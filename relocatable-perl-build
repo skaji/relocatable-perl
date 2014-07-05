@@ -1,0 +1,137 @@
+#!/usr/bin/env perl
+use strict;
+use warnings FATAL => 'all';
+use utf8;
+use Getopt::Long qw(:config no_auto_abbrev no_ignore_case bundling);
+use 5.010;
+use Cwd 'getcwd';
+use File::Spec;
+use File::Temp qw(tempfile tempdir);
+use File::Path 'rmtree';
+use File::Basename 'dirname';
+use Pod::Usage 'pod2usage';
+sub run { !system @_ or die "failed @_\n" }
+
+=head1 NAME
+
+relocatable-perl-build - building perl with relocatable settings
+
+=head1 SYNOPSIS
+
+    > relocatable-perl-build OPTIONS
+
+    Options:
+    --prefix         install prefix, this is just for installation.
+                     After installation, you can move perl wherever you want!
+    --perl_version   install perl version
+    --tarball        use local tar.gz
+    --help, -h       show this help message
+
+    Examples:
+    > relocatable-perl-build --prefix /usr/local --perl_version 5.20.0
+    > relocatable-perl-build --prefix ~/perl --tarball /tmp/perl-5.18.2.tar.gz
+
+=head1 AUTHOR
+
+Shoichi Kaji
+
+=cut
+
+
+GetOptions
+    "prefix=s"       => \(my $prefix),
+    "perl_version=s" => \(my $perl_version),
+    "tarball=s"      => \(my $tarball),
+    "help|h"         => sub { pod2usage(0) },
+or pod2usage(1);
+
+$prefix or do { warn "prefix option is required.\n"; pod2usage(1) };
+if ($tarball && $tarball =~ /5\.(\d+)\.(\d+)/) {
+    $perl_version = "5.$1.$2";
+}
+$perl_version or do { warn "perl_verion option is required.\n"; pod2usage(1) };
+
+if (!-d $prefix) {
+    mkdir $prefix or die "mkdir $prefix: $!\n";
+} elsif (!-w $prefix) {
+    die "don't have write permission to $prefix\n";
+}
+
+perl_build($prefix, $perl_version, $tarball);
+
+my $config_heavy = `$prefix/bin/perldoc -lm Config_heavy.pl`;
+die "failed to exec $prefix/bin/perldoc -lm Config_heavy.pl\n" if $? != 0;
+chomp $config_heavy;
+patch_config_heavy($config_heavy);
+say "---> successfully build perl $perl_version to $prefix";
+
+exit;
+
+sub perl_build {
+    my ($perefix, $perl_version, $tarball) = @_;
+
+    my $current_dir = getcwd;
+
+    my $now = time;
+    my $tempdir = "/tmp/perl-build-$now.$$";
+    my $log     = "/tmp/perl-build-$now.$$.log";
+    mkdir $tempdir or die "mkdir $tempdir: $!\n";
+
+    if ($tarball) {
+        say "---> use $tarball";
+        run "tar", "xzf", $tarball, "-C", $tempdir;
+    } else {
+        say "---> donwloding perl-$perl_version.tar.gz";
+        chdir $tempdir;
+        run http_get(), "http://www.cpan.org/src/5.0/perl-$perl_version.tar.gz";
+        run "tar", "xzf", "perl-$perl_version.tar.gz";
+    }
+
+    chdir "$tempdir/perl-$perl_version" or die;
+    say "---> building perl-$perl_version, see $log for progress";
+    run "./Configure -Dprefix=$prefix -Duserelocatableinc -des >>$log 2>&1";
+    run "make -j4 >>$log 2>&1";
+    run "make install >>$log 2>&1";
+    chdir $current_dir;
+    rmtree $tempdir;
+}
+
+sub http_get {
+    if (grep { -x "$_/wget" } File::Spec->path) {
+        return ("wget", "-q");
+    } elsif (grep { -x "$_/curl" } File::Spec->path) {
+        return ("curl", "-sO");
+    } else {
+        die "Cannot find wget nor curl\n";
+    }
+}
+
+sub patch_config_heavy {
+    my $config_heavy = shift;
+
+    open my $in, "<", $config_heavy or die "open $config_heavy: $!\n";
+    my ($out, $tmpname) = tempfile UNLINK => 0, DIR => dirname($config_heavy);
+    my $mode = (stat $config_heavy)[2];
+    chmod $mode, $tmpname;
+
+    my $fix_line1 = 'foreach my $what';
+    my $fix_line2 = 's/^($what=)';
+
+    while (<$in>) {
+        if (/^perlpath=/) {
+            say {$out} "perlpath='.../perl'";
+        } elsif (/^startperl=/) {
+            say {$out} "startperl='#!.../perl'";
+        } elsif (/^\Q$fix_line1\E/) {
+            say {$out} q[foreach my $what (qw(startperl perlpath prefixexp archlibexp man1direxp man3direxp privlibexp scriptdirexp sitearchexp sitebinexp sitelibexp siteman1direxp siteman3direxp sitescriptexp siteprefixexp sitelib_stem installarchlib installman1dir installman3dir installprefixexp installprivlib installscript installsitearch installsitebin installsitelib installsiteman1dir installsiteman3dir installsitescript)) {];
+        } elsif (/^(\s+)\Q$fix_line2\E/) {
+            say {$out} $1, q{s/^($what=)(['"])(#!)?(.*?)\2/$1 . $2 . ($3 || "") . relocate_inc($4) . $2/me;};
+        } else {
+            print {$out} $_;
+        }
+    }
+    close $_ for $in, $out;
+    rename $tmpname, $config_heavy or die "rename $tmpname $config_heavy: $!\n";
+}
+
+

@@ -1,24 +1,16 @@
 FROM centos:6.4
 MAINTAINER Shoichi Kaji <skaji@cpan.org>
 
-RUN yum install -y gcc make
+RUN yum install -y gcc make perl
 RUN mkdir /tmp/build /artifact
 
-RUN cd /tmp/build && wget -q http://www.cpan.org/src/5.0/perl-5.20.0.tar.gz
-RUN cd /tmp/build && tar xzf perl-5.20.0.tar.gz
-RUN cd /tmp/build/perl-5.20.0 && ./Configure -Dprefix=/opt/perl -Duserelocatableinc -des &>> /artifact/perl-build.log
-RUN cd /tmp/build/perl-5.20.0 && make &>> /artifact/perl-build.log
-RUN cd /tmp/build/perl-5.20.0 && make test &>> /artifact/perl-build.log
-RUN cd /tmp/build/perl-5.20.0 && make install &>> /artifact/perl-build.log
+ADD relocatable-perl-build /tmp/build/relocatable-perl-build
+RUN /usr/bin/perl /tmp/build/relocatable-perl-build --perl_version 5.20.0 --prefix /opt/perl
 
-ADD misc/config_heavy.patch.pl /tmp/build/config_heavy.patch.pl
-RUN /opt/perl/bin/perl /tmp/build/config_heavy.patch.pl /opt/perl/lib/5.20.0/`/opt/perl/bin/perl -MConfig -e 'print $Config{archname}'`/Config_heavy.pl
-ADD misc/change-shebang.pl /opt/perl/bin/change-shebang.pl
-RUN chmod 744 /opt/perl/bin/change-shebang.pl
-
-RUN wget -q -O - http://cpanmin.us | /opt/perl/bin/perl - -qn App::cpanminus
-
-RUN /opt/perl/bin/change-shebang.pl /opt/perl/bin/*
+RUN wget --no-check-certificate -q -O - http://cpanmin.us | /opt/perl/bin/perl - -qn App::cpanminus
+RUN cd /tmp/build && wget --no-check-certificate -O App-ChangeShebang.tar.gz -q https://github.com/shoichikaji/change-shebang/archive/v0.01.tar.gz
+RUN cd /tmp/build && /opt/perl/bin/cpanm -nq App-ChangeShebang.tar.gz
+RUN /opt/perl/bin/change-shebang -f /opt/perl/bin/*
 
 RUN cp -r /opt/perl /tmp/perl-`/opt/perl/bin/perl -MConfig -e 'print qq($^V-$Config{archname})'`
 RUN cd /tmp && tar czf /artifact/perl-`/opt/perl/bin/perl -MConfig -e 'print qq($^V-$Config{archname})'`.tar.gz perl-`/opt/perl/bin/perl -MConfig -e 'print qq($^V-$Config{archname})'`
