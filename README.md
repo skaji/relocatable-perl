@@ -3,7 +3,7 @@
 Perl can be build with relocatable enabled,
 which means you can move perl wherever you want!
 
-I prepare relocatable enabled perls for linux and MacOS X.
+I prepared relocatable enabled perls for linux and MacOS X.
 See [release page](https://github.com/shoichikaji/relocatable-perl/releases).
 Why don't you try them?
 
@@ -28,15 +28,25 @@ That's all! Check out your perl works:
 
 ## how to build yourself
 
-If you want to build relocatable enabled perl yourself, please see
-[Dockerfile](https://github.com/shoichikaji/relocatable-perl/blob/master/Dockerfile),
-in which all processes are described.
+    > wget https://raw.githubusercontent.com/shoichikaji/relocatable-perl/master/relocatable-perl-build
+    > /usr/bin/perl relocatable-perl-build --prefix ~/perl --perl_version 5.20.0
+    > curl -sL http://cpanmin.us | ~/perl/bin/perl - -nq App::cpanminus
+    > ~/perl/bin/cpanm -nq App::ChangeShebang
+    > ~/perl/bin/change-shebang -f ~/perl/bin/*
 
-In fact you can pull that docker image:
+    # Now ~/perl is your relocatable perl, move or copy it wherever you want!
+    > cp -r ~/perl ~/foo && ~/foo/bin/perl -v
+    > cp -r ~/perl ~/bar && ~/bar/bin/perl -v
+
+See also [Dockerfile](https://github.com/shoichikaji/relocatable-perl/blob/master/Dockerfile).
+
+## docker image
+
+You can pull docker image:
 
     > docker pull skaji/relocatable-perl
     > docker run -d skaji/relocatable-perl
     > docker cp `docker ps -l -q`:/artifact/perl-v5.20.0-x86_64-linux.tar.gz .
 
-See also https://registry.hub.docker.com/u/skaji/relocatable-perl
+See https://registry.hub.docker.com/u/skaji/relocatable-perl
 

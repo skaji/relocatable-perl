@@ -81,14 +81,14 @@ sub perl_build {
         say "---> use $tarball";
         run "tar", "xzf", $tarball, "-C", $tempdir;
     } else {
-        say "---> donwloding perl-$perl_version.tar.gz";
+        say "---> downloding perl-$perl_version.tar.gz";
         chdir $tempdir;
         run http_get(), "http://www.cpan.org/src/5.0/perl-$perl_version.tar.gz";
         run "tar", "xzf", "perl-$perl_version.tar.gz";
     }
 
     chdir "$tempdir/perl-$perl_version" or die;
-    say "---> building perl-$perl_version, see $log for progress";
+    say "---> building perl $perl_version, see $log for progress";
     run "./Configure -Dprefix=$prefix -Duserelocatableinc -des >>$log 2>&1";
     run "make -j4 >>$log 2>&1";
     run "make install >>$log 2>&1";
