@@ -12,7 +12,7 @@ RUN cd /tmp/build/perl-5.20.0 && make test &>> /artifact/perl-build.log
 RUN cd /tmp/build/perl-5.20.0 && make install &>> /artifact/perl-build.log
 
 ADD misc/config_heavy.patch.pl /tmp/build/config_heavy.patch.pl
-RUN /opt/perl/bin/perl /tmp/build/config_heavy.patch.pl /opt/perl/lib/5.20.0/x86_64-linux/Config_heavy.pl
+RUN /opt/perl/bin/perl /tmp/build/config_heavy.patch.pl /opt/perl/lib/5.20.0/`/opt/perl/bin/perl -MConfig -e 'print $Config{archname}'`/Config_heavy.pl
 ADD misc/change-shebang.pl /opt/perl/bin/change-shebang.pl
 RUN chmod 744 /opt/perl/bin/change-shebang.pl
 RUN /opt/perl/bin/change-shebang.pl /opt/perl/bin/*
