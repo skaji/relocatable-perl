@@ -15,6 +15,9 @@ ADD misc/config_heavy.patch.pl /tmp/build/config_heavy.patch.pl
 RUN /opt/perl/bin/perl /tmp/build/config_heavy.patch.pl /opt/perl/lib/5.20.0/`/opt/perl/bin/perl -MConfig -e 'print $Config{archname}'`/Config_heavy.pl
 ADD misc/change-shebang.pl /opt/perl/bin/change-shebang.pl
 RUN chmod 744 /opt/perl/bin/change-shebang.pl
+
+RUN wget -q -O - http://cpanmin.us | /opt/perl/bin/perl - -qn App::cpanminus
+
 RUN /opt/perl/bin/change-shebang.pl /opt/perl/bin/*
 
 RUN cp -r /opt/perl /tmp/perl-`/opt/perl/bin/perl -MConfig -e 'print qq($^V-$Config{archname})'`
