@@ -13,7 +13,7 @@ Just download and extract it.
 
 Let's say you use MacOS X, then:
 
-    > wget https://github.com/shoichikaji/relocatable-perl/releases/download/0.1/perl-v5.20.0-darwin-2level.tar.gz
+    > wget https://github.com/shoichikaji/relocatable-perl/releases/download/0.2/perl-v5.20.0-darwin-2level.tar.gz
     > tar xzf perl-v5.20.0-darwin-2level.tar.gz
     > mv perl-v5.20.0-darwin-2level ~/my-favorite-name
 
@@ -21,7 +21,6 @@ That's all! Check out your perl works:
 
     > ~/my-favorite-name/bin/perl -v
     This is perl 5, version 20, subversion 0 (v5.20.0) built for darwin-2level
-    ...
 
     # cpanm is already installed.
     > ~/my-favorite-name/bin/cpanm Mojolicious
