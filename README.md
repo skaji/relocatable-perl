@@ -1,6 +1,6 @@
 # relocatable perl
 
-Perl can be build with relocatable enabled,
+Perl can be built with relocatable enabled,
 which means you can move perl wherever you want!
 
 I prepared relocatable enabled perls for linux and MacOS X.
@@ -23,7 +23,7 @@ That's all! Check out your perl works:
     This is perl 5, version 20, subversion 0 (v5.20.0) built for darwin-2level
 
     # cpanm is already installed.
-    > ~/my-favorite-name/bin/cpanm Mojolicious
+    > ~/my-favorite-name/bin/cpanm LWP::UserAgent
 
 ## how to build yourself
 
