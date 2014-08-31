@@ -1,4 +1,4 @@
-FROM centos:6.4
+FROM centos:centos6
 MAINTAINER Shoichi Kaji <skaji@cpan.org>
 
 RUN yum install -y gcc make perl
