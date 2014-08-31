@@ -1,7 +1,7 @@
 FROM centos:centos6
 MAINTAINER Shoichi Kaji <skaji@cpan.org>
 
-RUN yum install -y gcc make perl
+RUN yum install -y gcc make perl tar wget
 RUN mkdir /tmp/build /artifact
 
 RUN perl -e 'for (grep !-d, @ARGV) { mkdir $_ }' /usr/local/lib64 /usr/local/lib /lib/x86_64-linux-gnu /lib64 /lib /usr/lib/x86_64-linux-gnu /usr/lib64 /usr/lib
