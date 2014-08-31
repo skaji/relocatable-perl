@@ -4,6 +4,8 @@ MAINTAINER Shoichi Kaji <skaji@cpan.org>
 RUN yum install -y gcc make perl
 RUN mkdir /tmp/build /artifact
 
+RUN perl -e 'for (grep !-d, @ARGV) { mkdir $_ }' /usr/local/lib64 /usr/local/lib /lib/x86_64-linux-gnu /lib64 /lib /usr/lib/x86_64-linux-gnu /usr/lib64 /usr/lib
+
 ADD relocatable-perl-build /tmp/build/relocatable-perl-build
 RUN /usr/bin/perl /tmp/build/relocatable-perl-build --perl_version 5.20.0 --prefix /opt/perl
 
