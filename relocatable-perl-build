@@ -57,6 +57,22 @@ if (!-d $prefix) {
     die "don't have write permission to $prefix\n";
 }
 
+# THIS IS REQUIRED!
+# we want to build perl which works fine both on CentOS and Ubuntu.
+my @LIBPTH = qw(
+    /usr/local/lib64
+    /usr/local/lib
+    /lib/x86_64-linux-gnu
+    /lib64
+    /lib
+    /usr/lib/x86_64-linux-gnu
+    /usr/lib64
+    /usr/lib
+);
+for my $libpth (@LIBPTH) {
+    -d $libpth or die "missing '$libpth' directory, mkdir it and try again\n";
+}
+
 perl_build($prefix, $perl_version, $tarball);
 
 my $config_heavy = `$prefix/bin/perldoc -lm Config_heavy.pl`;
@@ -89,7 +105,7 @@ sub perl_build {
 
     chdir "$tempdir/perl-$perl_version" or die;
     say "---> building perl $perl_version, see $log for progress";
-    run "./Configure -Dprefix=$prefix -Duserelocatableinc -des >>$log 2>&1";
+    run "./Configure -Dprefix=$prefix -Duserelocatableinc -Dlibpth='@LIBPTH' -des >>$log 2>&1";
     run "make -j4 >>$log 2>&1";
     run "make install >>$log 2>&1";
     chdir $current_dir;
