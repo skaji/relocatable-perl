@@ -4,6 +4,7 @@ use warnings FATAL => 'all';
 use utf8;
 use Getopt::Long qw(:config no_auto_abbrev no_ignore_case bundling);
 use 5.010;
+use Config;
 use Cwd 'getcwd';
 use File::Spec;
 use File::Temp qw(tempfile tempdir);
@@ -11,6 +12,17 @@ use File::Path 'rmtree';
 use File::Basename 'dirname';
 use Pod::Usage 'pod2usage';
 sub run { !system @_ or die "failed @_\n" }
+
+my @LINUX_LIBPTH = qw(
+    /usr/local/lib64
+    /usr/local/lib
+    /lib/x86_64-linux-gnu
+    /lib64
+    /lib
+    /usr/lib/x86_64-linux-gnu
+    /usr/lib64
+    /usr/lib
+);
 
 =head1 NAME
 
@@ -57,22 +69,6 @@ if (!-d $prefix) {
     die "don't have write permission to $prefix\n";
 }
 
-# THIS IS REQUIRED!
-# we want to build perl which works fine both on CentOS and Ubuntu.
-my @LIBPTH = qw(
-    /usr/local/lib64
-    /usr/local/lib
-    /lib/x86_64-linux-gnu
-    /lib64
-    /lib
-    /usr/lib/x86_64-linux-gnu
-    /usr/lib64
-    /usr/lib
-);
-for my $libpth (@LIBPTH) {
-    -d $libpth or die "missing '$libpth' directory, mkdir it and try again\n";
-}
-
 perl_build($prefix, $perl_version, $tarball);
 
 my $config_heavy = `$prefix/bin/perldoc -lm Config_heavy.pl`;
@@ -80,6 +76,7 @@ die "failed to exec $prefix/bin/perldoc -lm Config_heavy.pl\n" if $? != 0;
 chomp $config_heavy;
 patch_config_heavy($config_heavy);
 say "---> successfully build perl $perl_version to $prefix";
+debug_information("$prefix/bin/perl");
 
 exit;
 
@@ -103,9 +100,17 @@ sub perl_build {
         run "tar", "xzf", "perl-$perl_version.tar.gz";
     }
 
+    my @Configure = (
+        "./Configure",
+        "-Dprefix=$prefix",
+        "-Duserelocatableinc",
+        ($Config{archname} =~ /linux/i ? "-Dlibpth='@LINUX_LIBPTH'" : ()),
+        "-des",
+    );
+
     chdir "$tempdir/perl-$perl_version" or die;
     say "---> building perl $perl_version, see $log for progress";
-    run "./Configure -Dprefix=$prefix -Duserelocatableinc -Dlibpth='@LIBPTH' -des >>$log 2>&1";
+    run "@Configure >>$log 2>&1";
     run "make -j4 >>$log 2>&1";
     run "make install >>$log 2>&1";
     chdir $current_dir;
@@ -148,6 +153,15 @@ sub patch_config_heavy {
     }
     close $_ for $in, $out;
     rename $tmpname, $config_heavy or die "rename $tmpname $config_heavy: $!\n";
+}
+
+sub debug_information {
+    my $perl = shift;
+    system $perl, "-MConfig", "-E", q(
+        for my $key (qw(config_args libpth libs)) {
+            say "---> with $key: $Config{$key}";
+        }
+    );
 }
 
 
