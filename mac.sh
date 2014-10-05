@@ -17,11 +17,11 @@ if [ -e $PERL_PREFIX ]; then echo already exists $PERL_PREFIX; exit 1; fi
 sudo mkdir $PERL_PREFIX
 sudo chown $USER:staff $PERL_PREFIX
 
-if brew list gdbm >/dev/null 2>&1; then brew unlink gdbm; HAVE_GDBM=YES; fi
+if [ -f /usr/local/lib/libgdbm.dylib ]; then brew unlink gdbm; HAVE_GDBM=YES; fi
 perl ./relocatable-perl-build --prefix $PERL_PREFIX "$@"
 if [ $HAVE_GDBM = "YES" ]; then brew link gdbm; fi
 
-curl -sL  http://cpanmin.us | $PERL_PREFIX/bin/perl - -qn App::cpanminus App::ChangeShebang
+curl -sL http://cpanmin.us | $PERL_PREFIX/bin/perl - -qn App::cpanminus App::ChangeShebang
 $PERL_PREFIX/bin/change-shebang -f $PERL_PREFIX/bin/*
 
 NAME=perl-`$PERL_PREFIX/bin/perl -MConfig -e 'print qq($^V-$Config{archname})'`

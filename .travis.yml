@@ -1,5 +1,19 @@
 language: objective-c
-before_install: "brew install coreutils gnu-tar"
-script:
-  - "./mac.sh --perl_version 5.20.1"
-  - "ls -al"
+env: PERL_VERSION=5.20.1
+before_install: |
+  brew unlink `brew list`; \
+  brew install coreutils gnu-tar; \
+  brew link --force coreutils gnu-tar; \
+  true # ignore failure
+script: "./mac.sh --perl_version $PERL_VERSION"
+
+deploy:
+  provider: releases
+  api_key:
+    secure: LHxcdsW2E+3Dm1FXnIbeKf2yQtEHPP9l4d6j+uK47DmFVDe+u6IpphdiTdrJipiOUrU6eC+lyY3izzh0ej1yklMue99YBbT4KbdtQzHqyeb6KBYs4M/LrB8AU4n8i7O7ZcUCQVtbx5q/be7OtJnwEIJTFSfPnuaJpL3/9mYQ2wU=
+  file: perl-v$PERL_VERSION-darwin-2level.tar.gz
+  skip_cleanup: true
+  on:
+    repo: shoichikaji/relocatable-perl
+    all_branches: true
+    tags: true
