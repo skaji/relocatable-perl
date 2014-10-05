@@ -1,0 +1,5 @@
+language: objective-c
+before_install: "brew install coreutils gnu-tar"
+script:
+  - "./mac.sh --perl_version 5.20.1"
+  - "ls -al"
