@@ -24,7 +24,7 @@ if [ $HAVE_GDBM = "YES" ]; then brew link gdbm; fi
 curl -sL http://cpanmin.us | $PERL_PREFIX/bin/perl - -qn App::cpanminus App::ChangeShebang
 $PERL_PREFIX/bin/change-shebang -f $PERL_PREFIX/bin/*
 
-NAME=perl-`$PERL_PREFIX/bin/perl -MConfig -e 'print qq($^V-$Config{archname})'`
+NAME=perl-`$PERL_PREFIX/bin/perl -MConfig -e 'print $Config{archname}'`
 gcp -r /opt/perl ./$NAME
 gtar czf $NAME.tar.gz $NAME
 rm -rf $NAME
