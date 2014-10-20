@@ -1,51 +1,36 @@
 # relocatable perl
 
+[![Build Status](https://api.travis-ci.org/shoichikaji/relocatable-perl.svg)](https://travis-ci.org/shoichikaji/relocatable-perl)
+
 Perl can be built with relocatable enabled,
 which means you can move perl wherever you want!
 
 I prepared relocatable enabled perls for linux and MacOS X.
 See [release page](https://github.com/shoichikaji/relocatable-perl/releases).
-Why don't you try them?
 
-## how?
+## how to install
 
 Just download and extract it.
 
 Let's say you use MacOS X, then:
 
-    > wget https://github.com/shoichikaji/relocatable-perl/releases/download/0.2/perl-v5.20.0-darwin-2level.tar.gz
-    > tar xzf perl-v5.20.0-darwin-2level.tar.gz
-    > mv perl-v5.20.0-darwin-2level ~/my-favorite-name
+    > wget https://github.com/shoichikaji/relocatable-perl/releases/download/0.7/perl-darwin-2level.tar.gz
+    > tar xzf perl-darwin-2level.tar.gz
+    > mv perl-darwin-2level ~/my-favorite-name
 
-That's all! Check out your perl works:
+That's all. Check out your perl works:
 
     > ~/my-favorite-name/bin/perl -v
-    This is perl 5, version 20, subversion 0 (v5.20.0) built for darwin-2level
+    This is perl 5, version 20, subversion 1 (v5.20.1) built for darwin-2level
 
-    # cpanm is already installed.
+    # cpanm is already installed. Install your favorite cpan module.
     > ~/my-favorite-name/bin/cpanm LWP::UserAgent
 
 ## how to build yourself
 
-    > wget https://raw.githubusercontent.com/shoichikaji/relocatable-perl/master/relocatable-perl-build
-    > /usr/bin/perl relocatable-perl-build --prefix ~/perl --perl_version 5.20.0
-    > curl -sL http://cpanmin.us | ~/perl/bin/perl - -nq App::cpanminus
-    > ~/perl/bin/cpanm -nq App::ChangeShebang
-    > ~/perl/bin/change-shebang -f ~/perl/bin/*
-
-    # Now ~/perl is your relocatable perl, move or copy it wherever you want!
-    > cp -r ~/perl ~/foo && ~/foo/bin/perl -v
-    > cp -r ~/perl ~/bar && ~/bar/bin/perl -v
-
-See also [Dockerfile](https://github.com/shoichikaji/relocatable-perl/blob/master/Dockerfile).
+See [Dockerfile](https://github.com/shoichikaji/relocatable-perl/blob/master/Dockerfile)
+and [mac.sh](https://github.com/shoichikaji/relocatable-perl/blob/master/mac.sh).
 
 ## docker image
 
-You can pull docker image:
-
-    > docker pull skaji/relocatable-perl
-    > docker run -d skaji/relocatable-perl
-    > docker cp `docker ps -l -q`:/artifact/perl-v5.20.0-x86_64-linux.tar.gz .
-
-See https://registry.hub.docker.com/u/skaji/relocatable-perl
-
+https://registry.hub.docker.com/u/skaji/relocatable-perl
