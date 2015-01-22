@@ -75,6 +75,12 @@ my $config_heavy = `$prefix/bin/perldoc -lm Config_heavy.pl`;
 die "failed to exec $prefix/bin/perldoc -lm Config_heavy.pl\n" if $? != 0;
 chomp $config_heavy;
 patch_config_heavy($config_heavy);
+
+my $config_pm = `$prefix/bin/perldoc -lm Config`;
+die "failed to exec $prefix/bin/perldoc -lm Config\n" if $? != 0;
+chomp $config_pm;
+patch_config_pm($config_pm);
+
 say "---> successfully build perl $perl_version to $prefix";
 debug_information("$prefix/bin/perl");
 
@@ -129,11 +135,24 @@ sub http_get {
 
 sub patch_config_heavy {
     my $config_heavy = shift;
+    my @relocatable = do {
+        open my $fh, "<", $config_heavy or die "open $config_heavy: $!\n";
+        my @relocatable;
+        while (<$fh>) {
+            if (/^([^=]+)=['"].*\.\.\./) {
+                push @relocatable, $1;
+            }
+        }
+        @relocatable;
+    };
 
     open my $in, "<", $config_heavy or die "open $config_heavy: $!\n";
     my ($out, $tmpname) = tempfile UNLINK => 0, DIR => dirname($config_heavy);
     my $mode = (stat $config_heavy)[2];
     chmod $mode, $tmpname;
+
+    push @relocatable, "perlpath", "startperl";
+    @relocatable = uniq(@relocatable);
 
     my $fix_line1 = 'foreach my $what';
     my $fix_line2 = 's/^($what=)';
@@ -144,7 +163,7 @@ sub patch_config_heavy {
         } elsif (/^startperl=/) {
             say {$out} "startperl='#!.../perl'";
         } elsif (/^\Q$fix_line1\E/) {
-            say {$out} q[foreach my $what (qw(startperl perlpath prefixexp archlibexp man1direxp man3direxp privlibexp scriptdirexp sitearchexp sitebinexp sitelibexp siteman1direxp siteman3direxp sitescriptexp siteprefixexp sitelib_stem installarchlib installman1dir installman3dir installprefixexp installprivlib installscript installsitearch installsitebin installsitelib installsiteman1dir installsiteman3dir installsitescript)) {];
+            say {$out} 'foreach my $what (qw(' . "@relocatable" . ')) {';
         } elsif (/^(\s+)\Q$fix_line2\E/) {
             say {$out} $1, q{s/^($what=)(['"])(#!)?(.*?)\2/$1 . $2 . ($3 || "") . relocate_inc($4) . $2/me;};
         } else {
@@ -153,6 +172,23 @@ sub patch_config_heavy {
     }
     close $_ for $in, $out;
     rename $tmpname, $config_heavy or die "rename $tmpname $config_heavy: $!\n";
+}
+
+sub patch_config_pm {
+    my $config_pm = shift;
+    open my $in, "<", $config_pm or die "open $config_pm: $!\n";
+    my ($out, $tmpname) = tempfile UNLINK => 0, DIR => dirname($config_pm);
+    my $mode = (stat $config_pm)[2];
+    chmod $mode, $tmpname;
+    while (<$in>) {
+        if (/^(\s+)scriptdir\s*=>/) {
+            say {$out} "$1scriptdir => relocate_inc('.../'),";
+        } else {
+            print {$out} $_;
+        }
+    }
+    close $_ for $in, $out;
+    rename $tmpname, $config_pm or die "rename $tmpname $config_pm: $!\n";
 }
 
 sub debug_information {
@@ -164,4 +200,8 @@ sub debug_information {
     );
 }
 
-
+sub uniq {
+    my @item = @_;
+    my %seen;
+    grep { !$seen{$_}++ } @item;
+}
