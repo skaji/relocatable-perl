@@ -110,6 +110,8 @@ sub perl_build {
         "./Configure",
         "-Dprefix=$prefix",
         "-Duserelocatableinc",
+        "-Dman1dir=none",
+        "-Dman3dir=none",
         ($Config{archname} =~ /linux/i ? "-Dlibpth='@LINUX_LIBPTH'" : ()),
         "-des",
     );

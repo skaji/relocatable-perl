@@ -21,7 +21,7 @@ if [ -f /usr/local/lib/libgdbm.dylib ]; then brew unlink gdbm; HAVE_GDBM=YES; fi
 perl ./relocatable-perl-build --prefix $PERL_PREFIX "$@"
 if [ $HAVE_GDBM = "YES" ]; then brew link gdbm; fi
 
-curl -sL http://cpanmin.us | $PERL_PREFIX/bin/perl - -qn App::cpanminus App::ChangeShebang
+curl -sL http://cpanmin.us | $PERL_PREFIX/bin/perl - -qn --no-man-pages App::cpanminus App::ChangeShebang
 $PERL_PREFIX/bin/change-shebang -f $PERL_PREFIX/bin/*
 
 NAME=perl-`$PERL_PREFIX/bin/perl -MConfig -e 'print $Config{archname}'`
