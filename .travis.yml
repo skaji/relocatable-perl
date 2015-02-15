@@ -1,5 +1,5 @@
 language: objective-c
-env: PERL_VERSION=5.20.1
+env: PERL_VERSION=5.20.2
 before_install: |
   brew unlink `brew list`; \
   brew install coreutils gnu-tar; \
