@@ -34,3 +34,22 @@ and [mac.sh](https://github.com/shoichikaji/relocatable-perl/blob/master/mac.sh)
 ## docker image
 
 https://registry.hub.docker.com/u/skaji/relocatable-perl
+
+## LICENSE
+
+Copyright (C) Shoichi Kaji.
+
+This is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
+
+Please note that the artifacts in the release page contains
+Perl5, App::cpanminus and App::ChangeShebang.
+They have their own copyright and license.
+
+* [Perl5](https://www.perl.org/)
+Copyright 1987-2015, Larry Wall, GNU General Public License or Artistic License
+
+* [App::cpanminus](https://github.com/miyagawa/cpanminus)
+Copyright 2010- Tatsuhiko Miyagawa, licensed under the same terms as Perl.
+
+* [App::ChangeShebang](https://github.com/shoichikaji/change-shebang)
+Copyright Shoichi Kaji, licensed under the same terms as Perl.
