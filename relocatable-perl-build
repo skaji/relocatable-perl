@@ -112,6 +112,7 @@ sub perl_build {
         "-Duserelocatableinc",
         "-Dman1dir=none",
         "-Dman3dir=none",
+        "-DDEBUGGING=-g",
         ($Config{archname} =~ /linux/i ? "-Dlibpth='@LINUX_LIBPTH'" : ()),
         "-des",
     );
