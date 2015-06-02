@@ -14,14 +14,14 @@ Just download and extract it.
 
 Let's say you use MacOS X, then:
 
-    > wget https://github.com/shoichikaji/relocatable-perl/releases/download/0.7/perl-darwin-2level.tar.gz
+    > wget https://github.com/shoichikaji/relocatable-perl/releases/download/5.22.0.0/perl-darwin-2level.tar.gz
     > tar xzf perl-darwin-2level.tar.gz
     > mv perl-darwin-2level ~/my-favorite-name
 
 That's all. Check out your perl works:
 
     > ~/my-favorite-name/bin/perl -v
-    This is perl 5, version 20, subversion 1 (v5.20.1) built for darwin-2level
+    This is perl 5, version 22, subversion 0 (v5.22.0) built for darwin-2level
 
     # cpanm is already installed. Install your favorite cpan module.
     > ~/my-favorite-name/bin/cpanm LWP::UserAgent
