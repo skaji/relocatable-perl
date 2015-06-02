@@ -8,7 +8,7 @@ RUN mkdir /tmp/build /artifact
 RUN perl -e 'mkdir $_ for grep !-d, @ARGV' /usr/local/lib64 /usr/local/lib /lib/x86_64-linux-gnu /lib64 /lib /usr/lib/x86_64-linux-gnu /usr/lib64 /usr/lib
 
 ADD relocatable-perl-build /tmp/build/relocatable-perl-build
-RUN /usr/bin/perl /tmp/build/relocatable-perl-build --perl_version 5.20.2 --prefix /opt/perl
+RUN /usr/bin/perl /tmp/build/relocatable-perl-build --perl_version 5.22.0 --prefix /opt/perl
 
 RUN wget --no-check-certificate -q -O - http://cpanmin.us | /opt/perl/bin/perl - -qn --no-man-pages App::cpanminus App::ChangeShebang
 RUN /opt/perl/bin/change-shebang -f /opt/perl/bin/*
