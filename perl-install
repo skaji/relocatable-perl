@@ -1,0 +1,83 @@
+#!/bin/bash
+
+set -eu
+
+die() {
+  echo "$1" >&2
+  exit 1
+}
+
+if [[ $# -ne 1 ]] || [[ $1 = "-h" ]] || [[ $1 = "--help" ]]; then
+  die "Usage: perl-install INSTALL_DIR"
+fi
+
+if [[ `uname -m` != "x86_64" ]]; then
+  die "Only support x86_64"
+fi
+
+if [[ `uname -s` = "Darwin" ]]; then
+  ARCHNAME=darwin-2level
+elif [[ `uname -s` = "Linux" ]]; then
+  ARCHNAME=x86_64-linux
+else
+  die "Only support Darwin or Linux"
+fi
+
+INSTALL_DIR=$1
+if [[ -d $INSTALL_DIR ]]; then
+  [[ -w $INSTALL_DIR ]] || die "You don't have write permission to $INSTALL_DIR"
+else
+  mkdir $INSTALL_DIR
+fi
+ABS_INSTALL_DIR=$(cd $INSTALL_DIR &>/dev/null; pwd)
+
+if ! type tar &>/dev/null; then
+  die 'Cannot find `tar` command'
+fi
+
+if type curl &>/dev/null; then
+  HTTP_GET=curl
+  HTTP_GET_OPTION='-sSLk'
+  HTTP_LOCATION_GET_OPTION='--max-redirs 0 -sSkI'
+elif type wget &>/dev/null; then
+  HTTP_GET=wget
+  HTTP_GET_OPTION='-q --no-check-certificate -O -'
+  HTTP_LOCATION_GET_OPTION='--spider --max-redirect 0'
+else
+  die 'Cannot find `curl` nor `wget`'
+fi
+  HTTP_GET=wget
+  HTTP_GET_OPTION='-q --no-check-certificate -O -'
+  HTTP_LOCATION_GET_OPTION='--spider --max-redirect 0'
+
+get_latest_tag() {
+  local url=https://github.com/shoichikaji/relocatable-perl/releases/latest
+  local tag=`$HTTP_GET $HTTP_LOCATION_GET_OPTION $url 2>&1 \
+    | grep Location: \
+    | cut -d ' ' -f 2 \
+    | tr -d '\r' \
+    | sed -e 's/.*\///'`
+  if [[ $tag =~ ^5 ]]; then
+    echo "$tag"
+  else
+    die "Failed to get $url"
+  fi
+}
+
+TAG=`get_latest_tag`
+
+URL=https://github.com/shoichikaji/relocatable-perl/releases/download/$TAG/perl-$ARCHNAME.tar.gz
+echo "Installing perl $TAG to $INSTALL_DIR, this may take a while..."
+
+$HTTP_GET $HTTP_GET_OPTION $URL | tar xzf - --strip-components 1 -C $INSTALL_DIR
+if [[ ! -f $INSTALL_DIR/bin/perl ]]; then
+  die "Failed to install perl"
+fi
+
+cat <<EOF
+Successfully installed perl $TAG.
+To use this perl, add the following line to ~/.bash_profile or ~/.zshrc:
+
+  export PATH=$ABS_INSTALL_DIR/bin:\$PATH
+
+EOF
