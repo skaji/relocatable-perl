@@ -5,14 +5,20 @@
 Perl can be built with relocatable enabled,
 which means you can move perl wherever you want!
 
-I prepared relocatable enabled perls for linux and MacOS X.
+I prepared relocatable enabled perls for linux and OS X.
 See [release page](https://github.com/shoichikaji/relocatable-perl/releases).
 
-## how to install
+## How to install
 
-Just download and extract it.
+### One liner
 
-Let's say you use MacOS X, then:
+To install latest relocatable-perl to `~/perl`, just type:
+
+    curl -sSkL https://git.io/perl-install | bash -s ~/perl
+
+### Manually
+
+Download and extract artifacts. Let's say you use OS X, then:
 
     > wget https://github.com/shoichikaji/relocatable-perl/releases/download/5.22.0.0/perl-darwin-2level.tar.gz
     > tar xzf perl-darwin-2level.tar.gz
@@ -26,12 +32,12 @@ That's all. Check out your perl works:
     # cpanm is already installed. Install your favorite cpan module.
     > ~/my-favorite-name/bin/cpanm LWP::UserAgent
 
-## how to build yourself
+## How to build yourself
 
 See [Dockerfile](https://github.com/shoichikaji/relocatable-perl/blob/master/Dockerfile)
 and [mac.sh](https://github.com/shoichikaji/relocatable-perl/blob/master/mac.sh).
 
-## docker image
+## Docker image
 
 https://registry.hub.docker.com/u/skaji/relocatable-perl
 
