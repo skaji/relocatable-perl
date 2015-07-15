@@ -46,9 +46,6 @@ elif type wget &>/dev/null; then
 else
   die 'Cannot find `curl` nor `wget`'
 fi
-  HTTP_GET=wget
-  HTTP_GET_OPTION='-q --no-check-certificate -O -'
-  HTTP_LOCATION_GET_OPTION='--spider --max-redirect 0'
 
 get_latest_tag() {
   local url=https://github.com/shoichikaji/relocatable-perl/releases/latest
