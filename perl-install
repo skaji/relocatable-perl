@@ -42,7 +42,7 @@ if type curl &>/dev/null; then
 elif type wget &>/dev/null; then
   HTTP_GET=wget
   HTTP_GET_OPTION='-q --no-check-certificate -O -'
-  HTTP_LOCATION_GET_OPTION='--spider --max-redirect 0'
+  HTTP_LOCATION_GET_OPTION='--spider --no-check-certificate --max-redirect 0'
 else
   die 'Cannot find `curl` nor `wget`'
 fi
@@ -57,11 +57,14 @@ get_latest_tag() {
   if [[ $tag =~ ^5 ]]; then
     echo "$tag"
   else
-    die "Failed to get $url"
+    echo ""
   fi
 }
 
 TAG=`get_latest_tag`
+if [ "$TAG" = "" ]; then
+  die "Failed to determine latest perl version"
+fi
 
 URL=https://github.com/shoichikaji/relocatable-perl/releases/download/$TAG/perl-$ARCHNAME.tar.gz
 echo "Installing perl $TAG to $INSTALL_DIR, this may take a while..."
