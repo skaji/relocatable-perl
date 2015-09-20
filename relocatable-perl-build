@@ -70,6 +70,7 @@ if (!-d $prefix) {
 }
 
 perl_build($prefix, $perl_version, $tarball);
+force_symlink($prefix, $perl_version);
 
 my $config_heavy = `$prefix/bin/perldoc -lm Config_heavy.pl`;
 die "failed to exec $prefix/bin/perldoc -lm Config_heavy.pl\n" if $? != 0;
@@ -207,4 +208,24 @@ sub uniq {
     my @item = @_;
     my %seen;
     grep { !$seen{$_}++ } @item;
+}
+
+sub force_symlink {
+    my ($prefix, $perl_version) = @_;
+    # See utils.lst and installperl
+    my %map = (
+        perl    => "perl$perl_version",
+        c2ph    => "pstruct",
+        perlbug => "perlthanks",
+    );
+    my $cwd = getcwd;
+    chdir "$prefix/bin" or die "Failed to chdir $prefix/bin: $!";
+    for my $file (grep -f, values %map) {
+        unlink $file or die "Failed to unlink $file: $!";
+    }
+    for my $from (sort keys %map) {
+        my $target = $map{$from};
+        symlink $from => $target or die "Failed to symlink $from => $target: $!";
+    }
+    chdir $cwd;
 }
