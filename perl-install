@@ -8,7 +8,14 @@ die() {
 }
 
 if [[ $# -ne 1 ]] || [[ $1 = "-h" ]] || [[ $1 = "--help" ]]; then
-  die "Usage: perl-install INSTALL_DIR"
+  die "Usage:
+  perl-install INSTALL_DIR      # install latest perl to INSTALL_DIR
+  perl-install --print-version  # print latest perl version, and exit"
+fi
+
+PRINT_VERSION=NO
+if [[ $1 = "--print-version" ]]; then
+  PRINT_VERSION=YES
 fi
 
 if [[ `uname -m` != "x86_64" ]]; then
@@ -21,18 +28,6 @@ elif [[ `uname -s` = "Linux" ]]; then
   ARCHNAME=x86_64-linux
 else
   die "Only support Darwin or Linux"
-fi
-
-INSTALL_DIR=$1
-if [[ -d $INSTALL_DIR ]]; then
-  [[ -w $INSTALL_DIR ]] || die "You don't have write permission to $INSTALL_DIR"
-else
-  mkdir $INSTALL_DIR
-fi
-ABS_INSTALL_DIR=$(cd $INSTALL_DIR &>/dev/null; pwd)
-
-if ! type tar &>/dev/null; then
-  die 'Cannot find `tar` command'
 fi
 
 if type curl &>/dev/null; then
@@ -62,9 +57,25 @@ get_latest_tag() {
 }
 
 TAG=`get_latest_tag`
-if [ "$TAG" = "" ]; then
+if [[ -z $TAG ]]; then
   die "Failed to determine latest perl version"
 fi
+if [[ $PRINT_VERSION = "YES" ]]; then
+  echo $TAG
+  exit
+fi
+
+if ! type tar &>/dev/null; then
+  die 'Cannot find `tar` command'
+fi
+
+INSTALL_DIR=$1
+if [[ -d $INSTALL_DIR ]]; then
+  [[ -w $INSTALL_DIR ]] || die "You don't have write permission to $INSTALL_DIR"
+else
+  mkdir $INSTALL_DIR
+fi
+ABS_INSTALL_DIR=$(cd $INSTALL_DIR &>/dev/null; pwd)
 
 URL=https://github.com/shoichikaji/relocatable-perl/releases/download/$TAG/perl-$ARCHNAME.tar.gz
 echo "Installing perl $TAG to $INSTALL_DIR, this may take a while..."
