@@ -1,11 +1,10 @@
 language: objective-c
-env: PERL_VERSION=5.22.1
 before_install: |
   brew unlink `brew list`; \
   brew install coreutils gnu-tar; \
   brew link --force coreutils gnu-tar; \
   true # ignore failure
-script: "./mac.sh --perl_version $PERL_VERSION"
+script: "./mac.sh --perl_version `cat PERL_VERSION`"
 
 deploy:
   provider: releases
