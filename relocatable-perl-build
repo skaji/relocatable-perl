@@ -37,6 +37,7 @@ relocatable-perl-build - building perl with relocatable settings
                      After installation, you can move perl wherever you want!
     --perl_version   install perl version
     --tarball        use local tar.gz
+    --jobs           parallel build, default: 1
     --help, -h       show this help message
 
     Examples:
@@ -54,6 +55,7 @@ GetOptions
     "prefix=s"       => \(my $prefix),
     "perl_version=s" => \(my $perl_version),
     "tarball=s"      => \(my $tarball),
+    "jobs=i"         => \(my $jobs),
     "help|h"         => sub { pod2usage(0) },
 or pod2usage(1);
 
@@ -83,7 +85,7 @@ chomp $config_pm;
 patch_config_pm($config_pm);
 
 say "---> successfully build perl $perl_version to $prefix";
-debug_information("$prefix/bin/perl");
+system "$prefix/bin/perl -V";
 
 exit;
 
@@ -121,8 +123,8 @@ sub perl_build {
     chdir "$tempdir/perl-$perl_version" or die;
     say "---> building perl $perl_version, see $log for progress";
     run "@Configure >>$log 2>&1";
-    run "make -j4 >>$log 2>&1";
-    run "make install >>$log 2>&1";
+    my $option = $jobs ? "--jobs=$jobs" : "";
+    run "make $option install >>$log 2>&1";
     chdir $current_dir;
     rmtree $tempdir;
 }
@@ -155,17 +157,22 @@ sub patch_config_heavy {
     my $mode = (stat $config_heavy)[2];
     chmod $mode, $tmpname;
 
-    push @relocatable, "perlpath", "startperl";
+    my %fix = (
+        # XXX initialinstalllocation
+        installbin    => '.../../bin',
+        installprefix => '.../..',
+        perlpath      => '.../perl',
+        startperl   => '#!.../perl',
+    );
+    push @relocatable, sort keys %fix;
     @relocatable = uniq(@relocatable);
 
     my $fix_line1 = 'foreach my $what';
     my $fix_line2 = 's/^($what=)';
 
     while (<$in>) {
-        if (/^perlpath=/) {
-            say {$out} "perlpath='.../perl'";
-        } elsif (/^startperl=/) {
-            say {$out} "startperl='#!.../perl'";
+        if (/^([a-zA-Z0-9_]+)=/ && $fix{$1}) {
+            say {$out} "$1='$fix{$1}'";
         } elsif (/^\Q$fix_line1\E/) {
             say {$out} 'foreach my $what (qw(' . "@relocatable" . ')) {';
         } elsif (/^(\s+)\Q$fix_line2\E/) {
@@ -193,15 +200,6 @@ sub patch_config_pm {
     }
     close $_ for $in, $out;
     rename $tmpname, $config_pm or die "rename $tmpname $config_pm: $!\n";
-}
-
-sub debug_information {
-    my $perl = shift;
-    system $perl, "-MConfig", "-E", q(
-        for my $key (qw(config_args libpth libs)) {
-            say "---> with $key: $Config{$key}";
-        }
-    );
 }
 
 sub uniq {
