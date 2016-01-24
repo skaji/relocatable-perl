@@ -11,6 +11,7 @@ use File::Temp qw(tempfile tempdir);
 use File::Path 'rmtree';
 use File::Basename 'dirname';
 use Pod::Usage 'pod2usage';
+use Devel::PatchPerl;
 sub run { !system @_ or die "failed @_\n" }
 
 my @LINUX_LIBPTH = qw(
@@ -121,10 +122,14 @@ sub perl_build {
     );
 
     chdir "$tempdir/perl-$perl_version" or die;
+    my $devel = "Devel::PatchPerl";
+    say "---> patching by $devel " . $devel->VERSION;
+    $devel->patch_source($perl_version, ".");
     say "---> building perl $perl_version, see $log for progress";
     run "@Configure >>$log 2>&1";
     my $option = $jobs ? "--jobs=$jobs" : "";
-    run "make $option install >>$log 2>&1";
+    run "make $option >>$log 2>&1";
+    run "make install >>$log 2>&1";
     chdir $current_dir;
     rmtree $tempdir;
 }
