@@ -13,6 +13,6 @@ deploy:
   file: perl-darwin-2level.tar.gz
   skip_cleanup: true
   on:
-    repo: shoichikaji/relocatable-perl
+    repo: skaji/relocatable-perl
     all_branches: true
     tags: true

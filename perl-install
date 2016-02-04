@@ -43,7 +43,7 @@ else
 fi
 
 get_latest_tag() {
-  local url=https://github.com/shoichikaji/relocatable-perl/releases/latest
+  local url=https://github.com/skaji/relocatable-perl/releases/latest
   local tag=`$HTTP_GET $HTTP_LOCATION_GET_OPTION $url 2>&1 \
     | grep Location: \
     | cut -d ' ' -f 2 \
@@ -77,7 +77,7 @@ else
 fi
 ABS_INSTALL_DIR=$(cd $INSTALL_DIR &>/dev/null; pwd)
 
-URL=https://github.com/shoichikaji/relocatable-perl/releases/download/$TAG/perl-$ARCHNAME.tar.gz
+URL=https://github.com/skaji/relocatable-perl/releases/download/$TAG/perl-$ARCHNAME.tar.gz
 echo "Installing perl $TAG to $INSTALL_DIR, this may take a while..."
 
 $HTTP_GET $HTTP_GET_OPTION $URL | tar xzf - --strip-components 1 -C $INSTALL_DIR
