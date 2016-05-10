@@ -1,15 +1,16 @@
 FROM centos:centos6
 MAINTAINER Shoichi Kaji <skaji@cpan.org>
 
-RUN yum install -y gcc make perl tar wget
+RUN yum install -y gcc make tar wget patch
 RUN yum clean all
 RUN mkdir /tmp/build /artifact
+RUN wget --no-check-certificate -q -O - https://github.com/skaji/relocatable-perl/releases/download/5.22.1.0/perl-x86_64-linux.tar.gz | tar xzf - --strip-components 1 -C /usr/local
 
-RUN perl -e 'mkdir $_ for grep !-d, @ARGV' /usr/local/lib64 /usr/local/lib /lib/x86_64-linux-gnu /lib64 /lib /usr/lib/x86_64-linux-gnu /usr/lib64 /usr/lib
+RUN /usr/local/bin/perl -e 'mkdir $_ for grep !-d, @ARGV' /usr/local/lib64 /usr/local/lib /lib/x86_64-linux-gnu /lib64 /lib /usr/lib/x86_64-linux-gnu /usr/lib64 /usr/lib
 
 ADD relocatable-perl-build /tmp/build/relocatable-perl-build
 ADD PERL_VERSION /tmp/build/PERL_VERSION
-RUN /usr/bin/perl /tmp/build/relocatable-perl-build --perl_version `cat /tmp/build/PERL_VERSION` --prefix /opt/perl
+RUN /usr/local/bin/perl /tmp/build/relocatable-perl-build --perl_version `cat /tmp/build/PERL_VERSION` --prefix /opt/perl
 
 RUN wget --no-check-certificate -q -O - http://cpanmin.us | /opt/perl/bin/perl - -qn --no-man-pages App::cpanminus App::ChangeShebang
 RUN /opt/perl/bin/change-shebang -f /opt/perl/bin/*
