@@ -33,30 +33,14 @@ fi
 if type curl &>/dev/null; then
   HTTP_GET=curl
   HTTP_GET_OPTION='-sSLk'
-  HTTP_LOCATION_GET_OPTION='--max-redirs 0 -sSkI'
 elif type wget &>/dev/null; then
   HTTP_GET=wget
   HTTP_GET_OPTION='-q --no-check-certificate -O -'
-  HTTP_LOCATION_GET_OPTION='--spider --no-check-certificate --max-redirect 0'
 else
   die 'Cannot find `curl` nor `wget`'
 fi
 
-get_latest_tag() {
-  local url=https://github.com/skaji/relocatable-perl/releases/latest
-  local tag=`$HTTP_GET $HTTP_LOCATION_GET_OPTION $url 2>&1 \
-    | grep Location: \
-    | cut -d ' ' -f 2 \
-    | tr -d '\r' \
-    | sed -e 's/.*\///'`
-  if [[ $tag =~ ^5 ]]; then
-    echo "$tag"
-  else
-    echo ""
-  fi
-}
-
-TAG=`get_latest_tag`
+TAG=`$HTTP_GET $HTTP_GET_OPTION https://raw.githubusercontent.com/skaji/relocatable-perl/master/LATEST`
 if [[ -z $TAG ]]; then
   die "Failed to determine latest perl version"
 fi

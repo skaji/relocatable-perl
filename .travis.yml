@@ -4,7 +4,7 @@ before_install: |
   brew install coreutils gnu-tar; \
   brew link --force coreutils gnu-tar; \
   true # ignore failure
-script: "./mac.sh --perl_version `cat PERL_VERSION`"
+script: "./mac.sh --perl_version `cat BUILD_VERSION`"
 
 deploy:
   provider: releases
