@@ -3,7 +3,10 @@ before_install: |
   brew unlink `brew list`; \
   brew install coreutils gnu-tar; \
   brew link --force coreutils gnu-tar; \
-  true # ignore failure
+  true; \
+  rvm get head; \
+  true
+
 script: "./mac.sh --perl_version `cat BUILD_VERSION`"
 
 deploy:
