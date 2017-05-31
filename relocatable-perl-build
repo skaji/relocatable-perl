@@ -10,7 +10,7 @@ $fatpacked{"Devel/InnerPackage.pm"} = '#line '.(1+__LINE__).' "'.__FILE__."\"\n"
 DEVEL_INNERPACKAGE
 
 $fatpacked{"Devel/PatchPerl.pm"} = '#line '.(1+__LINE__).' "'.__FILE__."\"\n".<<'DEVEL_PATCHPERL';
-  package Devel::PatchPerl;$Devel::PatchPerl::VERSION='1.46';use strict;use warnings;use File::pushd qw[pushd];use File::Spec;use IO::File;use Devel::PatchPerl::Hints qw[hint_file];use Module::Pluggable search_path=>['Devel::PatchPerl::Plugin'];use vars qw[@ISA @EXPORT_OK];@ISA=qw(Exporter);@EXPORT_OK=qw(patch_source);my$patch_exe=_can_run('gpatch')|| _can_run('patch');my@patch=({perl=>[qw/5.005/,],subs=>[[\&_patch_5_005,1 ],],},{perl=>[qw/5.005_01/,],subs=>[[\&_patch_5_005_01,1 ],],},{perl=>[qw/5.005_02/,],subs=>[[\&_patch_5_005_02,1 ],],},{perl=>[qr/^5\.00[2345]/,qw/5.001n/,],subs=>[[\&_patch_handy,1 ],],},{perl=>[qw/5.005 5.005_01 5.005_02 5.005_03 5.005_04/,],subs=>[[\&_replace_makedepend,1 ],],},{perl=>[qr/^5\.00[01234]/,qw/5.005 5.005_01 5.005_02 5.005_03/,],subs=>[[\&_patch_db,1 ],],},{perl=>[qr/^5\.6\.[1-2]$/,qr/^5\.7\.[0-1]$/,],subs=>[[\&_patch_makefile_sh_phony ],],},{perl=>[qw/5.6.0 5.6.1 5.7.0 5.7.1 5.7.2 5.7.3 5.8.0/,],subs=>[[\&_patch_db,3 ],],},{perl=>[qr/^5\.004_0[1234]$/,],subs=>[[\&_patch_doio ],],},{perl=>[qw/5.005 5.005_01 5.005_02/,],subs=>[[\&_patch_sysv,old_format=>1 ],],},{perl=>[qw/5.005_03 5.005_04/,qr/^5\.6\.[0-2]$/,qr/^5\.7\.[0-3]$/,qr/^5\.8\.[0-8]$/,qr/^5\.9\.[0-5]$/ ],subs=>[[\&_patch_sysv,old_format=>0 ],],},{perl=>[qr/^5\.004_05$/,qr/^5\.005(?:_0[1-4])?$/,qr/^5\.6\.[01]$/,],subs=>[[\&_patch_configure ],[\&_patch_makedepend_lc ],],},{perl=>[qr/^5\.6\.[0-2]$/,],subs=>[[\&_patch_conf_gconvert ],[\&_patch_sort_N ],],},{perl=>['5.8.0',],subs=>[[\&_patch_makedepend_lc ],],},{perl=>[qr/.*/,],subs=>[[\&_patch_conf_solaris ],[\&_patch_bitrig ],[\&_patch_hints ],[\&_patch_patchlevel ],[\&_patch_develpatchperlversion ],[\&_patch_errno_gcc5 ],],},{perl=>[qr/^5\.6\.[0-2]$/,qr/^5\.7\.[0-3]$/,qr/^5\.8\.[0-8]$/,],subs=>[[\&_patch_makedepend_SH ],],},{perl=>[qr/^5\.1[0-2]/,],subs=>[[\&_patch_archive_tar_tests ],[\&_patch_odbm_file_hints_linux ],],},{perl=>[qr/^5.1([24].\d+|0.1)/,],subs=>[[\&_patch_make_ext_pl ],],},{perl=>[qr/^5\.8\.9$/,],subs=>[[\&_patch_589_perlio_c ],],},{perl=>[qr/^5\.8\.[89]$/ ],subs=>[[\&_patch_hsplit_rehash_58 ]],},{perl=>[qr/^5\.10\.1$/,qr/^5\.12\.5$/,],subs=>[[\&_patch_hsplit_rehash_510 ]],},{perl=>[qr/^5\.18\.0$/,],subs=>[[\&_patch_regmatch_pointer_5180 ]],},{perl=>[qr/^5\.20\.0$/,],subs=>[[\&_patch_cow_speed ]],},{perl=>[qr/^5\.6\.[012]$/,qr/^5\.8\.[89]$/,qr/^5\.10\.[01]$/,],subs=>[[\&_patch_preprocess_options ]],},{perl=>[qr/^5\.18\.3$/,],subs=>[[\&_patch_5183_metajson ]],},);sub patch_source {my$vers=shift;$vers=shift if eval {$vers->isa(__PACKAGE__)};my$source=shift || '.';if (!$vers){$vers=_determine_version($source);if ($vers){warn "Auto-guessed '$vers'\n"}else {die "You didn't provide a perl version and I don't appear to be in a perl source tree\n"}}$source=File::Spec->rel2abs($source);{my$dir=pushd($source);for my$p (grep {_is($_->{perl},$vers)}@patch){for my$s (@{$p->{subs}}){my($sub,@args)=@$s;push@args,$vers unless scalar@args;$sub->(@args)}}_process_plugin(version=>$vers,source=>$source,patchexe=>$patch_exe)}}sub _process_plugin {my%args=@_;return unless my$possible=$ENV{PERL5_PATCHPERL_PLUGIN};my ($plugin)=grep {$possible eq $_ or /\Q$possible\E$/}__PACKAGE__->plugins;unless ($plugin){warn "# You specified a plugin '",$ENV{PERL5_PATCHPERL_PLUGIN},"' that isn't installed, just thought you might be interested.\n";return}{local $@;eval "require $plugin";if ($@){die "# I tried to load '",$ENV{PERL5_PATCHPERL_PLUGIN},"' but it didn't work out. Here is what happened '$@'\n"}}{local $@;eval {$plugin->patchperl(%args,)};if ($@){warn "# Warnings from the plugin: '$@'\n"}}return 1}sub _can_run {my$command=shift;if ($^O eq 'VMS'){require VMS::DCLsym;my$syms=VMS::DCLsym->new;return$command if scalar$syms->getsym(uc$command)}require File::Spec;require ExtUtils::MakeMaker;my@possibles;if(File::Spec->file_name_is_absolute($command)){return MM->maybe_command($command)}else {for my$dir (File::Spec->path,File::Spec->curdir){next if!$dir ||!-d $dir;my$abs=File::Spec->catfile($^O eq 'MSWin32' ? Win32::GetShortPathName($dir): $dir,$command);push@possibles,$abs if$abs=MM->maybe_command($abs)}}return@possibles if wantarray;return shift@possibles}sub _is {my($s1,$s2)=@_;defined$s1!=defined$s2 and return 0;ref$s2 and ($s1,$s2)=($s2,$s1);if (ref$s1){if (ref$s1 eq 'ARRAY'){_is($_,$s2)and return 1 for @$s1;return 0}return$s2 =~ $s1}return$s1 eq $s2}sub _patch {my($patch)=@_;print "patching $_\n" for$patch =~ /^\+{3}\s+(\S+)/gm;my$diff='tmp.diff';_write_or_die($diff,$patch);die "No patch utility found\n" unless$patch_exe;local$ENV{PATCH_GET}=0;_run_or_die("$patch_exe -f -s -p0 <$diff");unlink$diff or die "unlink $diff: $!\n"}sub _write_or_die {my($file,$data)=@_;my$fh=IO::File->new(">$file")or die "$file: $!\n";$fh->print($data)}sub _run_or_die {die unless system(@_)==0}sub determine_version {my$src=shift;$src=shift if eval {$src->isa(__PACKAGE__)};$src='.' unless$src;_determine_version($src)}sub _determine_version {my ($source)=@_;my$patchlevel_h=File::Spec->catfile($source,'patchlevel.h');return unless -e $patchlevel_h;my$version;{my%defines;open my$fh,'<',$patchlevel_h;my@vers;while (<$fh>){chomp;next unless /^#define/;my ($foo,$bar)=(split /\s+/)[1,2];$defines{$foo}=$bar}if (my@wotsits=grep {defined$defines{$_}}qw(PERL_REVISION PERL_VERSION PERL_SUBVERSION)){$version=join '.',map {$defines{$_}}@wotsits}elsif (my@watsits=grep {defined$defines{$_}}qw(PATCHLEVEL SUBVERSION)){$version=sprintf '5.%03d_%02d',map {$defines{$_}}@watsits}else {return}}return$version}sub _patch_patchlevel {return if -d '.git';my$dpv=$Devel::PatchPerl::VERSION || "(unreleased)";open my$plin,"patchlevel.h" or die "Couldn't open patchlevel.h : $!";open my$plout,">patchlevel.new" or die "Couldn't write on patchlevel.new : $!";my$seen=0;while (<$plin>){if (/\t,NULL/ and $seen){print {$plout}qq{\t,"Devel::PatchPerl $dpv"\n}}$seen++ if /local_patches\[\]/;print {$plout}$_}close$plout or die "Couldn't close filehandle writing to patchlevel.new : $!";close$plin or die "Couldn't close filehandle reading from patchlevel.h : $!";unlink "patchlevel.bak" or warn "Couldn't unlink patchlevel.bak : $!" if -e "patchlevel.bak";rename "patchlevel.h","patchlevel.bak" or die "Couldn't rename patchlevel.h to patchlevel.bak : $!";rename "patchlevel.new","patchlevel.h" or die "Couldn't rename patchlevel.new to patchlevel.h : $!"}sub _patch_hints {my@os;push@os,$^O;push@os,'linux' if $^O eq 'gnukfreebsd';for my$os (@os){return unless my ($file,$data)=hint_file($os);my$path=File::Spec->catfile('hints',$file);if (-e $path){chmod 0644,$path or die "$!\n"}open my$fh,'>',$path or die "$!\n";print$fh $data;close$fh}return 1}sub _patch_db {my$ver=shift;for my$file ('ext/DB_File/DB_File.xs','Configure'){print "patching $file\n";_run_or_die($^X,'-pi.bak','-e',"s/<db.h>/<db$ver\\/db.h>/",$file);unlink "$file.bak" if -e "$file.bak"}}sub _patch_doio {_patch(<<'END')}sub _patch_sysv {my%opt=@_;return if $^O ne 'linux' or -f '/usr/include/asm/page.h';if ($opt{old_format}){_patch(<<'END')}else {_patch(<<'END')}}sub _patch_configure {_patch(<<'END')}sub _patch_makedepend_lc {_patch(<<'END')}sub _patch_makedepend_SH {my$perl=shift;SWITCH: {if ($perl eq '5.6.0'){_patch(<<'BADGER');last SWITCH}if ($perl eq '5.6.1'){_patch(<<'BADGER');last SWITCH}if ($perl eq '5.6.2'){_patch(<<'BADGER');last SWITCH}if ($perl eq '5.7.0'){_patch(<<'BADGER');last SWITCH}if ($perl eq '5.7.1'){_patch(<<'BADGER');last SWITCH}if ($perl eq '5.7.2'){_patch(<<'BADGER');last SWITCH}if ($perl eq '5.7.3'){_patch(<<'BADGER');last SWITCH}if ($perl eq '5.8.0'){_patch(<<'BADGER');last SWITCH}_patch(<<'BADGER')}}sub _patch_conf_gconvert {my$perl=shift;_patch(<<'END')}sub _patch_sort_N {system($^X,'-pi.bak','-e','s!\$sort \-n \+1!(\$sort -n -k 2 2>/dev/null || \$sort -n +1)!','Configure')}sub _patch_archive_tar_tests {my$perl=shift;if ($perl =~ /^5\.10/){_patch(<<'END')}else {_patch(<<'END')}}sub _patch_odbm_file_hints_linux {_patch(<<'END')}sub _patch_make_ext_pl {_patch(<<'END')}sub _patch_589_perlio_c {_patch(<<'END')}sub _patch_hsplit_rehash_58 {my$perl=shift;my$patch=<<'END';if ($perl =~ qr/^5\.8\.8$/){$patch =~ s/non-pathological/non-pathalogical/;$patch =~ s/triggering/triggerring/}_patch($patch)}sub _patch_hsplit_rehash_510 {_patch(<<'END')}sub _patch_bitrig {return unless $^O eq 'bitrig';my$perlver=shift;my$num=_norm_ver($perlver);return unless$num < 5.019004;unless ($num < 5.00800){_patch(<<'BOOGLE')}if ($num < 5.008009){_patch(<<'BITRIGM1')}else {_patch(<<'BITRIGMX')}if ($num < 5.008001){}elsif ($num < 5.008007){_patch(<<'BITRIGC3')}elsif ($num < 5.008009){_patch(<<'BITRIGC2')}elsif ($num < 5.013000){_patch(<<'BITRIGC1')}else {_patch(<<'BITRIGCX')}}sub _patch_conf_solaris {return unless $^O eq 'solaris';my$perlver=shift;my$num=_norm_ver($perlver);return unless$num < 5.018000;_patch(<<'BUBBLE')}sub _patch_regmatch_pointer_5180 {_patch(<<'BOBBLE')}sub _patch_makefile_sh_phony {_patch(<<'END')}sub _patch_cow_speed {_patch(<<'COWSAY')}sub _patch_preprocess_options {my$perl=shift;if ($perl =~ /^5\.(?:8|10)\./){_patch(<<'END')}elsif ($perl =~ /^5\.6\./){_patch(<<'END')}}sub _patch_5183_metajson {_patch(<<'DOGSAY')}sub _patch_handy {_patch(<<'END')}sub _replace_makedepend {_write_or_die('makedepend.SH',<<'END')}sub _patch_5_005_02 {_patch(<<'END')}sub _patch_5_005_01 {_patch(<<'END')}sub _patch_5_005 {_patch(<<'END')}sub _patch_errno_gcc5 {my$perlver=shift;my$num=_norm_ver($perlver);return unless$num < 5.021009;return if$num > 5.020002 && $num < 5.021;if ($num < 5.006){warn "The Errno GCC 5 patch only goes back as far as v5.6.0\n";warn "You will have to generate your own patch to go farther back\n";return}elsif ($num < 5.006001){_patch(<<'END')}elsif ($num < 5.007002){_patch(<<'END')}elsif ($num < 5.007003){_patch(<<'END')}elsif ($num < 5.008009){_patch(<<'END')}else {_patch(<<'END')}}sub _norm_ver {my$ver=shift;my@v=split(qr/[._]0*/,$ver);$v[2]||= 0;return sprintf '%d.%03d%03d',@v}sub _patch_develpatchperlversion {return if -d '.git';my$dpv=$Devel::PatchPerl::VERSION || "(unreleased)";_patch(<<"END")}qq[patchin'];
+  package Devel::PatchPerl;$Devel::PatchPerl::VERSION='1.48';use strict;use warnings;use File::pushd qw[pushd];use File::Spec;use IO::File;use Devel::PatchPerl::Hints qw[hint_file];use Module::Pluggable search_path=>['Devel::PatchPerl::Plugin'];use vars qw[@ISA @EXPORT_OK];@ISA=qw(Exporter);@EXPORT_OK=qw(patch_source);my$patch_exe=_can_run('gpatch')|| _can_run('patch');my@patch=({perl=>[qw/5.005/,],subs=>[[\&_patch_5_005,1 ],],},{perl=>[qw/5.005_01/,],subs=>[[\&_patch_5_005_01,1 ],],},{perl=>[qw/5.005_02/,],subs=>[[\&_patch_5_005_02,1 ],],},{perl=>[qr/^5\.00[2345]/,qw/5.001n/,],subs=>[[\&_patch_handy,1 ],],},{perl=>[qw/5.005 5.005_01 5.005_02 5.005_03 5.005_04/,],subs=>[[\&_replace_makedepend,1 ],],},{perl=>[qr/^5\.00[01234]/,qw/5.005 5.005_01 5.005_02 5.005_03/,],subs=>[[\&_patch_db,1 ],],},{perl=>[qr/^5\.6\.[1-2]$/,qr/^5\.7\.[0-1]$/,],subs=>[[\&_patch_makefile_sh_phony ],],},{perl=>[qw/5.6.0 5.6.1 5.7.0 5.7.1 5.7.2 5.7.3 5.8.0/,],subs=>[[\&_patch_db,3 ],],},{perl=>[qr/^5\.004_0[1234]$/,],subs=>[[\&_patch_doio ],],},{perl=>[qw/5.005 5.005_01 5.005_02/,],subs=>[[\&_patch_sysv,old_format=>1 ],],},{perl=>[qw/5.005_03 5.005_04/,qr/^5\.6\.[0-2]$/,qr/^5\.7\.[0-3]$/,qr/^5\.8\.[0-8]$/,qr/^5\.9\.[0-5]$/ ],subs=>[[\&_patch_sysv,old_format=>0 ],],},{perl=>[qr/^5\.004_05$/,qr/^5\.005(?:_0[1-4])?$/,qr/^5\.6\.[01]$/,],subs=>[[\&_patch_configure ],[\&_patch_makedepend_lc ],],},{perl=>[qr/^5\.6\.[0-2]$/,],subs=>[[\&_patch_conf_gconvert ],[\&_patch_sort_N ],],},{perl=>['5.8.0',],subs=>[[\&_patch_makedepend_lc ],],},{perl=>[qr/.*/,],subs=>[[\&_patch_conf_solaris ],[\&_patch_bitrig ],[\&_patch_hints ],[\&_patch_patchlevel ],[\&_patch_develpatchperlversion ],[\&_patch_errno_gcc5 ],],},{perl=>[qr/^5\.6\.[0-2]$/,qr/^5\.7\.[0-3]$/,qr/^5\.8\.[0-8]$/,],subs=>[[\&_patch_makedepend_SH ],],},{perl=>[qr/^5\.1[0-2]/,],subs=>[[\&_patch_archive_tar_tests ],[\&_patch_odbm_file_hints_linux ],],},{perl=>[qr/^5.1([24].\d+|0.1)/,],subs=>[[\&_patch_make_ext_pl ],],},{perl=>[qr/^5\.8\.9$/,],subs=>[[\&_patch_589_perlio_c ],],},{perl=>[qr/^5\.8\.[89]$/ ],subs=>[[\&_patch_hsplit_rehash_58 ]],},{perl=>[qr/^5\.10\.1$/,qr/^5\.12\.5$/,],subs=>[[\&_patch_hsplit_rehash_510 ]],},{perl=>[qr/^5\.18\.0$/,],subs=>[[\&_patch_regmatch_pointer_5180 ]],},{perl=>[qr/^5\.20\.0$/,],subs=>[[\&_patch_cow_speed ]],},{perl=>[qr/^5\.6\.[012]$/,qr/^5\.8\.[89]$/,qr/^5\.10\.[01]$/,],subs=>[[\&_patch_preprocess_options ]],},{perl=>[qr/^5\.18\.3$/,],subs=>[[\&_patch_5183_metajson ]],},{perl=>[qr/^5\.24\.[01]$/,],subs=>[[\&_patch_time_hires ]],},);sub patch_source {my$vers=shift;$vers=shift if eval {$vers->isa(__PACKAGE__)};my$source=shift || '.';if (!$vers){$vers=_determine_version($source);if ($vers){warn "Auto-guessed '$vers'\n"}else {die "You didn't provide a perl version and I don't appear to be in a perl source tree\n"}}$source=File::Spec->rel2abs($source);{my$dir=pushd($source);for my$p (grep {_is($_->{perl},$vers)}@patch){for my$s (@{$p->{subs}}){my($sub,@args)=@$s;push@args,$vers unless scalar@args;$sub->(@args)}}_process_plugin(version=>$vers,source=>$source,patchexe=>$patch_exe)}}sub _process_plugin {my%args=@_;return unless my$possible=$ENV{PERL5_PATCHPERL_PLUGIN};my ($plugin)=grep {$possible eq $_ or /\Q$possible\E$/}__PACKAGE__->plugins;unless ($plugin){warn "# You specified a plugin '",$ENV{PERL5_PATCHPERL_PLUGIN},"' that isn't installed, just thought you might be interested.\n";return}{local $@;eval "require $plugin";if ($@){die "# I tried to load '",$ENV{PERL5_PATCHPERL_PLUGIN},"' but it didn't work out. Here is what happened '$@'\n"}}{local $@;eval {$plugin->patchperl(%args,)};if ($@){warn "# Warnings from the plugin: '$@'\n"}}return 1}sub _can_run {my$command=shift;if ($^O eq 'VMS'){require VMS::DCLsym;my$syms=VMS::DCLsym->new;return$command if scalar$syms->getsym(uc$command)}require File::Spec;require ExtUtils::MakeMaker;my@possibles;if(File::Spec->file_name_is_absolute($command)){return MM->maybe_command($command)}else {for my$dir (File::Spec->path,File::Spec->curdir){next if!$dir ||!-d $dir;my$abs=File::Spec->catfile($^O eq 'MSWin32' ? Win32::GetShortPathName($dir): $dir,$command);push@possibles,$abs if$abs=MM->maybe_command($abs)}}return@possibles if wantarray;return shift@possibles}sub _is {my($s1,$s2)=@_;defined$s1!=defined$s2 and return 0;ref$s2 and ($s1,$s2)=($s2,$s1);if (ref$s1){if (ref$s1 eq 'ARRAY'){_is($_,$s2)and return 1 for @$s1;return 0}return$s2 =~ $s1}return$s1 eq $s2}sub _patch {my($patch)=@_;print "patching $_\n" for$patch =~ /^\+{3}\s+(\S+)/gm;my$diff='tmp.diff';_write_or_die($diff,$patch);die "No patch utility found\n" unless$patch_exe;local$ENV{PATCH_GET}=0;_run_or_die("$patch_exe -f -s -p0 <$diff");unlink$diff or die "unlink $diff: $!\n"}sub _write_or_die {my($file,$data)=@_;my$fh=IO::File->new(">$file")or die "$file: $!\n";$fh->print($data)}sub _run_or_die {die unless system(@_)==0}sub determine_version {my$src=shift;$src=shift if eval {$src->isa(__PACKAGE__)};$src='.' unless$src;_determine_version($src)}sub _determine_version {my ($source)=@_;my$patchlevel_h=File::Spec->catfile($source,'patchlevel.h');return unless -e $patchlevel_h;my$version;{my%defines;open my$fh,'<',$patchlevel_h;my@vers;while (<$fh>){chomp;next unless /^#define/;my ($foo,$bar)=(split /\s+/)[1,2];$defines{$foo}=$bar}if (my@wotsits=grep {defined$defines{$_}}qw(PERL_REVISION PERL_VERSION PERL_SUBVERSION)){$version=join '.',map {$defines{$_}}@wotsits}elsif (my@watsits=grep {defined$defines{$_}}qw(PATCHLEVEL SUBVERSION)){$version=sprintf '5.%03d_%02d',map {$defines{$_}}@watsits}else {return}}return$version}sub _patch_patchlevel {return if -d '.git';my$dpv=$Devel::PatchPerl::VERSION || "(unreleased)";open my$plin,"patchlevel.h" or die "Couldn't open patchlevel.h : $!";open my$plout,">patchlevel.new" or die "Couldn't write on patchlevel.new : $!";my$seen=0;while (<$plin>){if (/\t,NULL/ and $seen){print {$plout}qq{\t,"Devel::PatchPerl $dpv"\n}}$seen++ if /local_patches\[\]/;print {$plout}$_}close$plout or die "Couldn't close filehandle writing to patchlevel.new : $!";close$plin or die "Couldn't close filehandle reading from patchlevel.h : $!";unlink "patchlevel.bak" or warn "Couldn't unlink patchlevel.bak : $!" if -e "patchlevel.bak";rename "patchlevel.h","patchlevel.bak" or die "Couldn't rename patchlevel.h to patchlevel.bak : $!";rename "patchlevel.new","patchlevel.h" or die "Couldn't rename patchlevel.new to patchlevel.h : $!"}sub _patch_hints {my@os;push@os,$^O;push@os,'linux' if $^O eq 'gnukfreebsd';for my$os (@os){return unless my ($file,$data)=hint_file($os);my$path=File::Spec->catfile('hints',$file);if (-e $path){chmod 0644,$path or die "$!\n"}open my$fh,'>',$path or die "$!\n";print$fh $data;close$fh}return 1}sub _patch_db {my$ver=shift;for my$file ('ext/DB_File/DB_File.xs','Configure'){print "patching $file\n";_run_or_die($^X,'-pi.bak','-e',"s/<db.h>/<db$ver\\/db.h>/",$file);unlink "$file.bak" if -e "$file.bak"}}sub _patch_doio {_patch(<<'END')}sub _patch_sysv {my%opt=@_;return if $^O ne 'linux' or -f '/usr/include/asm/page.h';if ($opt{old_format}){_patch(<<'END')}else {_patch(<<'END')}}sub _patch_configure {_patch(<<'END')}sub _patch_makedepend_lc {_patch(<<'END')}sub _patch_makedepend_SH {my$perl=shift;SWITCH: {if ($perl eq '5.6.0'){_patch(<<'BADGER');last SWITCH}if ($perl eq '5.6.1'){_patch(<<'BADGER');last SWITCH}if ($perl eq '5.6.2'){_patch(<<'BADGER');last SWITCH}if ($perl eq '5.7.0'){_patch(<<'BADGER');last SWITCH}if ($perl eq '5.7.1'){_patch(<<'BADGER');last SWITCH}if ($perl eq '5.7.2'){_patch(<<'BADGER');last SWITCH}if ($perl eq '5.7.3'){_patch(<<'BADGER');last SWITCH}if ($perl eq '5.8.0'){_patch(<<'BADGER');last SWITCH}_patch(<<'BADGER')}}sub _patch_conf_gconvert {my$perl=shift;_patch(<<'END')}sub _patch_sort_N {system($^X,'-pi.bak','-e','s!\$sort \-n \+1!(\$sort -n -k 2 2>/dev/null || \$sort -n +1)!','Configure')}sub _patch_archive_tar_tests {my$perl=shift;if ($perl =~ /^5\.10/){_patch(<<'END')}else {_patch(<<'END')}}sub _patch_odbm_file_hints_linux {_patch(<<'END')}sub _patch_make_ext_pl {_patch(<<'END')}sub _patch_589_perlio_c {_patch(<<'END')}sub _patch_hsplit_rehash_58 {my$perl=shift;my$patch=<<'END';if ($perl =~ qr/^5\.8\.8$/){$patch =~ s/non-pathological/non-pathalogical/;$patch =~ s/triggering/triggerring/}_patch($patch)}sub _patch_hsplit_rehash_510 {_patch(<<'END')}sub _patch_bitrig {return unless $^O eq 'bitrig';my$perlver=shift;my$num=_norm_ver($perlver);return unless$num < 5.019004;unless ($num < 5.00800){_patch(<<'BOOGLE')}if ($num < 5.008009){_patch(<<'BITRIGM1')}else {_patch(<<'BITRIGMX')}if ($num < 5.008001){}elsif ($num < 5.008007){_patch(<<'BITRIGC3')}elsif ($num < 5.008009){_patch(<<'BITRIGC2')}elsif ($num < 5.013000){_patch(<<'BITRIGC1')}else {_patch(<<'BITRIGCX')}}sub _patch_conf_solaris {return unless $^O eq 'solaris';my$perlver=shift;my$num=_norm_ver($perlver);return unless$num < 5.018000;_patch(<<'BUBBLE')}sub _patch_regmatch_pointer_5180 {_patch(<<'BOBBLE')}sub _patch_makefile_sh_phony {_patch(<<'END')}sub _patch_cow_speed {_patch(<<'COWSAY')}sub _patch_preprocess_options {my$perl=shift;if ($perl =~ /^5\.(?:8|10)\./){_patch(<<'END')}elsif ($perl =~ /^5\.6\./){_patch(<<'END')}}sub _patch_5183_metajson {_patch(<<'DOGSAY')}sub _patch_handy {_patch(<<'END')}sub _replace_makedepend {_write_or_die('makedepend.SH',<<'END')}sub _patch_5_005_02 {_patch(<<'END')}sub _patch_5_005_01 {_patch(<<'END')}sub _patch_5_005 {_patch(<<'END')}sub _patch_errno_gcc5 {my$perlver=shift;my$num=_norm_ver($perlver);return unless$num < 5.021009;return if$num > 5.020002 && $num < 5.021;if ($num < 5.006){warn "The Errno GCC 5 patch only goes back as far as v5.6.0\n";warn "You will have to generate your own patch to go farther back\n";return}elsif ($num < 5.006001){_patch(<<'END')}elsif ($num < 5.007002){_patch(<<'END')}elsif ($num < 5.007003){_patch(<<'END')}elsif ($num < 5.008009){_patch(<<'END')}else {_patch(<<'END')}}sub _patch_time_hires {_patch(<<'END')}sub _norm_ver {my$ver=shift;my@v=split(qr/[._]0*/,$ver);$v[2]||= 0;return sprintf '%d.%03d%03d',@v}sub _patch_develpatchperlversion {return if -d '.git';my$dpv=$Devel::PatchPerl::VERSION || "(unreleased)";_patch(<<"END")}qq[patchin'];
   --- doio.c.org  2004-06-07 23:14:45.000000000 +0200
   +++ doio.c  2003-11-04 08:03:03.000000000 +0100
   @@ -75,6 +75,16 @@
@@ -5289,6 +5289,1623 @@ $fatpacked{"Devel/PatchPerl.pm"} = '#line '.(1+__LINE__).' "'.__FILE__."\"\n".<<
    		or die "Cannot exec $cpp";
    	}
   END
+  diff --git a/dist/Time-HiRes/HiRes.pm b/dist/Time-HiRes/HiRes.pm
+  index ad9a65c99d..a3ddd595b7 100644
+  --- dist/Time-HiRes/HiRes.pm
+  +++ dist/Time-HiRes/HiRes.pm
+  @@ -23,12 +23,12 @@ our @EXPORT_OK = qw (usleep sleep ualarm alarm gettimeofday time tv_interval
+   		 ITIMER_REAL ITIMER_VIRTUAL ITIMER_PROF ITIMER_REALPROF
+   		 TIMER_ABSTIME
+   		 d_usleep d_ualarm d_gettimeofday d_getitimer d_setitimer
+  -		 d_nanosleep d_clock_gettime d_clock_getres
+  +		 d_nanosleep d_clock_gettime d_clock_getres d_hires_utime
+   		 d_clock d_clock_nanosleep
+  -		 stat lstat
+  +		 stat lstat utime
+   		);
+   
+  -our $VERSION = '1.9733';
+  +our $VERSION = '1.9741';
+   our $XS_VERSION = $VERSION;
+   $VERSION = eval $VERSION;
+   
+  @@ -60,6 +60,7 @@ sub import {
+   	    ($i eq 'clock'           && !&d_clock)           ||
+   	    ($i eq 'nanosleep'       && !&d_nanosleep)       ||
+   	    ($i eq 'usleep'          && !&d_usleep)          ||
+  +	    ($i eq 'utime'           && !&d_hires_utime)     ||
+   	    ($i eq 'ualarm'          && !&d_ualarm)) {
+   	    require Carp;
+   	    Carp::croak("Time::HiRes::$i(): unimplemented in this platform");
+  @@ -92,7 +93,7 @@ Time::HiRes - High resolution alarm, sleep, gettimeofday, interval timers
+   
+     use Time::HiRes qw( usleep ualarm gettimeofday tv_interval nanosleep
+   		      clock_gettime clock_getres clock_nanosleep clock
+  -                      stat lstat );
+  +                      stat lstat utime);
+   
+     usleep ($microseconds);
+     nanosleep ($nanoseconds);
+  @@ -137,6 +138,9 @@ Time::HiRes - High resolution alarm, sleep, gettimeofday, interval timers
+     my @stat = stat(FH);
+     my @stat = lstat("file");
+   
+  +  use Time::HiRes qw( utime );
+  +  utime $floating_seconds, $floating_seconds, file...;
+  +
+   =head1 DESCRIPTION
+   
+   The C<Time::HiRes> module implements a Perl interface to the
+  @@ -446,6 +450,26 @@ if the operations are
+   the access time stamp from t2 need not be greater-than the modify
+   time stamp from t1: it may be equal or I<less>.
+   
+  +=item utime LIST
+  +
+  +As L<perlfunc/utime>
+  +but with the ability to set the access/modify file timestamps
+  +in subsecond resolution, if the operating system and the filesystem
+  +both support such timestamps.  To override the standard utime():
+  +
+  +    use Time::HiRes qw(utime);
+  +
+  +Test for the value of &Time::HiRes::d_hires_utime to find out whether
+  +the operating system supports setting subsecond file timestamps.
+  +
+  +As with CORE::utime(), passing undef as both the atime and mtime will
+  +call the syscall with a NULL argument.
+  +
+  +The actual achievable subsecond resolution depends on the combination
+  +of the operating system and the filesystem.
+  +
+  +Returns the number of files successfully changed.
+  +
+   =back
+   
+   =head1 EXAMPLES
+  @@ -535,7 +559,7 @@ VMS have emulations for it.)
+   Here is an example of using C<NVtime> from C:
+   
+     NV (*myNVtime)(); /* Returns -1 on failure. */
+  -  SV **svp = hv_fetch(PL_modglobal, "Time::NVtime", 12, 0);
+  +  SV **svp = hv_fetchs(PL_modglobal, "Time::NVtime", 0);
+     if (!svp)         croak("Time::HiRes is required");
+     if (!SvIOK(*svp)) croak("Time::NVtime isn't a function pointer");
+     myNVtime = INT2PTR(NV(*)(), SvIV(*svp));
+  @@ -586,9 +610,13 @@ might help in this (in case your system supports CLOCK_MONOTONIC).
+   Some systems have APIs but not implementations: for example QNX and Haiku
+   have the interval timer APIs but not the functionality.
+   
+  -In OS X clock_getres(), clock_gettime() and clock_nanosleep() are
+  -emulated using the Mach timers; as a side effect of being emulated
+  -the CLOCK_REALTIME and CLOCK_MONOTONIC are the same timer.
+  +In pre-Sierra macOS (pre-10.12, OS X) clock_getres(), clock_gettime()
+  +and clock_nanosleep() are emulated using the Mach timers; as a side
+  +effect of being emulated the CLOCK_REALTIME and CLOCK_MONOTONIC are
+  +the same timer.
+  +
+  +gnukfreebsd seems to have non-functional futimens() and utimensat()
+  +(at least as of 10.1): therefore the hires utime() does not work.
+   
+   =head1 SEE ALSO
+   
+  diff --git a/dist/Time-HiRes/HiRes.xs b/dist/Time-HiRes/HiRes.xs
+  index 38ca0dc320..6b0dba8e68 100644
+  --- dist/Time-HiRes/HiRes.xs
+  +++ dist/Time-HiRes/HiRes.xs
+  @@ -87,6 +87,10 @@ extern "C" {
+   #   undef ITIMER_REALPROF
+   #endif
+   
+  +#ifndef TIME_HIRES_CLOCKID_T
+  +typedef int clockid_t;
+  +#endif
+  +
+   #if defined(TIME_HIRES_CLOCK_GETTIME) && defined(_STRUCT_ITIMERSPEC)
+   
+   /* HP-UX has CLOCK_XXX values but as enums, not as defines.
+  @@ -747,21 +751,33 @@ hrstatns(UV *atime_nsec, UV *mtime_nsec, UV *ctime_nsec)
+   #endif /* !TIME_HIRES_STAT */
+   }
+   
+  -/* Until Apple implements clock_gettime() (ditto clock_getres())
+  - * we will emulate it using Mach interfaces. */
+  -#if defined(PERL_DARWIN) && !defined(CLOCK_REALTIME)
+  -
+  -#  include <mach/mach_time.h>
+  +/* Until Apple implements clock_gettime()
+  + * (ditto clock_getres() and clock_nanosleep())
+  + * we will emulate them using the Mach kernel interfaces. */
+  +#if defined(PERL_DARWIN) && \
+  +  (defined(TIME_HIRES_CLOCK_GETTIME_EMULATION)   || \
+  +   defined(TIME_HIRES_CLOCK_GETRES_EMULATION)    || \
+  +   defined(TIME_HIRES_CLOCK_NANOSLEEP_EMULATION))
+   
+  +#ifndef CLOCK_REALTIME
+   #  define CLOCK_REALTIME  0x01
+   #  define CLOCK_MONOTONIC 0x02
+  +#endif
+   
+  +#ifndef TIMER_ABSTIME
+   #  define TIMER_ABSTIME   0x01
+  +#endif
+   
+   #ifdef USE_ITHREADS
+  +#  define PERL_DARWIN_MUTEX
+  +#endif
+  +
+  +#ifdef PERL_DARWIN_MUTEX
+   STATIC perl_mutex darwin_time_mutex;
+   #endif
+   
+  +#include <mach/mach_time.h>
+  +
+   static uint64_t absolute_time_init;
+   static mach_timebase_info_data_t timebase_info;
+   static struct timespec timespec_init;
+  @@ -769,7 +785,7 @@ static struct timespec timespec_init;
+   static int darwin_time_init() {
+     struct timeval tv;
+     int success = 1;
+  -#ifdef USE_ITHREADS
+  +#ifdef PERL_DARWIN_MUTEX
+     MUTEX_LOCK(&darwin_time_mutex);
+   #endif
+     if (absolute_time_init == 0) {
+  @@ -784,13 +800,14 @@ static int darwin_time_init() {
+         }
+       }
+     }
+  -#ifdef USE_ITHREADS
+  +#ifdef PERL_DARWIN_MUTEX
+     MUTEX_UNLOCK(&darwin_time_mutex);
+   #endif
+     return success;
+   }
+   
+  -static int clock_gettime(int clock_id, struct timespec *ts) {
+  +#ifdef TIME_HIRES_CLOCK_GETTIME_EMULATION
+  +static int th_clock_gettime(clockid_t clock_id, struct timespec *ts) {
+     if (darwin_time_init() && timebase_info.denom) {
+       switch (clock_id) {
+         case CLOCK_REALTIME:
+  @@ -822,7 +839,12 @@ static int clock_gettime(int clock_id, struct timespec *ts) {
+     return -1;
+   }
+   
+  -static int clock_getres(int clock_id, struct timespec *ts) {
+  +#define clock_gettime(clock_id, ts) th_clock_gettime((clock_id), (ts))
+  +
+  +#endif /* TIME_HIRES_CLOCK_GETTIME_EMULATION */
+  +
+  +#ifdef TIME_HIRES_CLOCK_GETRES_EMULATION
+  +static int th_clock_getres(clockid_t clock_id, struct timespec *ts) {
+     if (darwin_time_init() && timebase_info.denom) {
+       switch (clock_id) {
+         case CLOCK_REALTIME:
+  @@ -842,7 +864,11 @@ static int clock_getres(int clock_id, struct timespec *ts) {
+     return -1;
+   }
+   
+  -static int clock_nanosleep(int clock_id, int flags,
+  +#define clock_getres(clock_id, ts) th_clock_getres((clock_id), (ts))
+  +#endif /* TIME_HIRES_CLOCK_GETRES_EMULATION */
+  +
+  +#ifdef TIME_HIRES_CLOCK_NANOSLEEP_EMULATION
+  +static int th_clock_nanosleep(clockid_t clock_id, int flags,
+   			   const struct timespec *rqtp,
+   			   struct timespec *rmtp) {
+     if (darwin_time_init()) {
+  @@ -880,6 +906,11 @@ static int clock_nanosleep(int clock_id, int flags,
+     return -1;
+   }
+   
+  +#define clock_nanosleep(clock_id, flags, rqtp, rmtp) \
+  +  th_clock_nanosleep((clock_id), (flags), (rqtp), (rmtp))
+  +
+  +#endif /* TIME_HIRES_CLOCK_NANOSLEEP_EMULATION */
+  +
+   #endif /* PERL_DARWIN */
+   
+   #include "const-c.inc"
+  @@ -921,6 +952,22 @@ nsec_without_unslept(struct timespec *sleepfor,
+   
+   #endif
+   
+  +/* In case Perl and/or Devel::PPPort are too old, minimally emulate
+  + * IS_SAFE_PATHNAME() (which looks for zero bytes in the pathname). */
+  +#ifndef IS_SAFE_PATHNAME
+  +#if PERL_VERSION >= 12 /* Perl_ck_warner is 5.10.0 -> */
+  +#ifdef WARN_SYSCALLS
+  +#define WARNEMUCAT WARN_SYSCALLS /* 5.22.0 -> */
+  +#else
+  +#define WARNEMUCAT WARN_MISC
+  +#endif
+  +#define WARNEMU(opname) Perl_ck_warner(aTHX_ packWARN(WARNEMUCAT), "Invalid \\0 character in pathname for %s",opname)
+  +#else
+  +#define WARNEMU(opname) Perl_warn(aTHX_ "Invalid \\0 character in pathname for %s",opname)
+  +#endif
+  +#define IS_SAFE_PATHNAME(pv, len, opname) (((len)>1)&&memchr((pv), 0, (len)-1)?(SETERRNO(ENOENT, LIB_INVARG),WARNEMU(opname),FALSE):(TRUE))
+  +#endif
+  +
+   MODULE = Time::HiRes            PACKAGE = Time::HiRes
+   
+   PROTOTYPES: ENABLE
+  @@ -941,7 +988,7 @@ BOOT:
+   #   endif
+   #endif
+   #if defined(PERL_DARWIN)
+  -#  ifdef USE_ITHREADS
+  +#  if defined(USE_ITHREADS) && defined(PERL_DARWIN_MUTEX)
+     MUTEX_INIT(&darwin_time_mutex);
+   #  endif
+   #endif
+  @@ -978,7 +1025,8 @@ usleep(useconds)
+   		    useconds -= NV_1E6 * seconds;
+   		}
+   	    } else if (useconds < 0.0)
+  -	        croak("Time::HiRes::usleep(%"NVgf"): negative time not invented yet", useconds);
+  +	        croak("Time::HiRes::usleep(%" NVgf
+  +                      "): negative time not invented yet", useconds);
+   	    usleep((U32)useconds);
+   	} else
+   	    PerlProc_pause();
+  @@ -1000,7 +1048,8 @@ nanosleep(nsec)
+   	struct timespec sleepfor, unslept;
+   	CODE:
+   	if (nsec < 0.0)
+  -	    croak("Time::HiRes::nanosleep(%"NVgf"): negative time not invented yet", nsec);
+  +	    croak("Time::HiRes::nanosleep(%" NVgf
+  +                  "): negative time not invented yet", nsec);
+           nanosleep_init(nsec, &sleepfor, &unslept);
+   	if (nanosleep(&sleepfor, &unslept) == 0) {
+   	    RETVAL = nsec;
+  @@ -1045,11 +1094,15 @@ sleep(...)
+   		   useconds = -(IV)useconds;
+   #endif /* #if defined(__sparc64__) && defined(__GNUC__) */
+   		   if ((IV)useconds < 0)
+  -		     croak("Time::HiRes::sleep(%"NVgf"): internal error: useconds < 0 (unsigned %"UVuf" signed %"IVdf")", seconds, useconds, (IV)useconds);
+  +		     croak("Time::HiRes::sleep(%" NVgf
+  +                           "): internal error: useconds < 0 (unsigned %" UVuf
+  +                           " signed %" IVdf ")",
+  +                           seconds, useconds, (IV)useconds);
+   		 }
+   		 usleep(useconds);
+   	    } else
+  -	        croak("Time::HiRes::sleep(%"NVgf"): negative time not invented yet", seconds);
+  +	        croak("Time::HiRes::sleep(%" NVgf
+  +                      "): negative time not invented yet", seconds);
+   	} else
+   	    PerlProc_pause();
+   	gettimeofday(&Tb, NULL);
+  @@ -1097,7 +1150,9 @@ ualarm(useconds,uinterval=0)
+   	  }
+   #else
+   	if (useconds >= IV_1E6 || uinterval >= IV_1E6) 
+  -		croak("Time::HiRes::ualarm(%d, %d): useconds or uinterval equal to or more than %"IVdf, useconds, uinterval, IV_1E6);
+  +		croak("Time::HiRes::ualarm(%d, %d): useconds or uinterval"
+  +                      " equal to or more than %" IVdf,
+  +                      useconds, uinterval, IV_1E6);
+   	RETVAL = ualarm(useconds, uinterval);
+   #endif
+   
+  @@ -1110,7 +1165,8 @@ alarm(seconds,interval=0)
+   	NV interval
+   	CODE:
+   	if (seconds < 0.0 || interval < 0.0)
+  -	    croak("Time::HiRes::alarm(%"NVgf", %"NVgf"): negative time not invented yet", seconds, interval);
+  +	    croak("Time::HiRes::alarm(%" NVgf ", %" NVgf
+  +                  "): negative time not invented yet", seconds, interval);
+   	{
+   	  IV iseconds = (IV)seconds;
+   	  IV iinterval = (IV)interval;
+  @@ -1118,7 +1174,9 @@ alarm(seconds,interval=0)
+   	  NV finterval = interval - iinterval;
+   	  IV useconds, uinterval;
+   	  if (fseconds >= 1.0 || finterval >= 1.0)
+  -		croak("Time::HiRes::alarm(%"NVgf", %"NVgf"): seconds or interval too large to split correctly", seconds, interval);
+  +		croak("Time::HiRes::alarm(%" NVgf ", %" NVgf
+  +                      "): seconds or interval too large to split correctly",
+  +                      seconds, interval);
+   	  useconds = IV_1E6 * fseconds;
+   	  uinterval = IV_1E6 * finterval;
+   #if defined(HAS_SETITIMER) && defined(ITIMER_REAL)
+  @@ -1138,7 +1196,9 @@ alarm(seconds,interval=0)
+   	  }
+   #else
+   	  if (iseconds || iinterval)
+  -		croak("Time::HiRes::alarm(%"NVgf", %"NVgf"): seconds or interval equal to or more than 1.0 ", seconds, interval);
+  +		croak("Time::HiRes::alarm(%" NVgf ", %" NVgf
+  +                      "): seconds or interval equal to or more than 1.0 ",
+  +                      seconds, interval);
+   	    RETVAL = (NV)ualarm( useconds, uinterval ) / NV_1E6;
+   #endif
+   	}
+  @@ -1266,7 +1326,9 @@ setitimer(which, seconds, interval = 0)
+   	struct itimerval oldit;
+       PPCODE:
+   	if (seconds < 0.0 || interval < 0.0)
+  -	    croak("Time::HiRes::setitimer(%"IVdf", %"NVgf", %"NVgf"): negative time not invented yet", (IV)which, seconds, interval);
+  +	    croak("Time::HiRes::setitimer(%" IVdf ", %" NVgf ", %" NVgf
+  +                  "): negative time not invented yet",
+  +                  (IV)which, seconds, interval);
+   	newit.it_value.tv_sec  = (IV)seconds;
+   	newit.it_value.tv_usec =
+   	  (IV)((seconds  - (NV)newit.it_value.tv_sec)    * NV_1E6);
+  @@ -1317,11 +1379,89 @@ getitimer(which)
+   
+   #endif /* #if defined(HAS_GETITIMER) && defined(HAS_SETITIMER) */
+   
+  +#if defined(TIME_HIRES_UTIME)
+  +
+  +I32
+  +utime(accessed, modified, ...)
+  +PROTOTYPE: $$@
+  +    PREINIT:
+  +	SV* accessed;
+  +	SV* modified;
+  +	SV* file;
+  +
+  +	struct timespec utbuf[2];
+  +	struct timespec *utbufp = utbuf;
+  +	int tot;
+  +
+  +    CODE:
+  +	accessed = ST(0);
+  +	modified = ST(1);
+  +	items -= 2;
+  +	tot = 0;
+  +
+  +	if ( accessed == &PL_sv_undef && modified == &PL_sv_undef )
+  +		utbufp = NULL;
+  +	else {
+  +		if (SvNV(accessed) < 0.0 || SvNV(modified) < 0.0)
+  +                    croak("Time::HiRes::utime(%" NVgf ", %" NVgf
+  +                          "): negative time not invented yet",
+  +                              SvNV(accessed), SvNV(modified));
+  +		Zero(&utbuf, sizeof utbuf, char);
+  +		utbuf[0].tv_sec = (Time_t)SvNV(accessed);  /* time accessed */
+  +		utbuf[0].tv_nsec = (long)( ( SvNV(accessed) - utbuf[0].tv_sec ) * 1e9 );
+  +		utbuf[1].tv_sec = (Time_t)SvNV(modified);  /* time modified */
+  +		utbuf[1].tv_nsec = (long)( ( SvNV(modified) - utbuf[1].tv_sec ) * 1e9 );
+  +	}
+  +
+  +	while (items > 0) {
+  +		file = POPs; items--;
+  +
+  +		if (SvROK(file) && GvIO(SvRV(file)) && IoIFP(sv_2io(SvRV(file)))) {
+  +			int fd =  PerlIO_fileno(IoIFP(sv_2io(file)));
+  +			if (fd < 0)
+  +				SETERRNO(EBADF,RMS_IFI);
+  +			else 
+  +#ifdef HAS_FUTIMENS
+  +			if (futimens(fd, utbufp) == 0)
+  +				tot++;
+  +#else  /* HAS_FUTIMES */
+  +				croak("futimens unimplemented in this platform");
+  +#endif /* HAS_FUTIMES */
+  +		}
+  +		else {
+  +#ifdef HAS_UTIMENSAT
+  +			STRLEN len;
+  +			char * name = SvPV(file, len);
+  +			if (IS_SAFE_PATHNAME(name, len, "utime") &&
+  +			    utimensat(AT_FDCWD, name, utbufp, 0) == 0)
+  +				tot++;
+  +#else  /* HAS_UTIMENSAT */
+  +			croak("utimensat unimplemented in this platform");
+  +#endif /* HAS_UTIMENSAT */
+  +		}
+  +	} /* while items */
+  +	RETVAL = tot;
+  +
+  +    OUTPUT:
+  +	RETVAL
+  +
+  +#else  /* #if defined(TIME_HIRES_UTIME) */
+  +
+  +I32
+  +utime(accessed, modified, ...)
+  +    CODE:
+  +        croak("Time::HiRes::utime(): unimplemented in this platform");
+  +        RETVAL = 0;
+  +    OUTPUT:
+  +	RETVAL
+  +
+  +#endif /* #if defined(TIME_HIRES_UTIME) */
+  +
+   #if defined(TIME_HIRES_CLOCK_GETTIME)
+   
+   NV
+   clock_gettime(clock_id = CLOCK_REALTIME)
+  -	int clock_id
+  +	clockid_t clock_id
+       PREINIT:
+   	struct timespec ts;
+   	int status = -1;
+  @@ -1340,7 +1480,7 @@ clock_gettime(clock_id = CLOCK_REALTIME)
+   
+   NV
+   clock_gettime(clock_id = 0)
+  -	int clock_id
+  +	clockid_t clock_id
+       CODE:
+   	PERL_UNUSED_ARG(clock_id);
+           croak("Time::HiRes::clock_gettime(): unimplemented in this platform");
+  @@ -1354,7 +1494,7 @@ clock_gettime(clock_id = 0)
+   
+   NV
+   clock_getres(clock_id = CLOCK_REALTIME)
+  -	int clock_id
+  +	clockid_t clock_id
+       PREINIT:
+   	int status = -1;
+   	struct timespec ts;
+  @@ -1373,7 +1513,7 @@ clock_getres(clock_id = CLOCK_REALTIME)
+   
+   NV
+   clock_getres(clock_id = 0)
+  -	int clock_id
+  +	clockid_t clock_id
+       CODE:
+   	PERL_UNUSED_ARG(clock_id);
+           croak("Time::HiRes::clock_getres(): unimplemented in this platform");
+  @@ -1387,14 +1527,15 @@ clock_getres(clock_id = 0)
+   
+   NV
+   clock_nanosleep(clock_id, nsec, flags = 0)
+  -	int clock_id
+  +	clockid_t clock_id
+   	NV  nsec
+   	int flags
+       PREINIT:
+   	struct timespec sleepfor, unslept;
+       CODE:
+   	if (nsec < 0.0)
+  -	    croak("Time::HiRes::clock_nanosleep(..., %"NVgf"): negative time not invented yet", nsec);
+  +	    croak("Time::HiRes::clock_nanosleep(..., %" NVgf
+  +                  "): negative time not invented yet", nsec);
+           nanosleep_init(nsec, &sleepfor, &unslept);
+   	if (clock_nanosleep(clock_id, flags, &sleepfor, &unslept) == 0) {
+   	    RETVAL = nsec;
+  @@ -1408,7 +1549,7 @@ clock_nanosleep(clock_id, nsec, flags = 0)
+   
+   NV
+   clock_nanosleep(clock_id, nsec, flags = 0)
+  -	int clock_id
+  +	clockid_t clock_id
+   	NV  nsec
+   	int flags
+       CODE:
+  diff --git a/dist/Time-HiRes/Makefile.PL b/dist/Time-HiRes/Makefile.PL
+  index 087ab79871..ccad6a3e6f 100644
+  --- dist/Time-HiRes/Makefile.PL
+  +++ dist/Time-HiRes/Makefile.PL
+  @@ -88,7 +88,7 @@ sub try_compile_and_link {
+       my $obj_ext = $Config{obj_ext} || ".o";
+       unlink("$tmp.c", "$tmp$obj_ext");
+   
+  -    if (open(TMPC, ">$tmp.c")) {
+  +    if (open(TMPC, '>', "$tmp.c")) {
+   	print TMPC $c;
+   	close(TMPC);
+   
+  @@ -132,7 +132,7 @@ __EOD__
+   	    unless defined $cccmd;
+   
+          if ($^O eq 'VMS') {
+  -	    open( CMDFILE, ">$tmp.com" );
+  +	    open( CMDFILE, '>', "$tmp.com" );
+   	    print CMDFILE "\$ SET MESSAGE/NOFACILITY/NOSEVERITY/NOIDENT/NOTEXT\n";
+   	    print CMDFILE "\$ $cccmd\n";
+   	    print CMDFILE "\$ IF \$SEVERITY .NE. 1 THEN EXIT 44\n"; # escalate
+  @@ -290,6 +290,7 @@ sub has_clock_xxx_syscall {
+   #include "EXTERN.h"
+   #include "perl.h"
+   #include "XSUB.h"
+  +#include <time.h>
+   #include <$SYSCALL_H>
+   int main(int argc, char** argv)
+   {
+  @@ -309,6 +310,7 @@ sub has_clock_xxx {
+   #include "EXTERN.h"
+   #include "perl.h"
+   #include "XSUB.h"
+  +#include <time.h>
+   int main(int argc, char** argv)
+   {
+       struct timespec ts;
+  @@ -325,6 +327,7 @@ sub has_clock {
+   #include "EXTERN.h"
+   #include "perl.h"
+   #include "XSUB.h"
+  +#include <time.h>
+   int main(int argc, char** argv)
+   {
+       clock_t tictoc;
+  @@ -348,12 +351,63 @@ int main(int argc, char** argv)
+       struct timespec ts2;
+       ts1.tv_sec  = 0;
+       ts1.tv_nsec = 750000000;;
+  -    ret = clock_nanosleep(CLOCK_MONOTONIC, 0, &ts1, &ts2);
+  +    /* All implementations are supposed to support CLOCK_REALTIME. */
+  +    ret = clock_nanosleep(CLOCK_REALTIME, 0, &ts1, &ts2);
+       ret == 0 ? exit(0) : exit(errno ? errno : -1);
+   }
+   EOM
+   }
+   
+  +sub has_futimens {
+  +    return 1 if
+  +    try_compile_and_link(<<EOM);
+  +#include "EXTERN.h"
+  +#include "perl.h"
+  +#include "XSUB.h"
+  +#include <sys/stat.h>
+  +int main(int argc, char** argv)
+  +{
+  +    int ret;
+  +    struct timespec ts[2];
+  +    ret = futimens(0, ts);
+  +    ret == 0 ? exit(0) : exit(errno ? errno : -1);
+  +}
+  +EOM
+  +}
+  +
+  +sub has_utimensat{
+  +    return 1 if
+  +    try_compile_and_link(<<EOM);
+  +#include "EXTERN.h"
+  +#include "perl.h"
+  +#include "XSUB.h"
+  +#include <sys/stat.h>
+  +#include <fcntl.h>
+  +int main(int argc, char** argv)
+  +{
+  +    int ret;
+  +    struct timespec ts[2];
+  +    ret = utimensat(AT_FDCWD, 0, ts, 0);
+  +    ret == 0 ? exit(0) : exit(errno ? errno : -1);
+  +}
+  +EOM
+  +}
+  +
+  +sub has_clockid_t{
+  +    return 1 if
+  +    try_compile_and_link(<<EOM);
+  +#include "EXTERN.h"
+  +#include "perl.h"
+  +#include "XSUB.h"
+  +#include <time.h>
+  +int main(int argc, char** argv)
+  +{
+  +    clockid_t id = CLOCK_REALTIME;
+  +    exit(id == CLOCK_REALTIME ? 1 : 0);
+  +}
+  +EOM
+  +}
+  +
+   sub DEFINE {
+       my ($def, $val) = @_;
+       my $define = defined $val ? "$def=$val" : $def ;
+  @@ -534,6 +588,16 @@ EOD
+           print "(It would not be portable anyway.)\n";
+       }
+   
+  +    print "Looking for clockid_t... ";
+  +    my $has_clockid_t;
+  +    if (has_clockid_t()) {
+  +	print "found.\n";
+  +        $has_clockid_t++;
+  +	$DEFINE .= ' -DTIME_HIRES_CLOCKID_T';
+  +    } else {
+  +	print "NOT found, will use int.\n";
+  +    }
+  +
+       print "Looking for clock_gettime()... ";
+       my $has_clock_gettime;
+       my $has_clock_gettime_emulation;
+  @@ -548,7 +612,7 @@ EOD
+       } elsif ($^O eq 'darwin') {
+          $has_clock_gettime_emulation++;
+          $has_clock_gettime++;
+  -       $DEFINE .= ' -DTIME_HIRES_CLOCK_GETTIME';
+  +       $DEFINE .= ' -DTIME_HIRES_CLOCK_GETTIME -DTIME_HIRES_CLOCK_GETTIME_EMULATION';
+       }
+   
+       if ($has_clock_gettime) {
+  @@ -577,7 +641,7 @@ EOD
+       } elsif ($^O eq 'darwin') {
+          $has_clock_getres_emulation++;
+          $has_clock_getres++;
+  -       $DEFINE .= ' -DTIME_HIRES_CLOCK_GETRES';
+  +       $DEFINE .= ' -DTIME_HIRES_CLOCK_GETRES -DTIME_HIRES_CLOCK_GETRES_EMULATION';
+       }
+   
+       if ($has_clock_getres) {
+  @@ -603,7 +667,7 @@ EOD
+       } elsif ($^O eq 'darwin') {
+           $has_clock_nanosleep++;
+           $has_clock_nanosleep_emulation++;
+  -	$DEFINE .= ' -DTIME_HIRES_CLOCK_NANOSLEEP';
+  +	$DEFINE .= ' -DTIME_HIRES_CLOCK_NANOSLEEP -DTIME_HIRES_CLOCK_NANOSLEEP_EMULATION';
+       }
+   
+       if ($has_clock_nanosleep) {
+  @@ -631,6 +695,36 @@ EOD
+   	print "NOT found.\n";
+       }
+   
+  +    print "Looking for futimens()... ";
+  +    my $has_futimens;
+  +    if (has_futimens()) {
+  +        $has_futimens++;
+  +	$DEFINE .= ' -DHAS_FUTIMENS';
+  +    }
+  +
+  +    if ($has_futimens) {
+  +        print "found.\n";
+  +    } else {
+  +	print "NOT found.\n";
+  +    }
+  +
+  +    print "Looking for utimensat()... ";
+  +    my $has_utimensat;
+  +    if (has_utimensat()) {
+  +        $has_utimensat++;
+  +	$DEFINE .= ' -DHAS_UTIMENSAT';
+  +    }
+  +
+  +    if ($has_utimensat) {
+  +        print "found.\n";
+  +    } else {
+  +	print "NOT found.\n";
+  +    }
+  +
+  +    if ($has_futimens or $has_utimensat) {
+  +	$DEFINE .= ' -DTIME_HIRES_UTIME';
+  +    }
+  +
+       print "Looking for stat() subsecond timestamps...\n";
+   
+       print "Trying struct stat st_atimespec.tv_nsec...";
+  @@ -644,7 +738,7 @@ int main(int argc, char** argv) {
+   }
+   EOM
+         $has_stat_st_xtimespec++;
+  -      DEFINE('TIME_HIRES_STAT', 1);
+  +      DEFINE('TIME_HIRES_STAT_ST_XTIMESPEC');  # 1
+       }
+   
+       if ($has_stat_st_xtimespec) {
+  @@ -664,7 +758,7 @@ int main(int argc, char** argv) {
+   }
+   EOM
+         $has_stat_st_xtimensec++;
+  -      DEFINE('TIME_HIRES_STAT', 2);
+  +      DEFINE('TIME_HIRES_STAT_ST_XTIMENSEC');  # 2
+       }
+   
+       if ($has_stat_st_xtimensec) {
+  @@ -684,7 +778,7 @@ int main(int argc, char** argv) {
+   }
+   EOM
+         $has_stat_st_xtime_n++;
+  -      DEFINE('TIME_HIRES_STAT', 3);
+  +      DEFINE('TIME_HIRES_STAT_ST_XTIME_N');  # 3
+       }
+   
+       if ($has_stat_st_xtime_n) {
+  @@ -704,7 +798,7 @@ int main(int argc, char** argv) {
+   }
+   EOM
+         $has_stat_st_xtim++;
+  -      DEFINE('TIME_HIRES_STAT', 4);
+  +      DEFINE('TIME_HIRES_STAT_XTIM');  # 4
+       }
+   
+       if ($has_stat_st_xtim) {
+  @@ -724,7 +818,7 @@ int main(int argc, char** argv) {
+   }
+   EOM
+         $has_stat_st_uxtime++;
+  -      DEFINE('TIME_HIRES_STAT', 5);
+  +      DEFINE('TIME_HIRES_STAT_ST_UXTIME');  # 5
+       }
+   
+       if ($has_stat_st_uxtime) {
+  @@ -733,6 +827,19 @@ EOM
+   	print "NOT found.\n";
+       }
+   
+  +    # See HiRes.xs hrstatns()
+  +    if ($has_stat_st_xtimespec) {
+  +        DEFINE('TIME_HIRES_STAT', 1);
+  +    } elsif ($has_stat_st_xtimensec) {
+  +        DEFINE('TIME_HIRES_STAT', 2);
+  +    } elsif ($has_stat_st_xtime_n) {
+  +        DEFINE('TIME_HIRES_STAT', 3);
+  +    } elsif ($has_stat_st_xtim) {
+  +        DEFINE('TIME_HIRES_STAT', 4);
+  +    } elsif ($has_stat_st_uxtime) {
+  +        DEFINE('TIME_HIRES_STAT', 5);
+  +    }    
+  +
+      if ($DEFINE =~ /-DTIME_HIRES_STAT=\d+/) {
+       print "You seem to have stat() subsecond timestamps.\n";
+       print "(Your struct stat has them, but the filesystems must help.)\n";
+  @@ -757,7 +864,7 @@ EOM
+   
+       if ($DEFINE) {
+           $DEFINE =~ s/^\s+//;
+  -        if (open(XDEFINE, ">xdefine")) {
+  +        if (open(XDEFINE, '>', 'xdefine')) {
+   	    print XDEFINE $DEFINE, "\n";
+   	    close(XDEFINE);
+           }
+  @@ -791,7 +898,7 @@ sub doMakefile {
+   	    'DynaLoader' => 0,
+   	    'Exporter' => 0,
+   	    'ExtUtils::MakeMaker' => 0,
+  -	    'Test::More' => "0.82",
+  +	    'Test::More' => 0,
+   	    'strict' => 0,
+   	},
+   	'dist'      => {
+  @@ -869,7 +976,8 @@ sub doConstants {
+                         );
+   	foreach (qw (d_usleep d_ualarm d_gettimeofday d_getitimer d_setitimer
+   		     d_nanosleep d_clock_gettime d_clock_getres
+  -		     d_clock d_clock_nanosleep d_hires_stat)) {
+  +		     d_clock d_clock_nanosleep d_hires_stat
+  +                     d_futimens d_utimensat d_hires_utime)) {
+   	    my $macro = $_;
+   	    if ($macro =~ /^(d_nanosleep|d_clock)$/) {
+   		$macro =~ s/^d_(.+)/TIME_HIRES_\U$1/;
+  @@ -879,6 +987,13 @@ sub doConstants {
+   		push @names, {name => $_, macro => "TIME_HIRES_STAT", value => $d_hires_stat,
+   			      default => ["IV", "0"]};
+   		next;
+  +	    } elsif ($macro =~ /^(d_hires_utime)$/) {
+  +		my $d_hires_utime =
+  +                    ($DEFINE =~ /-DHAS_FUTIMENS/ ||
+  +                     $DEFINE =~ /-DHAS_UTIMENSAT/) ? 1 : 0;
+  +		push @names, {name => $_, macro => "TIME_HIRES_UTIME", value => $d_hires_utime,
+  +			      default => ["IV", "0"]};
+  +		next;
+   	    } elsif ($macro =~ /^(d_clock_gettime|d_clock_getres|d_clock_nanosleep)$/) {
+   		$macro =~ s/^d_(.+)/TIME_HIRES_\U$1/;
+   		my $val = ($DEFINE =~ /-D$macro\b/) ? 1 : 0;
+  @@ -900,8 +1015,8 @@ sub doConstants {
+   	foreach $file ('const-c.inc', 'const-xs.inc') {
+   	    my $fallback = File::Spec->catfile('fallback', $file);
+   	    local $/;
+  -	    open IN, "<$fallback" or die "Can't open $fallback: $!";
+  -	    open OUT, ">$file" or die "Can't open $file: $!";
+  +	    open IN, '<', $fallback or die "Can't open $fallback: $!";
+  +	    open OUT, '>', $file or die "Can't open $file: $!";
+   	    print OUT <IN> or die $!;
+   	    close OUT or die "Can't close $file: $!";
+   	    close IN or die "Can't close $fallback: $!";
+  @@ -920,7 +1035,7 @@ sub main {
+   	    DEFINE('SELECT_IS_BROKEN');
+   	    $LIBS = [];
+   	    print "System is $^O, skipping full configure...\n";
+  -	    open(XDEFINE, ">xdefine") or die "$0: Cannot create xdefine: $!\n";
+  +	    open(XDEFINE, '>', 'xdefine') or die "$0: Cannot create xdefine: $!\n";
+   	    close(XDEFINE);
+   	} else {
+   	    init();
+  diff --git a/dist/Time-HiRes/fallback/const-c.inc b/dist/Time-HiRes/fallback/const-c.inc
+  index a8626172af..524db169a9 100644
+  --- dist/Time-HiRes/fallback/const-c.inc
+  +++ dist/Time-HiRes/fallback/const-c.inc
+  @@ -19,6 +19,7 @@ typedef double NV; /* 5.6 and later define NVTYPE, and typedef NV to it.  */
+   #ifndef pTHX_
+   #define pTHX_ /* 5.6 or later define this for threading support.  */
+   #endif
+  +
+   static int
+   constant_11 (pTHX_ const char *name, IV *iv_return) {
+     /* When generated this function returned values for the list of names given
+  @@ -86,6 +87,51 @@ constant_11 (pTHX_ const char *name, IV *iv_return) {
+     return PERL_constant_NOTFOUND;
+   }
+   
+  +static int
+  +constant_13 (pTHX_ const char *name, IV *iv_return) {
+  +  /* When generated this function returned values for the list of names given
+  +     here.  However, subsequent manual editing may have added or removed some.
+  +     CLOCK_HIGHRES TIMER_ABSTIME d_hires_utime */
+  +  /* Offset 1 gives the best switch position.  */
+  +  switch (name[1]) {
+  +  case 'I':
+  +    if (memEQ(name, "TIMER_ABSTIME", 13)) {
+  +    /*                ^                  */
+  +#ifdef TIMER_ABSTIME
+  +      *iv_return = TIMER_ABSTIME;
+  +      return PERL_constant_ISIV;
+  +#else
+  +      return PERL_constant_NOTDEF;
+  +#endif
+  +    }
+  +    break;
+  +  case 'L':
+  +    if (memEQ(name, "CLOCK_HIGHRES", 13)) {
+  +    /*                ^                  */
+  +#ifdef CLOCK_HIGHRES
+  +      *iv_return = CLOCK_HIGHRES;
+  +      return PERL_constant_ISIV;
+  +#else
+  +      return PERL_constant_NOTDEF;
+  +#endif
+  +    }
+  +    break;
+  +  case '_':
+  +    if (memEQ(name, "d_hires_utime", 13)) {
+  +    /*                ^                  */
+  +#ifdef TIME_HIRES_UTIME
+  +      *iv_return = 1;
+  +      return PERL_constant_ISIV;
+  +#else
+  +      *iv_return = 0;
+  +      return PERL_constant_ISIV;
+  +#endif
+  +    }
+  +    break;
+  +  }
+  +  return PERL_constant_NOTFOUND;
+  +}
+  +
+   static int
+   constant_14 (pTHX_ const char *name, IV *iv_return) {
+     /* When generated this function returned values for the list of names given
+  @@ -250,16 +296,17 @@ my @names = (qw(CLOCKS_PER_SEC CLOCK_HIGHRES CLOCK_MONOTONIC
+               {name=>"d_getitimer", type=>"IV", macro=>"HAS_GETITIMER", value=>"1", default=>["IV", "0"]},
+               {name=>"d_gettimeofday", type=>"IV", macro=>"HAS_GETTIMEOFDAY", value=>"1", default=>["IV", "0"]},
+               {name=>"d_hires_stat", type=>"IV", macro=>"TIME_HIRES_STAT", value=>"1", default=>["IV", "0"]},
+  +            {name=>"d_hires_utime", type=>"IV", macro=>"TIME_HIRES_UTIME", value=>"1", default=>["IV", "0"]},
+               {name=>"d_nanosleep", type=>"IV", macro=>"TIME_HIRES_NANOSLEEP", value=>"1", default=>["IV", "0"]},
+               {name=>"d_setitimer", type=>"IV", macro=>"HAS_SETITIMER", value=>"1", default=>["IV", "0"]},
+               {name=>"d_ualarm", type=>"IV", macro=>"HAS_UALARM", value=>"1", default=>["IV", "0"]},
+               {name=>"d_usleep", type=>"IV", macro=>"HAS_USLEEP", value=>"1", default=>["IV", "0"]});
+   
+  -print constant_types(); # macro defs
+  +print constant_types(), "\n"; # macro defs
+   foreach (C_constant ("Time::HiRes", 'constant', 'IV', $types, undef, 3, @names) ) {
+       print $_, "\n"; # C constant subs
+   }
+  -print "#### XS Section:\n";
+  +print "\n#### XS Section:\n";
+   print XS_constant ("Time::HiRes", $types);
+   __END__
+      */
+  @@ -322,33 +369,7 @@ __END__
+       }
+       break;
+     case 13:
+  -    /* Names all of length 13.  */
+  -    /* CLOCK_HIGHRES TIMER_ABSTIME */
+  -    /* Offset 2 gives the best switch position.  */
+  -    switch (name[2]) {
+  -    case 'M':
+  -      if (memEQ(name, "TIMER_ABSTIME", 13)) {
+  -      /*                 ^                 */
+  -#ifdef TIMER_ABSTIME
+  -        *iv_return = TIMER_ABSTIME;
+  -        return PERL_constant_ISIV;
+  -#else
+  -        return PERL_constant_NOTDEF;
+  -#endif
+  -      }
+  -      break;
+  -    case 'O':
+  -      if (memEQ(name, "CLOCK_HIGHRES", 13)) {
+  -      /*                 ^                 */
+  -#ifdef CLOCK_HIGHRES
+  -        *iv_return = CLOCK_HIGHRES;
+  -        return PERL_constant_ISIV;
+  -#else
+  -        return PERL_constant_NOTDEF;
+  -#endif
+  -      }
+  -      break;
+  -    }
+  +    return constant_13 (aTHX_ name, iv_return);
+       break;
+     case 14:
+       return constant_14 (aTHX_ name, iv_return);
+  diff --git a/dist/Time-HiRes/t/Watchdog.pm b/dist/Time-HiRes/t/Watchdog.pm
+  index 83e854396f..44ec8081de 100644
+  --- dist/Time-HiRes/t/Watchdog.pm
+  +++ dist/Time-HiRes/t/Watchdog.pm
+  @@ -10,44 +10,44 @@ my $watchdog_pid;
+   my $TheEnd;
+   
+   if ($Config{d_fork}) {
+  -    note "I am the main process $$, starting the watchdog process...";
+  +    print("# I am the main process $$, starting the watchdog process...\n");
+       $watchdog_pid = fork();
+       if (defined $watchdog_pid) {
+   	if ($watchdog_pid == 0) { # We are the kid, set up the watchdog.
+   	    my $ppid = getppid();
+  -	    note "I am the watchdog process $$, sleeping for $waitfor seconds...";
+  +	    print("# I am the watchdog process $$, sleeping for $waitfor seconds...\n");
+   	    sleep($waitfor - 2);    # Workaround for perlbug #49073
+   	    sleep(2);               # Wait for parent to exit
+   	    if (kill(0, $ppid)) {   # Check if parent still exists
+   		warn "\n$0: overall time allowed for tests (${waitfor}s) exceeded!\n";
+  -		note "Terminating main process $ppid...";
+  +		print("Terminating main process $ppid...\n");
+   		kill('KILL', $ppid);
+  -		note "This is the watchdog process $$, over and out.";
+  +		print("# This is the watchdog process $$, over and out.\n");
+   	    }
+   	    exit(0);
+   	} else {
+  -	    note "The watchdog process $watchdog_pid launched, continuing testing...";
+  +	    print("# The watchdog process $watchdog_pid launched, continuing testing...\n");
+   	    $TheEnd = time() + $waitfor;
+   	}
+       } else {
+   	warn "$0: fork failed: $!\n";
+       }
+   } else {
+  -    note "No watchdog process (need fork)";
+  +    print("# No watchdog process (need fork)\n");
+   }
+   
+   END {
+       if ($watchdog_pid) { # Only in the main process.
+   	my $left = $TheEnd - time();
+  -	note sprintf "I am the main process $$, terminating the watchdog process $watchdog_pid before it terminates me in %d seconds (testing took %d seconds).", $left, $waitfor - $left;
+  +	printf("# I am the main process $$, terminating the watchdog process $watchdog_pid before it terminates me in %d seconds (testing took %d seconds).\n", $left, $waitfor - $left);
+   	if (kill(0, $watchdog_pid)) {
+   	    local $? = 0;
+   	    my $kill = kill('KILL', $watchdog_pid); # We are done, the watchdog can go.
+   	    wait();
+  -	    note sprintf "kill KILL $watchdog_pid = %d", $kill;
+  +	    printf("# kill KILL $watchdog_pid = %d\n", $kill);
+   	}
+   	unlink("ktrace.out"); # Used in BSD system call tracing.
+  -	note "All done.";
+  +	print("# All done.\n");
+       }
+   }
+   
+  diff --git a/dist/Time-HiRes/t/alarm.t b/dist/Time-HiRes/t/alarm.t
+  index 841694f67c..4935410d36 100644
+  --- dist/Time-HiRes/t/alarm.t
+  +++ dist/Time-HiRes/t/alarm.t
+  @@ -1,6 +1,6 @@
+   use strict;
+   
+  -use Test::More 0.82 tests => 10;
+  +use Test::More tests => 10;
+   use t::Watchdog;
+   
+   BEGIN { require_ok "Time::HiRes"; }
+  @@ -10,7 +10,7 @@ use Config;
+   my $limit = 0.25; # 25% is acceptable slosh for testing timers
+   
+   my $xdefine = ''; 
+  -if (open(XDEFINE, "xdefine")) {
+  +if (open(XDEFINE, "<", "xdefine")) {
+       chomp($xdefine = <XDEFINE> || "");
+       close(XDEFINE);
+   }
+  @@ -29,12 +29,14 @@ SKIP: {
+   
+       my ($r, $i, $not, $ok);
+   
+  +    $not = "";
+  +
+       $r = [Time::HiRes::gettimeofday()];
+       $i = 5;
+       my $oldaction;
+       if ($use_sigaction) {
+   	$oldaction = new POSIX::SigAction;
+  -	note sprintf "sigaction tick, ALRM = %d", &POSIX::SIGALRM;
+  +	printf("# sigaction tick, ALRM = %d\n", &POSIX::SIGALRM);
+   
+   	# Perl's deferred signals may be too wimpy to break through
+   	# a restartable select(), so use POSIX::sigaction if available.
+  @@ -44,7 +46,7 @@ SKIP: {
+   			 $oldaction)
+   	    or die "Error setting SIGALRM handler with sigaction: $!\n";
+       } else {
+  -	note "SIG tick";
+  +	print("# SIG tick\n");
+   	$SIG{ALRM} = "tick";
+       }
+   
+  @@ -56,8 +58,8 @@ SKIP: {
+   	    Time::HiRes::alarm(0.3);
+   	    select (undef, undef, undef, 3);
+   	    my $ival = Time::HiRes::tv_interval ($r);
+  -	    note "Select returned! $i $ival";
+  -	    note abs($ival/3 - 1);
+  +	    print("# Select returned! $i $ival\n");
+  +	    printf("# %s\n", abs($ival/3 - 1));
+   	    # Whether select() gets restarted after signals is
+   	    # implementation dependent.  If it is restarted, we
+   	    # will get about 3.3 seconds: 3 from the select, 0.3
+  @@ -86,7 +88,7 @@ SKIP: {
+       sub tick {
+   	$i--;
+   	my $ival = Time::HiRes::tv_interval ($r);
+  -	note "Tick! $i $ival";
+  +	print("# Tick! $i $ival\n");
+   	my $exp = 0.3 * (5 - $i);
+   	if ($exp == 0) {
+   	    $not = "tick: divisor became zero";
+  @@ -106,8 +108,8 @@ SKIP: {
+   	Time::HiRes::alarm(0); # can't cancel usig %SIG
+       }
+   
+  +    print("# $not\n");
+       ok !$not;
+  -    note $not || $ok;
+   }
+   
+   SKIP: {
+  @@ -126,7 +128,7 @@ SKIP: {
+       # http://groups.google.com/group/perl.perl5.porters/browse_thread/thread/adaffaaf939b042e/20dafc298df737f0%2320dafc298df737f0?sa=X&oi=groupsr&start=0&num=3
+       # Perl changes [18765] and [18770], perl bug [perl #20920]
+   
+  -    note "Finding delay loop...";
+  +    print("# Finding delay loop...\n");
+   
+       my $T = 0.01;
+       my $DelayN = 1024;
+  @@ -137,7 +139,7 @@ SKIP: {
+   	 for ($i = 0; $i < $DelayN; $i++) { }
+   	 my $t1 = Time::HiRes::time();
+   	 my $dt = $t1 - $t0;
+  -	 note "N = $DelayN, t1 = $t1, t0 = $t0, dt = $dt";
+  +	 print("# N = $DelayN, t1 = $t1, t0 = $t0, dt = $dt\n");
+   	 last N if $dt > $T;
+   	 $DelayN *= 2;
+        } while (1);
+  @@ -169,7 +171,7 @@ SKIP: {
+   
+       $SIG{ALRM} = sub {
+   	$a++;
+  -	note "Alarm $a - ", Time::HiRes::time();
+  +	printf("# Alarm $a - %s\n", Time::HiRes::time());
+   	Time::HiRes::alarm(0) if $a >= $A; # Disarm the alarm.
+   	$Delay->(2); # Try burning CPU at least for 2T seconds.
+       }; 
+  @@ -204,18 +206,18 @@ SKIP: {
+   	my $alrm = 0;
+   	$SIG{ALRM} = sub { $alrm++ };
+   	my $got = Time::HiRes::alarm(2.7);
+  -	ok $got == 0 or note $got;
+  +	ok $got == 0 or print("# $got\n");
+   
+   	my $t0 = Time::HiRes::time();
+   	1 while Time::HiRes::time() - $t0 <= 1;
+   
+   	$got = Time::HiRes::alarm(0);
+  -	ok $got > 0 && $got < 1.8 or note $got;
+  +	ok $got > 0 && $got < 1.8 or print("# $got\n");
+   
+  -	ok $alrm == 0 or note $alrm;
+  +	ok $alrm == 0 or print("# $alrm\n");
+   
+   	$got = Time::HiRes::alarm(0);
+  -	ok $got == 0 or note $got;
+  +	ok $got == 0 or print("# $got\n");
+       }
+   }
+   
+  diff --git a/dist/Time-HiRes/t/clock.t b/dist/Time-HiRes/t/clock.t
+  index 6d11dd2ca0..346ca57fbf 100644
+  --- dist/Time-HiRes/t/clock.t
+  +++ dist/Time-HiRes/t/clock.t
+  @@ -1,6 +1,6 @@
+   use strict;
+   
+  -use Test::More 0.82 tests => 5;
+  +use Test::More tests => 5;
+   use t::Watchdog;
+   
+   BEGIN { require_ok "Time::HiRes"; }
+  @@ -13,10 +13,10 @@ sub has_symbol {
+       return $@ eq '';
+   }
+   
+  -note sprintf "have_clock_gettime   = %d", &Time::HiRes::d_clock_gettime;
+  -note sprintf "have_clock_getres    = %d", &Time::HiRes::d_clock_getres;
+  -note sprintf "have_clock_nanosleep = %d", &Time::HiRes::d_clock_nanosleep;
+  -note sprintf "have_clock           = %d", &Time::HiRes::d_clock;
+  +printf("# have_clock_gettime   = %d\n", &Time::HiRes::d_clock_gettime);
+  +printf("# have_clock_getres    = %d\n", &Time::HiRes::d_clock_getres);
+  +printf("# have_clock_nanosleep = %d\n", &Time::HiRes::d_clock_nanosleep);
+  +printf("# have_clock           = %d\n", &Time::HiRes::d_clock);
+   
+   # Ideally, we'd like to test that the timers are rather precise.
+   # However, if the system is busy, there are no guarantees on how
+  @@ -36,25 +36,25 @@ SKIP: {
+       my $ok = 0;
+    TRY: {
+   	for my $try (1..3) {
+  -	    note "CLOCK_REALTIME: try = $try";
+  +	    print("# CLOCK_REALTIME: try = $try\n");
+   	    my $t0 = Time::HiRes::clock_gettime(&CLOCK_REALTIME);
+   	    my $T = 1.5;
+   	    Time::HiRes::sleep($T);
+   	    my $t1 = Time::HiRes::clock_gettime(&CLOCK_REALTIME);
+   	    if ($t0 > 0 && $t1 > $t0) {
+  -		note "t1 = $t1, t0 = $t0";
+  +		print("# t1 = $t1, t0 = $t0\n");
+   		my $dt = $t1 - $t0;
+   		my $rt = abs(1 - $dt / $T);
+  -		note "dt = $dt, rt = $rt";
+  +		print("# dt = $dt, rt = $rt\n");
+   		if ($rt <= 2 * $limit) {
+   		    $ok = 1;
+   		    last TRY;
+   		}
+   	    } else {
+  -		note "Error: t0 = $t0, t1 = $t1";
+  +		print("# Error: t0 = $t0, t1 = $t1\n");
+   	    }
+   	    my $r = rand() + rand();
+  -	    note sprintf "Sleeping for %.6f seconds...\n", $r;
+  +	    printf("# Sleeping for %.6f seconds...\n", $r);
+   	    Time::HiRes::sleep($r);
+   	}
+       }
+  @@ -64,7 +64,7 @@ SKIP: {
+   SKIP: {
+       skip "no clock_getres", 1 unless &Time::HiRes::d_clock_getres;
+       my $tr = Time::HiRes::clock_getres();
+  -    ok $tr > 0 or note "tr = $tr";
+  +    ok $tr > 0 or print("# tr = $tr\n");
+   }
+   
+   SKIP: {
+  @@ -73,17 +73,17 @@ SKIP: {
+       my $s = 1.5e9;
+       my $t = Time::HiRes::clock_nanosleep(&CLOCK_REALTIME, $s);
+       my $r = abs(1 - $t / $s);
+  -    ok $r < 2 * $limit or note "t = $t, r = $r";
+  +    ok $r < 2 * $limit or print("# t = $t, r = $r\n");
+   }
+   
+   SKIP: {
+       skip "no clock", 1 unless &Time::HiRes::d_clock;
+       my @clock = Time::HiRes::clock();
+  -    note "clock = @clock";
+  +    print("# clock = @clock\n");
+       for my $i (1..3) {
+   	for (my $j = 0; $j < 1e6; $j++) { }
+   	push @clock, Time::HiRes::clock();
+  -	note "clock = @clock";
+  +	print("# clock = @clock\n");
+       }
+       ok $clock[0] >= 0 &&
+   	$clock[1] > $clock[0] &&
+  diff --git a/dist/Time-HiRes/t/gettimeofday.t b/dist/Time-HiRes/t/gettimeofday.t
+  index 8f7c5f3039..69defe8672 100644
+  --- dist/Time-HiRes/t/gettimeofday.t
+  +++ dist/Time-HiRes/t/gettimeofday.t
+  @@ -8,26 +8,26 @@ BEGIN {
+       }
+   }
+   
+  -use Test::More 0.82 tests => 6;
+  +use Test::More tests => 6;
+   use t::Watchdog;
+   
+   my @one = Time::HiRes::gettimeofday();
+  -note 'gettimeofday returned ', 0+@one, ' args';
+  +printf("# gettimeofday returned %d args\n", 0+@one);
+   ok @one == 2;
+  -ok $one[0] > 850_000_000 or note "@one too small";
+  +ok $one[0] > 850_000_000 or print("# @one too small\n");
+   
+   sleep 1;
+   
+   my @two = Time::HiRes::gettimeofday();
+   ok $two[0] > $one[0] || ($two[0] == $one[0] && $two[1] > $one[1])
+  -	or note "@two is not greater than @one";
+  +	or print("# @two is not greater than @one\n");
+   
+   my $f = Time::HiRes::time();
+  -ok $f > 850_000_000 or note "$f too small";
+  -ok $f - $two[0] < 2 or note "$f - $two[0] >= 2";
+  +ok $f > 850_000_000 or print("# $f too small\n");
+  +ok $f - $two[0] < 2 or print("# $f - $two[0] >= 2\n");
+   
+   my $r = [Time::HiRes::gettimeofday()];
+   my $g = Time::HiRes::tv_interval $r;
+  -ok $g < 2 or note $g;
+  +ok $g < 2 or print("# $g\n");
+   
+   1;
+  diff --git a/dist/Time-HiRes/t/itimer.t b/dist/Time-HiRes/t/itimer.t
+  index 9eb2b93f6f..31cdd674ae 100644
+  --- dist/Time-HiRes/t/itimer.t
+  +++ dist/Time-HiRes/t/itimer.t
+  @@ -25,7 +25,7 @@ BEGIN {
+       }
+   }
+   
+  -use Test::More 0.82 tests => 2;
+  +use Test::More tests => 2;
+   use t::Watchdog;
+   
+   my $limit = 0.25; # 25% is acceptable slosh for testing timers
+  @@ -35,11 +35,11 @@ my $r = [Time::HiRes::gettimeofday()];
+   
+   $SIG{VTALRM} = sub {
+       $i ? $i-- : Time::HiRes::setitimer(&Time::HiRes::ITIMER_VIRTUAL, 0);
+  -    note "Tick! $i ", Time::HiRes::tv_interval($r);
+  +    printf("# Tick! $i %s\n", Time::HiRes::tv_interval($r));
+   };	
+   
+  -note "setitimer: ", join(" ",
+  -    Time::HiRes::setitimer(&Time::HiRes::ITIMER_VIRTUAL, 0.5, 0.4));
+  +printf("# setitimer: %s\n", join(" ",
+  +       Time::HiRes::setitimer(&Time::HiRes::ITIMER_VIRTUAL, 0.5, 0.4)));
+   
+   # Assume interval timer granularity of $limit * 0.5 seconds.  Too bold?
+   my $virt = Time::HiRes::getitimer(&Time::HiRes::ITIMER_VIRTUAL);
+  @@ -47,19 +47,19 @@ ok(defined $virt && abs($virt / 0.5) - 1 < $limit,
+      "ITIMER_VIRTUAL defined with sufficient granularity")
+      or diag "virt=" . (defined $virt ? $virt : 'undef');
+   
+  -note "getitimer: ", join(" ",
+  -    Time::HiRes::getitimer(&Time::HiRes::ITIMER_VIRTUAL));
+  +printf("# getitimer: %s\n", join(" ",
+  +       Time::HiRes::getitimer(&Time::HiRes::ITIMER_VIRTUAL)));
+   
+   while (Time::HiRes::getitimer(&Time::HiRes::ITIMER_VIRTUAL)) {
+       my $j;
+       for (1..1000) { $j++ } # Can't be unbreakable, must test getitimer().
+   }
+   
+  -note "getitimer: ", join(" ",
+  -    Time::HiRes::getitimer(&Time::HiRes::ITIMER_VIRTUAL));
+  +printf("# getitimer: %s\n", join(" ",
+  +       Time::HiRes::getitimer(&Time::HiRes::ITIMER_VIRTUAL)));
+   
+   $virt = Time::HiRes::getitimer(&Time::HiRes::ITIMER_VIRTUAL);
+  -note "at end, i=$i";
+  +print("# at end, i=$i\n");
+   is($virt, 0, "time left should be zero");
+   
+   $SIG{VTALRM} = 'DEFAULT';
+  diff --git a/dist/Time-HiRes/t/nanosleep.t b/dist/Time-HiRes/t/nanosleep.t
+  index aef9db6163..c17a7e4790 100644
+  --- dist/Time-HiRes/t/nanosleep.t
+  +++ dist/Time-HiRes/t/nanosleep.t
+  @@ -8,7 +8,7 @@ BEGIN {
+       }
+   }
+   
+  -use Test::More 0.82 tests => 3;
+  +use Test::More tests => 3;
+   use t::Watchdog;
+   
+   eval { Time::HiRes::nanosleep(-5) };
+  @@ -21,7 +21,7 @@ my $two = CORE::time;
+   Time::HiRes::nanosleep(10_000_000);
+   my $three = CORE::time;
+   ok $one == $two || $two == $three
+  -    or note "slept too long, $one $two $three";
+  +    or print("# slept too long, $one $two $three\n");
+   
+   SKIP: {
+       skip "no gettimeofday", 1 unless &Time::HiRes::d_gettimeofday;
+  @@ -29,7 +29,7 @@ SKIP: {
+       Time::HiRes::nanosleep(500_000_000);
+       my $f2 = Time::HiRes::time();
+       my $d = $f2 - $f;
+  -    ok $d > 0.4 && $d < 0.9 or note "slept $d secs $f to $f2";
+  +    ok $d > 0.4 && $d < 0.9 or print("# slept $d secs $f to $f2\n");
+   }
+   
+   1;
+  diff --git a/dist/Time-HiRes/t/sleep.t b/dist/Time-HiRes/t/sleep.t
+  index e7cc6271a8..b84b4c6725 100644
+  --- dist/Time-HiRes/t/sleep.t
+  +++ dist/Time-HiRes/t/sleep.t
+  @@ -1,6 +1,6 @@
+   use strict;
+   
+  -use Test::More 0.82 tests => 4;
+  +use Test::More tests => 4;
+   use t::Watchdog;
+   
+   BEGIN { require_ok "Time::HiRes"; }
+  @@ -8,7 +8,7 @@ BEGIN { require_ok "Time::HiRes"; }
+   use Config;
+   
+   my $xdefine = ''; 
+  -if (open(XDEFINE, "xdefine")) {
+  +if (open(XDEFINE, "<", "xdefine")) {
+       chomp($xdefine = <XDEFINE> || "");
+       close(XDEFINE);
+   }
+  @@ -26,12 +26,12 @@ like $@, qr/::sleep\(-1\): negative time not invented yet/,
+   SKIP: {
+       skip "no subsecond alarm", 2 unless $can_subsecond_alarm;
+       my $f = Time::HiRes::time; 
+  -    note "time...$f";
+  +    print("# time...$f\n");
+       ok 1;
+   
+       my $r = [Time::HiRes::gettimeofday()];
+       Time::HiRes::sleep (0.5);
+  -    note "sleep...", Time::HiRes::tv_interval($r);
+  +    printf("# sleep...%s\n", Time::HiRes::tv_interval($r));
+       ok 1;
+   }
+   
+  diff --git a/dist/Time-HiRes/t/stat.t b/dist/Time-HiRes/t/stat.t
+  index 68a6fb6bbd..a59a342e20 100644
+  --- dist/Time-HiRes/t/stat.t
+  +++ dist/Time-HiRes/t/stat.t
+  @@ -13,14 +13,14 @@ BEGIN {
+       }
+   }
+   
+  -use Test::More 0.82 tests => 43;
+  +use Test::More tests => 43;
+   use t::Watchdog;
+   
+   my @atime;
+   my @mtime;
+   for (1..5) {
+       Time::HiRes::sleep(rand(0.1) + 0.1);
+  -    open(X, ">$$");
+  +    open(X, '>', $$);
+       print X $$;
+       close(X);
+       my($a, $stat, $b) = ("a", [Time::HiRes::stat($$)], "b");
+  @@ -33,7 +33,7 @@ for (1..5) {
+       is $b, "b";
+       is_deeply $lstat, $stat;
+       Time::HiRes::sleep(rand(0.1) + 0.1);
+  -    open(X, "<$$");
+  +    open(X, '<', $$);
+       <X>;
+       close(X);
+       $stat = [Time::HiRes::stat($$)];
+  @@ -42,8 +42,8 @@ for (1..5) {
+       is_deeply $lstat, $stat;
+   }
+   1 while unlink $$;
+  -note "mtime = @mtime";
+  -note "atime = @atime";
+  +print("# mtime = @mtime\n");
+  +print("# atime = @atime\n");
+   my $ai = 0;
+   my $mi = 0;
+   my $ss = 0;
+  @@ -63,7 +63,7 @@ for (my $i = 1; $i < @mtime; $i++) {
+   	$ss++;
+       }
+   }
+  -note "ai = $ai, mi = $mi, ss = $ss";
+  +print("# ai = $ai, mi = $mi, ss = $ss\n");
+   # Need at least 75% of monotonical increase and
+   # 20% of subsecond results. Yes, this is guessing.
+   SKIP: {
+  @@ -75,7 +75,7 @@ SKIP: {
+   my $targetname = "tgt$$";
+   my $linkname = "link$$";
+   SKIP: {
+  -    open(X, ">$targetname");
+  +    open(X, '>', $targetname);
+       print X $$;
+       close(X);
+       eval { symlink $targetname, $linkname or die "can't symlink: $!"; };
+  diff --git a/dist/Time-HiRes/t/time.t b/dist/Time-HiRes/t/time.t
+  index feec4799d9..6f219f9e0c 100644
+  --- dist/Time-HiRes/t/time.t
+  +++ dist/Time-HiRes/t/time.t
+  @@ -1,6 +1,6 @@
+   use strict;
+   
+  -use Test::More 0.82 tests => 2;
+  +use Test::More tests => 2;
+   use t::Watchdog;
+   
+   BEGIN { require_ok "Time::HiRes"; }
+  @@ -16,8 +16,8 @@ SKIP: {
+       # (CORE::time() may be rounding down, up, or closest),
+       # but allow 10% of slop.
+       ok abs($s) / $n <= 1.10
+  -	or note "Time::HiRes::time() not close to CORE::time()";
+  -    note "s = $s, n = $n, s/n = ", abs($s)/$n;
+  +	or print("# Time::HiRes::time() not close to CORE::time()\n");
+  +    printf("# s = $s, n = $n, s/n = %s\n", abs($s)/$n);
+   }
+   
+   1;
+  diff --git a/dist/Time-HiRes/t/tv_interval.t b/dist/Time-HiRes/t/tv_interval.t
+  index bffcf39ec1..8ac876daf3 100644
+  --- dist/Time-HiRes/t/tv_interval.t
+  +++ dist/Time-HiRes/t/tv_interval.t
+  @@ -1,10 +1,10 @@
+   use strict;
+   
+  -use Test::More 0.82 tests => 2;
+  +use Test::More tests => 2;
+   
+   BEGIN { require_ok "Time::HiRes"; }
+   
+   my $f = Time::HiRes::tv_interval [5, 100_000], [10, 500_000];
+  -ok abs($f - 5.4) < 0.001 or note $f;
+  +ok abs($f - 5.4) < 0.001 or print("# $f\n");
+   
+   1;
+  diff --git a/dist/Time-HiRes/t/ualarm.t b/dist/Time-HiRes/t/ualarm.t
+  index 12ef4b52cc..b50a175f44 100644
+  --- dist/Time-HiRes/t/ualarm.t
+  +++ dist/Time-HiRes/t/ualarm.t
+  @@ -8,7 +8,7 @@ BEGIN {
+       }
+   }
+   
+  -use Test::More 0.82 tests => 12;
+  +use Test::More tests => 12;
+   use t::Watchdog;
+   
+   use Config;
+  @@ -24,13 +24,13 @@ SKIP: {
+       $tick = 0; Time::HiRes::ualarm(10_000); while ($tick == 0) { }
+       my $three = CORE::time;
+       ok $one == $two || $two == $three
+  -	or note "slept too long, $one $two $three";
+  -    note "tick = $tick, one = $one, two = $two, three = $three";
+  +	or print("# slept too long, $one $two $three\n");
+  +    print("# tick = $tick, one = $one, two = $two, three = $three\n");
+   
+       $tick = 0; Time::HiRes::ualarm(10_000, 10_000); while ($tick < 3) { }
+       ok 1;
+       Time::HiRes::ualarm(0);
+  -    note "tick = $tick, one = $one, two = $two, three = $three";
+  +    print("# tick = $tick, one = $one, two = $two, three = $three\n");
+   }
+   
+   eval { Time::HiRes::ualarm(-4) };
+  @@ -59,24 +59,24 @@ for my $n (100_000, 1_100_000, 2_200_000, 4_300_000) {
+   	my $alarmed = 0;
+   	local $SIG{ ALRM } = sub { $alarmed++ };
+   	my $t0 = Time::HiRes::time();
+  -	note "t0 = $t0";
+  -	note "ualarm($n)";
+  +	print("# t0 = $t0\n");
+  +	print("# ualarm($n)\n");
+   	Time::HiRes::ualarm($n); 1 while $alarmed == 0;
+   	my $t1 = Time::HiRes::time();
+  -	note "t1 = $t1";
+  +	print("# t1 = $t1\n");
+   	my $dt = $t1 - $t0;
+  -	note "dt = $dt";
+  +	print("# dt = $dt\n");
+   	my $r = $dt / ($n/1e6);
+  -	note "r = $r";
+  +	print("# r = $r\n");
+   	$ok =
+   	    ($n < 1_000_000 || # Too much noise.
+   	     ($r >= 0.8 && $r <= 1.6));
+   	last if $ok;
+   	my $nap = bellish(3, 15);
+  -	note sprintf "Retrying in %.1f seconds...\n", $nap;
+  +	printf("# Retrying in %.1f seconds...\n", $nap);
+   	Time::HiRes::sleep($nap);
+       }
+  -    ok $ok or note "ualarm($n) close enough";
+  +    ok $ok or print("# ualarm($n) close enough\n");
+   }
+   
+   {
+  @@ -93,12 +93,12 @@ for my $n (100_000, 1_100_000, 2_200_000, 4_300_000) {
+       } while $t1 - $t0 <= 0.3;
+       my $got1 = Time::HiRes::ualarm(0);
+   
+  -    note "t0 = $t0";
+  -    note "got0 = $got0";
+  -    note "t1 = $t1";
+  -    note "t1 - t0 = ", ($t1 - $t0);
+  -    note "got1 = $got1";
+  -    ok $got0 == 0 or note $got0;
+  +    print("# t0 = $t0\n");
+  +    print("# got0 = $got0\n");
+  +    print("# t1 = $t1\n");
+  +    printf("# t1 - t0 = %s\n", ($t1 - $t0));
+  +    print("# got1 = $got1\n");
+  +    ok $got0 == 0 or print("# $got0\n");
+       SKIP: {
+   	skip "alarm interval exceeded", 2 if $t1 - $t0 >= 0.5;
+   	ok $got1 > 0;
+  @@ -106,7 +106,7 @@ for my $n (100_000, 1_100_000, 2_200_000, 4_300_000) {
+       }
+       ok $got1 < 300_000;
+       my $got2 = Time::HiRes::ualarm(0);
+  -    ok $got2 == 0 or note $got2;
+  +    ok $got2 == 0 or print("# $got2\n");
+   }
+   
+   1;
+  diff --git a/dist/Time-HiRes/t/usleep.t b/dist/Time-HiRes/t/usleep.t
+  index 0d6bacfac3..bdf372bd16 100644
+  --- dist/Time-HiRes/t/usleep.t
+  +++ dist/Time-HiRes/t/usleep.t
+  @@ -8,7 +8,7 @@ BEGIN {
+       }
+   }
+   
+  -use Test::More 0.82 tests => 6;
+  +use Test::More tests => 6;
+   use t::Watchdog;
+   
+   eval { Time::HiRes::usleep(-2) };
+  @@ -23,7 +23,7 @@ my $two = CORE::time;
+   Time::HiRes::usleep(10_000);
+   my $three = CORE::time;
+   ok $one == $two || $two == $three
+  -or note "slept too long, $one $two $three";
+  +or print("# slept too long, $one $two $three\n");
+   
+   SKIP: {
+       skip "no gettimeofday", 1 unless &Time::HiRes::d_gettimeofday;
+  @@ -31,7 +31,7 @@ SKIP: {
+       Time::HiRes::usleep(500_000);
+       my $f2 = Time::HiRes::time();
+       my $d = $f2 - $f;
+  -    ok $d > 0.4 && $d < 0.9 or note "slept $d secs $f to $f2";
+  +    ok $d > 0.4 && $d < 0.9 or print("# slept $d secs $f to $f2\n");
+   }
+   
+   SKIP: {
+  @@ -39,7 +39,7 @@ SKIP: {
+       my $r = [ Time::HiRes::gettimeofday() ];
+       Time::HiRes::sleep( 0.5 );
+       my $f = Time::HiRes::tv_interval $r;
+  -    ok $f > 0.4 && $f < 0.9 or note "slept $f instead of 0.5 secs.";
+  +    ok $f > 0.4 && $f < 0.9 or print("# slept $f instead of 0.5 secs.\n");
+   }
+   
+   SKIP: {
+  @@ -59,7 +59,7 @@ SKIP: {
+   
+       SKIP: {
+   	skip $msg, 1 unless $td < $sleep * (1 + $limit);
+  -	ok $a < $limit or note $msg;
+  +	ok $a < $limit or print("# $msg\n");
+       }
+   
+       $t0 = Time::HiRes::gettimeofday();
+  @@ -71,7 +71,7 @@ SKIP: {
+   
+       SKIP: {
+   	skip $msg, 1 unless $td < $sleep * (1 + $limit);
+  -	ok $a < $limit or note $msg;
+  +	ok $a < $limit or print("# $msg\n");
+       }
+   }
+   
+  diff --git a/dist/Time-HiRes/typemap b/dist/Time-HiRes/typemap
+  index 1124eb6483..3fa91f3a0b 100644
+  --- dist/Time-HiRes/typemap
+  +++ dist/Time-HiRes/typemap
+  @@ -28,6 +28,8 @@ AV *			T_AVREF
+   HV *			T_HVREF
+   CV *			T_CVREF
+   
+  +clockid_t               T_IV
+  +
+   IV			T_IV
+   UV			T_UV
+   NV                      T_NV
+  END
   diff --git a/Configure b/Configure
   index e12c8bb..1a8088f 100755
   --- Configure
@@ -5306,7 +6923,7 @@ $fatpacked{"Devel/PatchPerl.pm"} = '#line '.(1+__LINE__).' "'.__FILE__."\"\n".<<
 DEVEL_PATCHPERL
 
 $fatpacked{"Devel/PatchPerl/Hints.pm"} = '#line '.(1+__LINE__).' "'.__FILE__."\"\n".<<'DEVEL_PATCHPERL_HINTS';
-  package Devel::PatchPerl::Hints;$Devel::PatchPerl::Hints::VERSION='1.46';use strict;use warnings;use MIME::Base64 qw[decode_base64];use File::Spec;our@ISA=qw[Exporter];our@EXPORT_OK=qw[hint_file hints];my%hints=('bitrig'=>'IyBoaW50cy9vcGVuYnNkLnNoCiMKIyBoaW50cyBmaWxlIGZvciBPcGVuQlNEOyBUb2RkIE1pbGxl
+  package Devel::PatchPerl::Hints;$Devel::PatchPerl::Hints::VERSION='1.48';use strict;use warnings;use MIME::Base64 qw[decode_base64];use File::Spec;our@ISA=qw[Exporter];our@EXPORT_OK=qw[hint_file hints];my%hints=('bitrig'=>'IyBoaW50cy9vcGVuYnNkLnNoCiMKIyBoaW50cyBmaWxlIGZvciBPcGVuQlNEOyBUb2RkIE1pbGxl
   ciA8bWlsbGVydEBvcGVuYnNkLm9yZz4KIyBFZGl0ZWQgdG8gYWxsb3cgQ29uZmlndXJlIGNvbW1h
   bmQtbGluZSBvdmVycmlkZXMgYnkKIyAgQW5keSBEb3VnaGVydHkgPGRvdWdoZXJhQGxhZmF5ZXR0
   ZS5lZHU+CiMKIyBUbyBidWlsZCB3aXRoIGRpc3RyaWJ1dGlvbiBwYXRocywgdXNlOgojCS4vQ29u
@@ -5764,111 +7381,115 @@ $fatpacked{"Devel/PatchPerl/Hints.pm"} = '#line '.(1+__LINE__).' "'.__FILE__."\"
   bmUnCgkjIGRfZG9zdWlkPSdkZWZpbmUnICMgT2Jzb2xldGUuCgk7OwoqKQl1c2V2Zm9yaz0ndHJ1
   ZScKCWNhc2UgIiR1c2VteW1hbGxvYyIgaW4KCSAgICAiIikgdXNlbXltYWxsb2M9J24nCgkgICAg
   ICAgIDs7Cgllc2FjCglsaWJzd2FudGVkPWBlY2hvICRsaWJzd2FudGVkIHwgc2VkICdzLyBtYWxs
-  b2MgLyAvJ2AKCTs7CmVzYWMKCiMgRHluYW1pYyBMb2FkaW5nIGZsYWdzIGhhdmUgbm90IGNoYW5n
-  ZWQgbXVjaCwgc28gdGhleSBhcmUgc2VwYXJhdGVkCiMgb3V0IGhlcmUgdG8gYXZvaWQgZHVwbGlj
-  YXRpbmcgdGhlbSBldmVyeXdoZXJlLgpjYXNlICIkb3N2ZXJzIiBpbgowLip8MS4wKikgOzsKCjEu
-  KnwyLiopCgljY2NkbGZsYWdzPSctRFBJQyAtZnBpYycKCWxkZGxmbGFncz0iLUJzaGFyZWFibGUg
-  JGxkZGxmbGFncyIKCTs7CgozKnw0Knw1Knw2KikKICAgICAgICBvYmpmb3JtYXQ9YC91c3IvYmlu
-  L29iamZvcm1hdGAKICAgICAgICBpZiBbIHgkb2JqZm9ybWF0ID0geGFvdXQgXTsgdGhlbgogICAg
-  ICAgICAgICBpZiBbIC1lIC91c3IvbGliL2FvdXQgXTsgdGhlbgogICAgICAgICAgICAgICAgbGli
-  cHRoPSIvdXNyL2xpYi9hb3V0IC91c3IvbG9jYWwvbGliIC91c3IvbGliIgogICAgICAgICAgICAg
-  ICAgZ2xpYnB0aD0iL3Vzci9saWIvYW91dCAvdXNyL2xvY2FsL2xpYiAvdXNyL2xpYiIKICAgICAg
-  ICAgICAgZmkKICAgICAgICAgICAgbGRkbGZsYWdzPSctQnNoYXJlYWJsZScKICAgICAgICBlbHNl
-  CiAgICAgICAgICAgIGxpYnB0aD0iL3Vzci9saWIgL3Vzci9sb2NhbC9saWIiCiAgICAgICAgICAg
-  IGdsaWJwdGg9Ii91c3IvbGliIC91c3IvbG9jYWwvbGliIgogICAgICAgICAgICBsZGZsYWdzPSIt
-  V2wsLUUgIgogICAgICAgICAgICBsZGRsZmxhZ3M9Ii1zaGFyZWQgIgogICAgICAgIGZpCiAgICAg
-  ICAgY2NjZGxmbGFncz0nLURQSUMgLWZQSUMnCiAgICAgICAgOzsKKikKICAgICAgIGxpYnB0aD0i
-  L3Vzci9saWIgL3Vzci9sb2NhbC9saWIiCiAgICAgICBnbGlicHRoPSIvdXNyL2xpYiAvdXNyL2xv
-  Y2FsL2xpYiIKICAgICAgIGxkZmxhZ3M9Ii1XbCwtRSAiCiAgICAgICAgbGRkbGZsYWdzPSItc2hh
-  cmVkICIKICAgICAgICBjY2NkbGZsYWdzPSctRFBJQyAtZlBJQycKICAgICAgIDs7CmVzYWMKCmNh
-  c2UgIiRvc3ZlcnMiIGluCjAuKnwxLip8Mi4qfDMuKikgOzsKCiopCgljY2ZsYWdzPSIke2NjZmxh
-  Z3N9IC1ESEFTX0ZQU0VUTUFTSyAtREhBU19GTE9BVElOR1BPSU5UX0giCglpZiAvdXNyL2Jpbi9m
-  aWxlIC1MIC91c3IvbGliL2xpYmMuc28gfCAvdXNyL2Jpbi9ncmVwIC12cSAibm90IHN0cmlwcGVk
-  IiA7IHRoZW4KCSAgICB1c2VubT1mYWxzZQoJZmkKICAgICAgICA7Owplc2FjCgpjYXQgPDwnRU9N
-  JyA+JjQKClNvbWUgdXNlcnMgaGF2ZSByZXBvcnRlZCB0aGF0IENvbmZpZ3VyZSBoYWx0cyB3aGVu
-  IHRlc3RpbmcgZm9yCnRoZSBPX05PTkJMT0NLIHN5bWJvbCB3aXRoIGEgc3ludGF4IGVycm9yLiAg
-  VGhpcyBpcyBhcHBhcmVudGx5IGEKc2ggZXJyb3IuICBSZXJ1bm5pbmcgQ29uZmlndXJlIHdpdGgg
-  a3NoIGFwcGFyZW50bHkgZml4ZXMgdGhlCnByb2JsZW0uICBUcnkKCWtzaCBDb25maWd1cmUgW3lv
-  dXIgb3B0aW9uc10KCkVPTQoKIyBGcm9tOiBBbnRvbiBCZXJlemluIDx0b2JlekBwbGFiLmt1LmRr
-  PgojIFRvOiBwZXJsNS1wb3J0ZXJzQHBlcmwub3JnCiMgU3ViamVjdDogW1BBVENIIDUuMDA1XzU0
-  XSBDb25maWd1cmUgLSBoaW50cy9mcmVlYnNkLnNoIHNpZ25hbCBoYW5kbGVyIHR5cGUKIyBEYXRl
-  OiAzMCBOb3YgMTk5OCAxOTo0NjoyNCArMDEwMAojIE1lc3NhZ2UtSUQ6IDw4NjRzcmhodmN2LmZz
-  ZkBsaW9uLnBsYWIua3UuZGs+CgpzaWduYWxfdD0ndm9pZCcKZF92b2lkc2lnPSdkZWZpbmUnCgoj
-  IHNldCBsaWJwZXJsLnNvLlguWCBmb3IgMi4yLlgKY2FzZSAiJG9zdmVycyIgaW4KMi4yKikKICAg
-  ICMgdW5mb3J0dW5hdGVseSB0aGlzIGNvZGUgZ2V0cyBleGVjdXRlZCBiZWZvcmUKICAgICMgdGhl
-  IGVxdWl2YWxlbnQgaW4gdGhlIG1haW4gQ29uZmlndXJlIHNvIHdlIGNvcHkgYSBsaXR0bGUKICAg
-  ICMgZnJvbSBDb25maWd1cmUgWFhYIENvbmZpZ3VyZSBzaG91bGQgYmUgZml4ZWQuCiAgICBpZiAk
-  dGVzdCAtciAkc3JjL3BhdGNobGV2ZWwuaDt0aGVuCiAgICAgICBwYXRjaGxldmVsPWBhd2sgJy9k
-  ZWZpbmVbIAldK1BFUkxfVkVSU0lPTi8ge3ByaW50ICQzfScgJHNyYy9wYXRjaGxldmVsLmhgCiAg
-  ICAgICBzdWJ2ZXJzaW9uPWBhd2sgJy9kZWZpbmVbIAldK1BFUkxfU1VCVkVSU0lPTi8ge3ByaW50
-  ICQzfScgJHNyYy9wYXRjaGxldmVsLmhgCiAgICBlbHNlCiAgICAgICBwYXRjaGxldmVsPTAKICAg
-  ICAgIHN1YnZlcnNpb249MAogICAgZmkKICAgIGxpYnBlcmw9ImxpYnBlcmwuc28uJHBhdGNobGV2
-  ZWwuJHN1YnZlcnNpb24iCiAgICB1bnNldCBwYXRjaGxldmVsCiAgICB1bnNldCBzdWJ2ZXJzaW9u
-  CiAgICA7Owplc2FjCgojIFRoaXMgc2NyaXB0IFVVL3VzZXRocmVhZHMuY2J1IHdpbGwgZ2V0ICdj
-  YWxsZWQtYmFjaycgYnkgQ29uZmlndXJlIAojIGFmdGVyIGl0IGhhcyBwcm9tcHRlZCB0aGUgdXNl
-  ciBmb3Igd2hldGhlciB0byB1c2UgdGhyZWFkcy4KY2F0ID4gVVUvdXNldGhyZWFkcy5jYnUgPDwn
-  RU9DQlUnCmNhc2UgIiR1c2V0aHJlYWRzIiBpbgokZGVmaW5lfHRydWV8W3lZXSopCiAgICAgICAg
-  bGNfcj1gL3NiaW4vbGRjb25maWcgLXJ8Z3JlcCAnOi1sY19yJ3xhd2sgJ3twcmludCAkTkZ9J3xz
-  ZWQgLW4gJyRwJ2AKICAgICAgICBjYXNlICIkb3N2ZXJzIiBpbiAgCgkwLip8MS4qfDIuMCp8Mi4x
-  KikgICBjYXQgPDxFT00gPiY0CkkgZGlkIG5vdCBrbm93IHRoYXQgRnJlZUJTRCAkb3N2ZXJzIHN1
-  cHBvcnRzIFBPU0lYIHRocmVhZHMuCgpGZWVsIGZyZWUgdG8gdGVsbCBwZXJsYnVnQHBlcmwub3Jn
-  IG90aGVyd2lzZS4KRU9NCgkgICAgICBleGl0IDEKCSAgICAgIDs7CgogICAgICAgIDIuMi5bMC03
-  XSopCiAgICAgICAgICAgICAgY2F0IDw8RU9NID4mNApQT1NJWCB0aHJlYWRzIGFyZSBub3Qgc3Vw
-  cG9ydGVkIHdlbGwgYnkgRnJlZUJTRCAkb3N2ZXJzLgoKUGxlYXNlIGNvbnNpZGVyIHVwZ3JhZGlu
-  ZyB0byBhdCBsZWFzdCBGcmVlQlNEIDIuMi44LApvciBwcmVmZXJhYmx5IHRvIHRoZSBtb3N0IHJl
-  Y2VudCAtUkVMRUFTRSBvciAtU1RBQkxFCnZlcnNpb24gKHNlZSBodHRwOi8vd3d3LmZyZWVic2Qu
-  b3JnL3JlbGVhc2VzLykuCgooV2hpbGUgMi4yLjcgZG9lcyBoYXZlIHB0aHJlYWRzLCBpdCBoYXMg
-  c29tZSBwcm9ibGVtcwogd2l0aCB0aGUgY29tYmluYXRpb24gb2YgdGhyZWFkcyBhbmQgcGlwZXMg
-  YW5kIHRoZXJlZm9yZQogbWFueSBQZXJsIHRlc3RzIHdpbGwgZWl0aGVyIGhhbmcgb3IgZmFpbC4p
-  CkVPTQoJICAgICAgZXhpdCAxCgkgICAgICA7OwoKCVszLTVdLiopCgkgICAgICBpZiBbICEgLXIg
-  IiRsY19yIiBdOyB0aGVuCgkgICAgICBjYXQgPDxFT00gPiY0ClBPU0lYIHRocmVhZHMgc2hvdWxk
-  IGJlIHN1cHBvcnRlZCBieSBGcmVlQlNEICRvc3ZlcnMgLS0KYnV0IHlvdXIgc3lzdGVtIGlzIG1p
-  c3NpbmcgdGhlIHNoYXJlZCBsaWJjX3IuCigvc2Jpbi9sZGNvbmZpZyAtciBkb2Vzbid0IGZpbmQg
-  YW55KS4KCkNvbnNpZGVyIHVzaW5nIHRoZSBsYXRlc3QgU1RBQkxFIHJlbGVhc2UuCkVPTQoJCSBl
-  eGl0IDEKCSAgICAgIGZpCgkgICAgICAjIDUwMDAxNiBpcyB0aGUgZmlyc3Qgb3NyZWxkYXRlIGlu
-  IHdoaWNoIG9uZSBjb3VsZAoJICAgICAgIyBqdXN0IGxpbmsgYWdhaW5zdCBsaWJjX3Igd2l0aG91
-  dCBkaXNwb3Npbmcgb2YgbGliYwoJICAgICAgIyBhdCB0aGUgc2FtZSB0aW1lLiAgNTAwMDE2IC4u
-  LiB1cCB0byB3aGF0ZXZlciBpdCB3YXMKCSAgICAgICMgb24gdGhlIDMxc3Qgb2YgQXVndXN0IDIw
-  MDMgY2FuIHN0aWxsIGJlIHVzZWQgd2l0aCAtcHRocmVhZCwKCSAgICAgICMgYnV0IGl0IGlzIG5v
-  dCBuZWNlc3NhcnkuCgoJICAgICAgIyBBbnRvbiBCZXJlemluIHNheXMgdGhhdCBwb3N0IDUwMHNv
-  bWV0aGluZyB3ZSdyZSB3cm9uZyB0byBiZQoJICAgICAgIyB0byBiZSB1c2luZyAtbGNfciwgYW5k
-  IHNob3VsZCBqdXN0IGJlIHVzaW5nIC1wdGhyZWFkIG9uIHRoZQoJICAgICAgIyBsaW5rZXIgbGlu
-  ZS4KCSAgICAgICMgU28gcHJlc3VtYWJseSByZWFsbHkgd2Ugc2hvdWxkIGJlIGNoZWNraW5nIHRo
-  YXQgJG9zdmVyIGlzIDUuKikKCSAgICAgICMgYW5kIHRoYXQgYC9zYmluL3N5c2N0bCAtbiBrZXJu
-  Lm9zcmVsZGF0ZWAgLWdlIDUwMDAxNgoJICAgICAgIyBvciAtbHQgNTAwc29tZXRoaW5nIGFuZCBv
-  bmx5IGluIHRoYXQgcmFuZ2Ugbm90IGRvaW5nIHRoaXM6CgkgICAgICBsZGZsYWdzPSItcHRocmVh
-  ZCAkbGRmbGFncyIKCgkgICAgICAjIEJvdGggaW4gNC54IGFuZCA1LnggZ2V0aG9zdGJ5YWRkcl9y
-  IGV4aXN0cyBidXQKCSAgICAgICMgaXQgaXMgIlRlbXBvcmFyeSBmdW5jdGlvbiwgbm90IHRocmVh
-  ZHNhZmUiLi4uCgkgICAgICAjIFByZXN1bWFibHkgZWFybGllciBpdCBkaWRuJ3QgZXZlbiBleGlz
-  dC4KCSAgICAgIGRfZ2V0aG9zdGJ5YWRkcl9yPSJ1bmRlZiIKCSAgICAgIGRfZ2V0aG9zdGJ5YWRk
-  cl9yX3Byb3RvPSIwIgoJICAgICAgOzsKCgkqKQoJICAgICAgIyA3LnggZG9lc24ndCBpbnN0YWxs
-  IGxpYmNfciBieSBkZWZhdWx0LCBhbmQgQ29uZmlndXJlCgkgICAgICAjIHdvdWxkIGZhaWwgaW4g
-  dGhlIGNvZGUgZm9sbG93aW5nCgkgICAgICAjCgkgICAgICAjIGdldGhvc3RieWFkZHJfcigpIGFw
-  cGVhcnMgdG8gaGF2ZSBiZWVuIGltcGxlbWVudGVkIGluIDYueCsKCSAgICAgIGxkZmxhZ3M9Ii1w
-  dGhyZWFkICRsZGZsYWdzIgoJICAgICAgOzsKCgllc2FjCgogICAgICAgIGNhc2UgIiRvc3ZlcnMi
-  IGluCiAgICAgICAgWzEtNF0qKQoJICAgIHNldCBgZWNobyBYICIkbGlic3dhbnRlZCAifCBzZWQg
-  LWUgJ3MvIGMgLyBjX3IgLydgCgkgICAgc2hpZnQKCSAgICBsaWJzd2FudGVkPSIkKiIKCSAgICA7
-  OwogICAgICAgICopCgkgICAgc2V0IGBlY2hvIFggIiRsaWJzd2FudGVkICJ8IHNlZCAtZSAncy8g
-  YyAvLydgCgkgICAgc2hpZnQKCSAgICBsaWJzd2FudGVkPSIkKiIKCSAgICA7OwoJZXNhYwoJICAg
-  IAoJIyBDb25maWd1cmUgd2lsbCBwcm9iYWJseSBwaWNrIHRoZSB3cm9uZyBsaWJjIHRvIHVzZSBm
-  b3Igbm0gc2Nhbi4KCSMgVGhlIHNhZmVzdCBxdWljay1maXggaXMganVzdCB0byBub3QgdXNlIG5t
-  IGF0IGFsbC4uLgoJdXNlbm09ZmFsc2UKCiAgICAgICAgY2FzZSAiJG9zdmVycyIgaW4KICAgICAg
-  ICAyLjIuOCopCiAgICAgICAgICAgICMgLi4uIGJ1dCB0aGlzIGRvZXMgbm90IGFwcGx5IGZvciAy
-  LjIuOCAtIHdlIGtub3cgaXQncyBzYWZlCiAgICAgICAgICAgIGxpYmM9IiRsY19yIgogICAgICAg
-  ICAgICB1c2VubT10cnVlCiAgICAgICAgICAgOzsKICAgICAgICBlc2FjCgogICAgICAgIHVuc2V0
-  IGxjX3IKCgkjIEV2ZW4gd2l0aCB0aGUgbWFsbG9jIG11dGV4ZXMgdGhlIFBlcmwgbWFsbG9jIGRv
-  ZXMgbm90CgkjIHNlZW0gdG8gYmUgdGhyZWFkc2FmZSBpbiBGcmVlQlNEPwoJY2FzZSAiJHVzZW15
-  bWFsbG9jIiBpbgoJJycpIHVzZW15bWFsbG9jPW4gOzsKCWVzYWMKZXNhYwpFT0NCVQoKIyBtYWxs
-  b2Mgd3JhcCB3b3JrcwpjYXNlICIkdXNlbWFsbG9jd3JhcCIgaW4KJycpIHVzZW1hbGxvY3dyYXA9
-  J2RlZmluZScgOzsKZXNhYwoKIyBYWFggVW5kZXIgRnJlZUJTRCA2LjAgKGFuZCBwcm9iYWJseSBt
-  b3N0IG90aGVyIHNpbWlsYXIgdmVyc2lvbnMpCiMgUGVybF9kaWUoTlVMTCkgZ2VuZXJhdGVzIGEg
-  d2FybmluZzoKIyAgICBwcF9zeXMuYzo0OTE6IHdhcm5pbmc6IG51bGwgZm9ybWF0IHN0cmluZwoj
-  IENvbmZpZ3VyZSBzdXBwb3NlZGVseSB0ZXN0cyBmb3IgdGhpcywgYnV0IGFwcGFyZW50bHkgdGhl
-  IHRlc3QgZG9lc24ndAojIHdvcmsuICBWb2x1bnRlZXJzIHdpdGggRnJlZUJTRCBhcmUgbmVlZGVk
-  IHRvIGltcHJvdmluZyB0aGUgQ29uZmlndXJlIHRlc3QuCiMgTWVhbndoaWxlLCB0aGUgZm9sbG93
-  aW5nIHdvcmthcm91bmQgc2hvdWxkIGJlIHNhZmUgb24gYWxsIHZlcnNpb25zCiMgb2YgRnJlZUJT
-  RC4KZF9wcmludGZfZm9ybWF0X251bGw9J3VuZGVmJwoKIyBBcyBvZiAxMC4zLVJFTEVBU0UgRnJl
-  ZUJTRC4gIFNlZSBbcGVybCAjMTI4ODY3XQpkX3VzZWxvY2FsZT0ndW5kZWYnCg==','gnu'=>'IyBoaW50cy9nbnUuc2gKIyBPcmlnaW5hbGx5IGNvbnRyaWJ1dGVkIGJ5OiAgTWFyayBLZXR0ZW5p
+  b2MgLyAvJ2AKCTs7CmVzYWMKCmNhc2UgIiRvc3ZlcnMiIGluCjEwLiopCgkjIGR0cmFjZSBvbiAx
+  MC54IG5lZWRzIGxpYmVsZiBzeW1ib2xzLCBidXQgd2UgZG9uJ3Qga25vdyBpZiB0aGUKCSMgdXNl
+  ciBpcyBnb2luZyB0byByZXF1ZXN0IHVzZWR0cmFjZSBhbmQgdGhlcmUncyBubyAuY2J1IGZvciB1
+  c2VkdHJhY2UKCWxpYnN3YW50ZWQ9IiRsaWJzd2FudGVkIGVsZiIKCTs7CmVzYWMKCiMgRHluYW1p
+  YyBMb2FkaW5nIGZsYWdzIGhhdmUgbm90IGNoYW5nZWQgbXVjaCwgc28gdGhleSBhcmUgc2VwYXJh
+  dGVkCiMgb3V0IGhlcmUgdG8gYXZvaWQgZHVwbGljYXRpbmcgdGhlbSBldmVyeXdoZXJlLgpjYXNl
+  ICIkb3N2ZXJzIiBpbgowLip8MS4wKikgOzsKCjEuKnwyLiopCgljY2NkbGZsYWdzPSctRFBJQyAt
+  ZnBpYycKCWxkZGxmbGFncz0iLUJzaGFyZWFibGUgJGxkZGxmbGFncyIKCTs7CgozKnw0Knw1Knw2
+  KikKICAgICAgICBvYmpmb3JtYXQ9YC91c3IvYmluL29iamZvcm1hdGAKICAgICAgICBpZiBbIHgk
+  b2JqZm9ybWF0ID0geGFvdXQgXTsgdGhlbgogICAgICAgICAgICBpZiBbIC1lIC91c3IvbGliL2Fv
+  dXQgXTsgdGhlbgogICAgICAgICAgICAgICAgbGlicHRoPSIvdXNyL2xpYi9hb3V0IC91c3IvbG9j
+  YWwvbGliIC91c3IvbGliIgogICAgICAgICAgICAgICAgZ2xpYnB0aD0iL3Vzci9saWIvYW91dCAv
+  dXNyL2xvY2FsL2xpYiAvdXNyL2xpYiIKICAgICAgICAgICAgZmkKICAgICAgICAgICAgbGRkbGZs
+  YWdzPSctQnNoYXJlYWJsZScKICAgICAgICBlbHNlCiAgICAgICAgICAgIGxpYnB0aD0iL3Vzci9s
+  aWIgL3Vzci9sb2NhbC9saWIiCiAgICAgICAgICAgIGdsaWJwdGg9Ii91c3IvbGliIC91c3IvbG9j
+  YWwvbGliIgogICAgICAgICAgICBsZGZsYWdzPSItV2wsLUUgIgogICAgICAgICAgICBsZGRsZmxh
+  Z3M9Ii1zaGFyZWQgIgogICAgICAgIGZpCiAgICAgICAgY2NjZGxmbGFncz0nLURQSUMgLWZQSUMn
+  CiAgICAgICAgOzsKKikKICAgICAgIGxpYnB0aD0iL3Vzci9saWIgL3Vzci9sb2NhbC9saWIiCiAg
+  ICAgICBnbGlicHRoPSIvdXNyL2xpYiAvdXNyL2xvY2FsL2xpYiIKICAgICAgIGxkZmxhZ3M9Ii1X
+  bCwtRSAiCiAgICAgICAgbGRkbGZsYWdzPSItc2hhcmVkICIKICAgICAgICBjY2NkbGZsYWdzPSct
+  RFBJQyAtZlBJQycKICAgICAgIDs7CmVzYWMKCmNhc2UgIiRvc3ZlcnMiIGluCjAuKnwxLip8Mi4q
+  fDMuKikgOzsKCiopCgljY2ZsYWdzPSIke2NjZmxhZ3N9IC1ESEFTX0ZQU0VUTUFTSyAtREhBU19G
+  TE9BVElOR1BPSU5UX0giCglpZiAvdXNyL2Jpbi9maWxlIC1MIC91c3IvbGliL2xpYmMuc28gfCAv
+  dXNyL2Jpbi9ncmVwIC12cSAibm90IHN0cmlwcGVkIiA7IHRoZW4KCSAgICB1c2VubT1mYWxzZQoJ
+  ZmkKICAgICAgICA7Owplc2FjCgpjYXQgPDwnRU9NJyA+JjQKClNvbWUgdXNlcnMgaGF2ZSByZXBv
+  cnRlZCB0aGF0IENvbmZpZ3VyZSBoYWx0cyB3aGVuIHRlc3RpbmcgZm9yCnRoZSBPX05PTkJMT0NL
+  IHN5bWJvbCB3aXRoIGEgc3ludGF4IGVycm9yLiAgVGhpcyBpcyBhcHBhcmVudGx5IGEKc2ggZXJy
+  b3IuICBSZXJ1bm5pbmcgQ29uZmlndXJlIHdpdGgga3NoIGFwcGFyZW50bHkgZml4ZXMgdGhlCnBy
+  b2JsZW0uICBUcnkKCWtzaCBDb25maWd1cmUgW3lvdXIgb3B0aW9uc10KCkVPTQoKIyBGcm9tOiBB
+  bnRvbiBCZXJlemluIDx0b2JlekBwbGFiLmt1LmRrPgojIFRvOiBwZXJsNS1wb3J0ZXJzQHBlcmwu
+  b3JnCiMgU3ViamVjdDogW1BBVENIIDUuMDA1XzU0XSBDb25maWd1cmUgLSBoaW50cy9mcmVlYnNk
+  LnNoIHNpZ25hbCBoYW5kbGVyIHR5cGUKIyBEYXRlOiAzMCBOb3YgMTk5OCAxOTo0NjoyNCArMDEw
+  MAojIE1lc3NhZ2UtSUQ6IDw4NjRzcmhodmN2LmZzZkBsaW9uLnBsYWIua3UuZGs+CgpzaWduYWxf
+  dD0ndm9pZCcKZF92b2lkc2lnPSdkZWZpbmUnCgojIHNldCBsaWJwZXJsLnNvLlguWCBmb3IgMi4y
+  LlgKY2FzZSAiJG9zdmVycyIgaW4KMi4yKikKICAgICMgdW5mb3J0dW5hdGVseSB0aGlzIGNvZGUg
+  Z2V0cyBleGVjdXRlZCBiZWZvcmUKICAgICMgdGhlIGVxdWl2YWxlbnQgaW4gdGhlIG1haW4gQ29u
+  ZmlndXJlIHNvIHdlIGNvcHkgYSBsaXR0bGUKICAgICMgZnJvbSBDb25maWd1cmUgWFhYIENvbmZp
+  Z3VyZSBzaG91bGQgYmUgZml4ZWQuCiAgICBpZiAkdGVzdCAtciAkc3JjL3BhdGNobGV2ZWwuaDt0
+  aGVuCiAgICAgICBwYXRjaGxldmVsPWBhd2sgJy9kZWZpbmVbIAldK1BFUkxfVkVSU0lPTi8ge3By
+  aW50ICQzfScgJHNyYy9wYXRjaGxldmVsLmhgCiAgICAgICBzdWJ2ZXJzaW9uPWBhd2sgJy9kZWZp
+  bmVbIAldK1BFUkxfU1VCVkVSU0lPTi8ge3ByaW50ICQzfScgJHNyYy9wYXRjaGxldmVsLmhgCiAg
+  ICBlbHNlCiAgICAgICBwYXRjaGxldmVsPTAKICAgICAgIHN1YnZlcnNpb249MAogICAgZmkKICAg
+  IGxpYnBlcmw9ImxpYnBlcmwuc28uJHBhdGNobGV2ZWwuJHN1YnZlcnNpb24iCiAgICB1bnNldCBw
+  YXRjaGxldmVsCiAgICB1bnNldCBzdWJ2ZXJzaW9uCiAgICA7Owplc2FjCgojIFRoaXMgc2NyaXB0
+  IFVVL3VzZXRocmVhZHMuY2J1IHdpbGwgZ2V0ICdjYWxsZWQtYmFjaycgYnkgQ29uZmlndXJlIAoj
+  IGFmdGVyIGl0IGhhcyBwcm9tcHRlZCB0aGUgdXNlciBmb3Igd2hldGhlciB0byB1c2UgdGhyZWFk
+  cy4KY2F0ID4gVVUvdXNldGhyZWFkcy5jYnUgPDwnRU9DQlUnCmNhc2UgIiR1c2V0aHJlYWRzIiBp
+  bgokZGVmaW5lfHRydWV8W3lZXSopCiAgICAgICAgbGNfcj1gL3NiaW4vbGRjb25maWcgLXJ8Z3Jl
+  cCAnOi1sY19yJ3xhd2sgJ3twcmludCAkTkZ9J3xzZWQgLW4gJyRwJ2AKICAgICAgICBjYXNlICIk
+  b3N2ZXJzIiBpbiAgCgkwLip8MS4qfDIuMCp8Mi4xKikgICBjYXQgPDxFT00gPiY0CkkgZGlkIG5v
+  dCBrbm93IHRoYXQgRnJlZUJTRCAkb3N2ZXJzIHN1cHBvcnRzIFBPU0lYIHRocmVhZHMuCgpGZWVs
+  IGZyZWUgdG8gdGVsbCBwZXJsYnVnQHBlcmwub3JnIG90aGVyd2lzZS4KRU9NCgkgICAgICBleGl0
+  IDEKCSAgICAgIDs7CgogICAgICAgIDIuMi5bMC03XSopCiAgICAgICAgICAgICAgY2F0IDw8RU9N
+  ID4mNApQT1NJWCB0aHJlYWRzIGFyZSBub3Qgc3VwcG9ydGVkIHdlbGwgYnkgRnJlZUJTRCAkb3N2
+  ZXJzLgoKUGxlYXNlIGNvbnNpZGVyIHVwZ3JhZGluZyB0byBhdCBsZWFzdCBGcmVlQlNEIDIuMi44
+  LApvciBwcmVmZXJhYmx5IHRvIHRoZSBtb3N0IHJlY2VudCAtUkVMRUFTRSBvciAtU1RBQkxFCnZl
+  cnNpb24gKHNlZSBodHRwOi8vd3d3LmZyZWVic2Qub3JnL3JlbGVhc2VzLykuCgooV2hpbGUgMi4y
+  LjcgZG9lcyBoYXZlIHB0aHJlYWRzLCBpdCBoYXMgc29tZSBwcm9ibGVtcwogd2l0aCB0aGUgY29t
+  YmluYXRpb24gb2YgdGhyZWFkcyBhbmQgcGlwZXMgYW5kIHRoZXJlZm9yZQogbWFueSBQZXJsIHRl
+  c3RzIHdpbGwgZWl0aGVyIGhhbmcgb3IgZmFpbC4pCkVPTQoJICAgICAgZXhpdCAxCgkgICAgICA7
+  OwoKCVszLTVdLiopCgkgICAgICBpZiBbICEgLXIgIiRsY19yIiBdOyB0aGVuCgkgICAgICBjYXQg
+  PDxFT00gPiY0ClBPU0lYIHRocmVhZHMgc2hvdWxkIGJlIHN1cHBvcnRlZCBieSBGcmVlQlNEICRv
+  c3ZlcnMgLS0KYnV0IHlvdXIgc3lzdGVtIGlzIG1pc3NpbmcgdGhlIHNoYXJlZCBsaWJjX3IuCigv
+  c2Jpbi9sZGNvbmZpZyAtciBkb2Vzbid0IGZpbmQgYW55KS4KCkNvbnNpZGVyIHVzaW5nIHRoZSBs
+  YXRlc3QgU1RBQkxFIHJlbGVhc2UuCkVPTQoJCSBleGl0IDEKCSAgICAgIGZpCgkgICAgICAjIDUw
+  MDAxNiBpcyB0aGUgZmlyc3Qgb3NyZWxkYXRlIGluIHdoaWNoIG9uZSBjb3VsZAoJICAgICAgIyBq
+  dXN0IGxpbmsgYWdhaW5zdCBsaWJjX3Igd2l0aG91dCBkaXNwb3Npbmcgb2YgbGliYwoJICAgICAg
+  IyBhdCB0aGUgc2FtZSB0aW1lLiAgNTAwMDE2IC4uLiB1cCB0byB3aGF0ZXZlciBpdCB3YXMKCSAg
+  ICAgICMgb24gdGhlIDMxc3Qgb2YgQXVndXN0IDIwMDMgY2FuIHN0aWxsIGJlIHVzZWQgd2l0aCAt
+  cHRocmVhZCwKCSAgICAgICMgYnV0IGl0IGlzIG5vdCBuZWNlc3NhcnkuCgoJICAgICAgIyBBbnRv
+  biBCZXJlemluIHNheXMgdGhhdCBwb3N0IDUwMHNvbWV0aGluZyB3ZSdyZSB3cm9uZyB0byBiZQoJ
+  ICAgICAgIyB0byBiZSB1c2luZyAtbGNfciwgYW5kIHNob3VsZCBqdXN0IGJlIHVzaW5nIC1wdGhy
+  ZWFkIG9uIHRoZQoJICAgICAgIyBsaW5rZXIgbGluZS4KCSAgICAgICMgU28gcHJlc3VtYWJseSBy
+  ZWFsbHkgd2Ugc2hvdWxkIGJlIGNoZWNraW5nIHRoYXQgJG9zdmVyIGlzIDUuKikKCSAgICAgICMg
+  YW5kIHRoYXQgYC9zYmluL3N5c2N0bCAtbiBrZXJuLm9zcmVsZGF0ZWAgLWdlIDUwMDAxNgoJICAg
+  ICAgIyBvciAtbHQgNTAwc29tZXRoaW5nIGFuZCBvbmx5IGluIHRoYXQgcmFuZ2Ugbm90IGRvaW5n
+  IHRoaXM6CgkgICAgICBsZGZsYWdzPSItcHRocmVhZCAkbGRmbGFncyIKCgkgICAgICAjIEJvdGgg
+  aW4gNC54IGFuZCA1LnggZ2V0aG9zdGJ5YWRkcl9yIGV4aXN0cyBidXQKCSAgICAgICMgaXQgaXMg
+  IlRlbXBvcmFyeSBmdW5jdGlvbiwgbm90IHRocmVhZHNhZmUiLi4uCgkgICAgICAjIFByZXN1bWFi
+  bHkgZWFybGllciBpdCBkaWRuJ3QgZXZlbiBleGlzdC4KCSAgICAgIGRfZ2V0aG9zdGJ5YWRkcl9y
+  PSJ1bmRlZiIKCSAgICAgIGRfZ2V0aG9zdGJ5YWRkcl9yX3Byb3RvPSIwIgoJICAgICAgOzsKCgkq
+  KQoJICAgICAgIyA3LnggZG9lc24ndCBpbnN0YWxsIGxpYmNfciBieSBkZWZhdWx0LCBhbmQgQ29u
+  ZmlndXJlCgkgICAgICAjIHdvdWxkIGZhaWwgaW4gdGhlIGNvZGUgZm9sbG93aW5nCgkgICAgICAj
+  CgkgICAgICAjIGdldGhvc3RieWFkZHJfcigpIGFwcGVhcnMgdG8gaGF2ZSBiZWVuIGltcGxlbWVu
+  dGVkIGluIDYueCsKCSAgICAgIGxkZmxhZ3M9Ii1wdGhyZWFkICRsZGZsYWdzIgoJICAgICAgOzsK
+  Cgllc2FjCgogICAgICAgIGNhc2UgIiRvc3ZlcnMiIGluCiAgICAgICAgWzEtNF0qKQoJICAgIHNl
+  dCBgZWNobyBYICIkbGlic3dhbnRlZCAifCBzZWQgLWUgJ3MvIGMgLyBjX3IgLydgCgkgICAgc2hp
+  ZnQKCSAgICBsaWJzd2FudGVkPSIkKiIKCSAgICA7OwogICAgICAgICopCgkgICAgc2V0IGBlY2hv
+  IFggIiRsaWJzd2FudGVkICJ8IHNlZCAtZSAncy8gYyAvLydgCgkgICAgc2hpZnQKCSAgICBsaWJz
+  d2FudGVkPSIkKiIKCSAgICA7OwoJZXNhYwoJICAgIAoJIyBDb25maWd1cmUgd2lsbCBwcm9iYWJs
+  eSBwaWNrIHRoZSB3cm9uZyBsaWJjIHRvIHVzZSBmb3Igbm0gc2Nhbi4KCSMgVGhlIHNhZmVzdCBx
+  dWljay1maXggaXMganVzdCB0byBub3QgdXNlIG5tIGF0IGFsbC4uLgoJdXNlbm09ZmFsc2UKCiAg
+  ICAgICAgY2FzZSAiJG9zdmVycyIgaW4KICAgICAgICAyLjIuOCopCiAgICAgICAgICAgICMgLi4u
+  IGJ1dCB0aGlzIGRvZXMgbm90IGFwcGx5IGZvciAyLjIuOCAtIHdlIGtub3cgaXQncyBzYWZlCiAg
+  ICAgICAgICAgIGxpYmM9IiRsY19yIgogICAgICAgICAgICB1c2VubT10cnVlCiAgICAgICAgICAg
+  OzsKICAgICAgICBlc2FjCgogICAgICAgIHVuc2V0IGxjX3IKCgkjIEV2ZW4gd2l0aCB0aGUgbWFs
+  bG9jIG11dGV4ZXMgdGhlIFBlcmwgbWFsbG9jIGRvZXMgbm90CgkjIHNlZW0gdG8gYmUgdGhyZWFk
+  c2FmZSBpbiBGcmVlQlNEPwoJY2FzZSAiJHVzZW15bWFsbG9jIiBpbgoJJycpIHVzZW15bWFsbG9j
+  PW4gOzsKCWVzYWMKZXNhYwpFT0NCVQoKIyBtYWxsb2Mgd3JhcCB3b3JrcwpjYXNlICIkdXNlbWFs
+  bG9jd3JhcCIgaW4KJycpIHVzZW1hbGxvY3dyYXA9J2RlZmluZScgOzsKZXNhYwoKIyBYWFggVW5k
+  ZXIgRnJlZUJTRCA2LjAgKGFuZCBwcm9iYWJseSBtb3N0IG90aGVyIHNpbWlsYXIgdmVyc2lvbnMp
+  CiMgUGVybF9kaWUoTlVMTCkgZ2VuZXJhdGVzIGEgd2FybmluZzoKIyAgICBwcF9zeXMuYzo0OTE6
+  IHdhcm5pbmc6IG51bGwgZm9ybWF0IHN0cmluZwojIENvbmZpZ3VyZSBzdXBwb3NlZGx5IHRlc3Rz
+  IGZvciB0aGlzLCBidXQgYXBwYXJlbnRseSB0aGUgdGVzdCBkb2Vzbid0CiMgd29yay4gIFZvbHVu
+  dGVlcnMgd2l0aCBGcmVlQlNEIGFyZSBuZWVkZWQgdG8gaW1wcm92aW5nIHRoZSBDb25maWd1cmUg
+  dGVzdC4KIyBNZWFud2hpbGUsIHRoZSBmb2xsb3dpbmcgd29ya2Fyb3VuZCBzaG91bGQgYmUgc2Fm
+  ZSBvbiBhbGwgdmVyc2lvbnMKIyBvZiBGcmVlQlNELgpkX3ByaW50Zl9mb3JtYXRfbnVsbD0ndW5k
+  ZWYnCgojIEFzIG9mIDEwLjMtUkVMRUFTRSBGcmVlQlNELiAgU2VlIFtwZXJsICMxMjg4NjddCmRf
+  dXNlbG9jYWxlPSd1bmRlZicK','gnu'=>'IyBoaW50cy9nbnUuc2gKIyBPcmlnaW5hbGx5IGNvbnRyaWJ1dGVkIGJ5OiAgTWFyayBLZXR0ZW5p
   cyA8a2V0dGVuaXNAcGh5cy51dmEubmw+IERlYyAxMCAxOTk4CgojIGxpYm5zbCBpcyB1bnVzYWJs
   ZSBvbiB0aGUgSHVyZC4KIyBYWFggcmVtb3ZlIHRoaXMgb25jZSBTVU5SUEMgaXMgaW1wbGVtZW50
   ZWQuCnNldCBgZWNobyBYICIkbGlic3dhbnRlZCAifCBzZWQgLWUgJ3MvIGJzZCAvIC8nIC1lICdz
@@ -7211,7 +8832,7 @@ $fatpacked{"Devel/PatchPerl/Hints.pm"} = '#line '.(1+__LINE__).' "'.__FILE__."\"
 DEVEL_PATCHPERL_HINTS
 
 $fatpacked{"Devel/PatchPerl/Plugin.pm"} = '#line '.(1+__LINE__).' "'.__FILE__."\"\n".<<'DEVEL_PATCHPERL_PLUGIN';
-  package Devel::PatchPerl::Plugin;$Devel::PatchPerl::Plugin::VERSION='1.46';use strict;use warnings;qq[Plug it in];
+  package Devel::PatchPerl::Plugin;$Devel::PatchPerl::Plugin::VERSION='1.48';use strict;use warnings;qq[Plug it in];
 DEVEL_PATCHPERL_PLUGIN
 
 $fatpacked{"File/pushd.pm"} = '#line '.(1+__LINE__).' "'.__FILE__."\"\n".<<'FILE_PUSHD';

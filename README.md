@@ -39,7 +39,7 @@ and [mac.sh](https://github.com/skaji/relocatable-perl/blob/master/mac.sh).
 
 ## Docker image
 
-https://registry.hub.docker.com/u/skaji/relocatable-perl
+https://hub.docker.com/r/skaji/relocatable-perl/
 
 ## LICENSE
 
