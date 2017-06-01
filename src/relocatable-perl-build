@@ -226,7 +226,7 @@ sub force_symlink {
     for my $file (grep -f, values %map) {
         unlink $file or die "Failed to unlink $file: $!";
     }
-    for my $from (sort keys %map) {
+    for my $from (sort grep -f, keys %map) {
         my $target = $map{$from};
         symlink $from => $target or die "Failed to symlink $from => $target: $!";
     }
