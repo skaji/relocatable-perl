@@ -28,7 +28,7 @@ then [plenv-download](https://github.com/skaji/plenv-download) may be useful:
 
 Let's say you use OS X. Then:
 
-    wget https://github.com/skaji/relocatable-perl/releases/download/5.26.0.0/perl-darwin-2level.tar.gz
+    wget https://github.com/skaji/relocatable-perl/releases/download/5.26.0.1/perl-darwin-2level.tar.gz
     tar xzf perl-darwin-2level.tar.gz
     mv perl-darwin-2level ~/my-favorite-name
 
