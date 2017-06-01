@@ -1,6 +1,6 @@
 # relocatable perl
 
-[![Build Status](https://api.travis-ci.org/skaji/relocatable-perl.svg)](https://travis-ci.org/skaji/relocatable-perl)
+[![Build Status](https://api.travis-ci.org/skaji/relocatable-perl.svg?branch=master)](https://travis-ci.org/skaji/relocatable-perl)
 
 Perl can be built with relocatable enabled,
 which means you can move perl wherever you want!
