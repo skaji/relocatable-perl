@@ -12,6 +12,8 @@ use File::Path 'rmtree';
 use File::Basename 'dirname';
 use Pod::Usage 'pod2usage';
 use Devel::PatchPerl;
+use CPAN::Perl::Releases::MetaCPAN 'perl_tarballs';
+use HTTP::Tinyish;
 sub run { !system @_ or die "failed @_\n" }
 
 my @LINUX_LIBPTH = qw(
@@ -100,14 +102,21 @@ sub perl_build {
     my $log     = "/tmp/perl-build-$now.$$.log";
     mkdir $tempdir or die "mkdir $tempdir: $!\n";
 
+    my %tar_option = ("tar.gz" => "xzf", "tar.bz2" => "xjf", "tar.xz" => "xJf");
     if ($tarball) {
         say "---> use $tarball";
-        run "tar", "xzf", $tarball, "-C", $tempdir;
+        my ($suffix) = $tarball =~ /\.(tar\.(?:gz|bz2|xz))$/;
+        run "tar", $tar_option{$suffix}, $tarball, "-C", $tempdir;
     } else {
-        say "---> downloding perl-$perl_version.tar.gz";
+        say "---> downloding perl-$perl_version";
         chdir $tempdir;
-        run http_get(), "http://www.cpan.org/src/5.0/perl-$perl_version.tar.gz";
-        run "tar", "xzf", "perl-$perl_version.tar.gz";
+        my $found = perl_tarballs $perl_version;
+        die "Couldn't find $perl_version\n" if !$found || !keys %$found;
+        my ($suffix) = keys %$found;
+        my $url = "https://cpan.metacpan.org/authors/id/" . $found->{$suffix};
+        my $res = HTTP::Tinyish->new->mirror($url => "perl-$perl_version.$suffix");
+        die "$url, $res->{status} $res->{reason}\n" unless $res->{success};
+        run "tar", $tar_option{$suffix}, "perl-$perl_version.$suffix";
     }
 
     my @Configure = (
@@ -132,16 +141,6 @@ sub perl_build {
     run "make install >>$log 2>&1";
     chdir $current_dir;
     rmtree $tempdir;
-}
-
-sub http_get {
-    if (grep { -x "$_/wget" } File::Spec->path) {
-        return ("wget", "-q");
-    } elsif (grep { -x "$_/curl" } File::Spec->path) {
-        return ("curl", "-sO");
-    } else {
-        die "Cannot find wget nor curl\n";
-    }
 }
 
 sub patch_config_heavy {

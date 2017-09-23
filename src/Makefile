@@ -1,5 +1,5 @@
-../relocatable-perl-build: relocatable-perl-build local/lib/perl5/Devel/PatchPerl.pm
+../relocatable-perl-build: relocatable-perl-build local
 	fatpack-simple -o ../relocatable-perl-build relocatable-perl-build
 
-local/lib/perl5/Devel/PatchPerl.pm:
-	cpanm -nq -Llocal Devel::PatchPerl
+local:
+	cpm install
