@@ -28,14 +28,14 @@ then [plenv-download](https://github.com/skaji/plenv-download) may be useful:
 
 Let's say you use OS X. Then:
 
-    wget https://github.com/skaji/relocatable-perl/releases/download/5.26.0.1/perl-darwin-2level.tar.gz
+    wget https://github.com/skaji/relocatable-perl/releases/download/5.26.1.0/perl-darwin-2level.tar.gz
     tar xzf perl-darwin-2level.tar.gz
     mv perl-darwin-2level ~/my-favorite-name
 
 That's all. Check out your perl works:
 
     $ ~/my-favorite-name/bin/perl -v
-    This is perl 5, version 26, subversion 0 (v5.26.0) built for darwin-2level
+    This is perl 5, version 26, subversion 1 (v5.26.1) built for darwin-2level
 
     # cpanm is already installed. Install your favorite cpan modules.
     $ ~/my-favorite-name/bin/cpanm LWP::UserAgent
