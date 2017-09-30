@@ -4,7 +4,7 @@ before_install: |
   brew install xz coreutils gnu-tar; \
   brew link --force xz coreutils gnu-tar; \
   true; \
-  rvm get head; \
+  rvm get stable; \
   true
 
 script: "./mac.sh --perl_version `cat BUILD_VERSION`"
