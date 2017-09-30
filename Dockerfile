@@ -1,7 +1,7 @@
 FROM centos:centos6
 MAINTAINER Shoichi Kaji <skaji@cpan.org>
 
-RUN yum install -y gcc make tar wget patch bzip2
+RUN yum install -y gcc make tar wget patch bzip2 xz
 RUN yum clean all
 RUN mkdir /tmp/build /artifact
 RUN wget --no-check-certificate -q -O - https://github.com/skaji/relocatable-perl/releases/download/5.26.0.1/perl-x86_64-linux.tar.gz | tar xzf - --strip-components 1 -C /usr/local
@@ -16,7 +16,9 @@ RUN wget --no-check-certificate -q -O - http://cpanmin.us | /opt/perl/bin/perl -
 RUN /opt/perl/bin/change-shebang -f /opt/perl/bin/*
 
 RUN cp -r /opt/perl /tmp/perl-`/opt/perl/bin/perl -MConfig -e 'print $Config{archname}'`
-RUN cd /tmp && tar czf /artifact/perl-`/opt/perl/bin/perl -MConfig -e 'print $Config{archname}'`.tar.gz perl-`/opt/perl/bin/perl -MConfig -e 'print $Config{archname}'`
+RUN cd /tmp && tar czf /artifact/perl-`/opt/perl/bin/perl -MConfig -e 'print $Config{archname}'`.tar.gz  perl-`/opt/perl/bin/perl -MConfig -e 'print $Config{archname}'`
+RUN cd /tmp && tar cjf /artifact/perl-`/opt/perl/bin/perl -MConfig -e 'print $Config{archname}'`.tar.bz2 perl-`/opt/perl/bin/perl -MConfig -e 'print $Config{archname}'`
+RUN cd /tmp && tar cJf /artifact/perl-`/opt/perl/bin/perl -MConfig -e 'print $Config{archname}'`.tar.xz  perl-`/opt/perl/bin/perl -MConfig -e 'print $Config{archname}'`
 
 RUN rm -rf /tmp/perl-`/opt/perl/bin/perl -MConfig -e 'print $Config{archname}'`
 RUN rm -rf /tmp/build

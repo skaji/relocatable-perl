@@ -8,7 +8,7 @@ HAVE_GDBM=NO
 PERL_PREFIX=/opt/perl
 export PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin
 
-for cmd in gcp gtar curl; do
+for cmd in gcp gtar xz curl; do
   if ! type $cmd >/dev/null 2>&1; then echo missing $cmd; exit 1; fi
 done
 
@@ -26,5 +26,7 @@ $PERL_PREFIX/bin/change-shebang -f $PERL_PREFIX/bin/*
 
 NAME=perl-`$PERL_PREFIX/bin/perl -MConfig -e 'print $Config{archname}'`
 gcp -r /opt/perl ./$NAME
-gtar czf $NAME.tar.gz $NAME
+gtar czf $NAME.tar.gz  $NAME
+gtar cjf $NAME.tar.bz2 $NAME
+gtar cJf $NAME.tar.xz  $NAME
 rm -rf $NAME
