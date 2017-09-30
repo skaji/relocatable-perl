@@ -13,7 +13,10 @@ deploy:
   provider: releases
   api_key:
     secure: LHxcdsW2E+3Dm1FXnIbeKf2yQtEHPP9l4d6j+uK47DmFVDe+u6IpphdiTdrJipiOUrU6eC+lyY3izzh0ej1yklMue99YBbT4KbdtQzHqyeb6KBYs4M/LrB8AU4n8i7O7ZcUCQVtbx5q/be7OtJnwEIJTFSfPnuaJpL3/9mYQ2wU=
-  file: perl-darwin-2level.tar.gz
+  file:
+    - perl-darwin-2level.tar.gz
+    - perl-darwin-2level.tar.bz2
+    - perl-darwin-2level.tar.xz
   skip_cleanup: true
   on:
     repo: skaji/relocatable-perl
