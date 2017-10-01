@@ -17,7 +17,6 @@ RUN /opt/perl/bin/change-shebang -f /opt/perl/bin/*
 
 RUN cp -r /opt/perl /tmp/perl-`/opt/perl/bin/perl -MConfig -e 'print $Config{archname}'`
 RUN cd /tmp && tar czf /artifact/perl-`/opt/perl/bin/perl -MConfig -e 'print $Config{archname}'`.tar.gz  perl-`/opt/perl/bin/perl -MConfig -e 'print $Config{archname}'`
-RUN cd /tmp && tar cjf /artifact/perl-`/opt/perl/bin/perl -MConfig -e 'print $Config{archname}'`.tar.bz2 perl-`/opt/perl/bin/perl -MConfig -e 'print $Config{archname}'`
 RUN cd /tmp && tar cJf /artifact/perl-`/opt/perl/bin/perl -MConfig -e 'print $Config{archname}'`.tar.xz  perl-`/opt/perl/bin/perl -MConfig -e 'print $Config{archname}'`
 
 RUN rm -rf /tmp/perl-`/opt/perl/bin/perl -MConfig -e 'print $Config{archname}'`

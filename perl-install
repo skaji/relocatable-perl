@@ -53,6 +53,13 @@ if ! type tar &>/dev/null; then
   die 'Cannot find `tar` command'
 fi
 
+TAR_OPTION=xzf
+TAR_SUFFIX=tar.gz
+if type xz &>/dev/null; then
+  TAR_OPTION=xJf
+  TAR_SUFFIX=tar.xz
+fi
+
 INSTALL_DIR=$1
 if [[ -d $INSTALL_DIR ]]; then
   [[ -w $INSTALL_DIR ]] || die "You don't have write permission to $INSTALL_DIR"
@@ -61,10 +68,10 @@ else
 fi
 ABS_INSTALL_DIR=$(cd $INSTALL_DIR &>/dev/null; pwd)
 
-URL=https://github.com/skaji/relocatable-perl/releases/download/$TAG/perl-$ARCHNAME.tar.gz
+URL=https://github.com/skaji/relocatable-perl/releases/download/$TAG/perl-$ARCHNAME.$TAR_SUFFIX
 echo "Installing perl $TAG to $INSTALL_DIR, this may take a while..."
 
-$HTTP_GET $HTTP_GET_OPTION $URL | tar xzf - --strip-components 1 -C $INSTALL_DIR
+$HTTP_GET $HTTP_GET_OPTION $URL | tar $TAR_OPTION - --strip-components 1 -C $INSTALL_DIR
 if [[ ! -f $INSTALL_DIR/bin/perl ]]; then
   die "Failed to install perl"
 fi

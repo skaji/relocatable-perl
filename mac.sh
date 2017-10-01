@@ -27,6 +27,5 @@ $PERL_PREFIX/bin/change-shebang -f $PERL_PREFIX/bin/*
 NAME=perl-`$PERL_PREFIX/bin/perl -MConfig -e 'print $Config{archname}'`
 gcp -r /opt/perl ./$NAME
 gtar czf $NAME.tar.gz  $NAME
-gtar cjf $NAME.tar.bz2 $NAME
 gtar cJf $NAME.tar.xz  $NAME
 rm -rf $NAME
