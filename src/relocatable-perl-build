@@ -3,7 +3,7 @@ use strict;
 use warnings FATAL => 'all';
 use utf8;
 use Getopt::Long qw(:config no_auto_abbrev no_ignore_case bundling);
-use 5.010;
+use 5.10.1;
 use Config;
 use Cwd 'getcwd';
 use File::Spec;
@@ -15,6 +15,9 @@ use Devel::PatchPerl;
 use CPAN::Perl::Releases::MetaCPAN 'perl_tarballs';
 use HTTP::Tinyish;
 sub run { !system @_ or die "failed @_\n" }
+
+# XXX old mac os X was shipped with openssl 0.9.8 :/
+@HTTP::Tinyish::Backends = map "HTTP::Tinyish::$_", qw( Curl Wget HTTPTiny LWP );
 
 my @LINUX_LIBPTH = qw(
     /usr/local/lib64

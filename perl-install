@@ -32,10 +32,10 @@ fi
 
 if type curl &>/dev/null; then
   HTTP_GET=curl
-  HTTP_GET_OPTION='-sSLk'
+  HTTP_GET_OPTION='-sSL'
 elif type wget &>/dev/null; then
   HTTP_GET=wget
-  HTTP_GET_OPTION='-q --no-check-certificate -O -'
+  HTTP_GET_OPTION='-q -O -'
 else
   die 'Cannot find `curl` nor `wget`'
 fi
