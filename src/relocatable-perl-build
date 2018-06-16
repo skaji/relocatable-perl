@@ -129,9 +129,15 @@ sub perl_build {
         "-Dman1dir=none",
         "-Dman3dir=none",
         "-DDEBUGGING=-g",
-        ($Config{archname} =~ /linux/i ? "-Dlibpth='@LINUX_LIBPTH'" : ()),
-        "-des",
     );
+    if ($Config{archname} =~ /linux/i) {
+        # ubuntu 18.04 does not have xlocale.h
+        # we can safely remove xlocale.h because locale.h reads it
+        # see https://github.com/agracio/electron-edge-js/issues/16
+        push @Configure, "-Ui_xlocale";
+        push @Configure, "-Dlibpth='@LINUX_LIBPTH'";
+    }
+    push @Configure, "-des";
 
     chdir "$tempdir/perl-$perl_version" or die;
     my $devel = "Devel::PatchPerl";
