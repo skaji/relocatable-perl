@@ -204,8 +204,18 @@ sub patch_config_pm {
     my ($out, $tmpname) = tempfile UNLINK => 0, DIR => dirname($config_pm);
     my $mode = (stat $config_pm)[2];
     chmod $mode, $tmpname;
+
+    my %fix = (
+           'while ($libdir =~ m!^\.\./!) {',
+        => 'while ($libdir =~ m!^\.\.(?:/|$)!) {',
+           '$libdir = "$prefix/$libdir";',
+        => '$libdir = $prefix . (length $libdir ? "/$libdir" : "");',
+    );
+    my $fix = join "|", map { quotemeta $_ } sort keys %fix;
     while (<$in>) {
-        if (/^(\s+)scriptdir\s*=>/) {
+        if (/^(\s*)($fix)$/) {
+            say {$out} "$1$fix{$2}";
+        } elsif (/^(\s+)scriptdir\s*=>/) {
             say {$out} "$1scriptdir => relocate_inc('.../'),";
         } else {
             print {$out} $_;
