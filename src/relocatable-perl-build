@@ -103,7 +103,7 @@ system "$prefix/bin/perl -V";
 exit;
 
 sub perl_build {
-    my ($perefix, $perl_version, $tarball) = @_;
+    my ($prefix, $perl_version, $tarball) = @_;
 
     my $current_dir = getcwd;
 
