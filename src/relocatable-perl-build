@@ -14,7 +14,14 @@ use Pod::Usage 'pod2usage';
 use Devel::PatchPerl;
 use CPAN::Perl::Releases::MetaCPAN 'perl_tarballs';
 use HTTP::Tinyish;
-sub run { !system @_ or die "failed @_\n" }
+use IPC::Run3 'run3';
+
+sub run {
+    my ($cmd, $log) = @_;
+    warn "---> @$cmd\n";
+    run3 $cmd, undef, $log, $log, { append_stdout => 1 };
+    $? == 0 or die "failed @$cmd";
+}
 
 # XXX old mac os X was shipped with openssl 0.9.8 :/
 @HTTP::Tinyish::Backends = map "HTTP::Tinyish::$_", qw( Curl Wget HTTPTiny LWP );
@@ -109,7 +116,7 @@ sub perl_build {
     if ($tarball) {
         say "---> use $tarball";
         my ($suffix) = $tarball =~ /\.(tar\.(?:gz|bz2|xz))$/;
-        run "tar", $tar_option{$suffix}, $tarball, "-C", $tempdir;
+        run ["tar", $tar_option{$suffix}, $tarball, "-C", $tempdir], $log;
     } else {
         say "---> downloding perl-$perl_version";
         chdir $tempdir;
@@ -119,7 +126,7 @@ sub perl_build {
         my $url = "https://cpan.metacpan.org/authors/id/" . $found->{$suffix};
         my $res = HTTP::Tinyish->new->mirror($url => "perl-$perl_version.$suffix");
         die "$url, $res->{status} $res->{reason}\n" unless $res->{success};
-        run "tar", $tar_option{$suffix}, "perl-$perl_version.$suffix";
+        run ["tar", $tar_option{$suffix}, "perl-$perl_version.$suffix"], $log;
     }
 
     my @Configure = (
@@ -135,7 +142,7 @@ sub perl_build {
         # we can safely remove xlocale.h because locale.h reads it
         # see https://github.com/agracio/electron-edge-js/issues/16
         push @Configure, "-Ui_xlocale";
-        push @Configure, "-Dlibpth='@LINUX_LIBPTH'";
+        push @Configure, "-Dlibpth=@LINUX_LIBPTH";
     }
     push @Configure, "-des";
 
@@ -144,10 +151,9 @@ sub perl_build {
     say "---> patching by $devel " . $devel->VERSION;
     $devel->patch_source($perl_version, ".");
     say "---> building perl $perl_version, see $log for progress";
-    run "@Configure >>$log 2>&1";
-    my $option = $jobs ? "--jobs=$jobs" : "";
-    run "make $option >>$log 2>&1";
-    run "make install >>$log 2>&1";
+    run \@Configure, $log;
+    my @option = $jobs ? ("--jobs=$jobs") : ();
+    run ["make", @option, "install"], $log;
     chdir $current_dir;
     rmtree $tempdir;
 }
