@@ -14,7 +14,7 @@ $fatpacked{"Devel/InnerPackage.pm"} = '#line '.(1+__LINE__).' "'.__FILE__."\"\n"
 DEVEL_INNERPACKAGE
 
 $fatpacked{"Devel/PatchPerl.pm"} = '#line '.(1+__LINE__).' "'.__FILE__."\"\n".<<'DEVEL_PATCHPERL';
-  package Devel::PatchPerl;$Devel::PatchPerl::VERSION='1.52';use strict;use warnings;use File::pushd qw[pushd];use File::Spec;use IO::File;use Devel::PatchPerl::Hints qw[hint_file];use Module::Pluggable search_path=>['Devel::PatchPerl::Plugin'];use vars qw[@ISA @EXPORT_OK];@ISA=qw(Exporter);@EXPORT_OK=qw(patch_source);my$patch_exe=_can_run('gpatch')|| _can_run('patch');my@patch=({perl=>[qw/5.005/,],subs=>[[\&_patch_5_005,1 ],],},{perl=>[qw/5.005_01/,],subs=>[[\&_patch_5_005_01,1 ],],},{perl=>[qw/5.005_02/,],subs=>[[\&_patch_5_005_02,1 ],],},{perl=>[qr/^5\.00[2345]/,qw/5.001n/,],subs=>[[\&_patch_handy,1 ],],},{perl=>[qw/5.005 5.005_01 5.005_02 5.005_03 5.005_04/,],subs=>[[\&_replace_makedepend,1 ],],},{perl=>[qr/^5\.00[01234]/,qw/5.005 5.005_01 5.005_02 5.005_03/,],subs=>[[\&_patch_db,1 ],],},{perl=>[qr/^5\.6\.[1-2]$/,qr/^5\.7\.[0-1]$/,],subs=>[[\&_patch_makefile_sh_phony ],],},{perl=>[qw/5.6.0 5.6.1 5.7.0 5.7.1 5.7.2 5.7.3 5.8.0/,],subs=>[[\&_patch_db,3 ],],},{perl=>[qr/^5\.004_0[1234]$/,],subs=>[[\&_patch_doio ],],},{perl=>[qw/5.005 5.005_01 5.005_02/,],subs=>[[\&_patch_sysv,old_format=>1 ],],},{perl=>[qw/5.005_03 5.005_04/,qr/^5\.6\.[0-2]$/,qr/^5\.7\.[0-3]$/,qr/^5\.8\.[0-8]$/,qr/^5\.9\.[0-5]$/ ],subs=>[[\&_patch_sysv,old_format=>0 ],],},{perl=>[qr/^5\.004_05$/,qr/^5\.005(?:_0[1-4])?$/,qr/^5\.6\.[01]$/,],subs=>[[\&_patch_configure ],[\&_patch_makedepend_lc ],],},{perl=>[qr/^5\.6\.[0-2]$/,],subs=>[[\&_patch_conf_gconvert ],[\&_patch_sort_N ],],},{perl=>['5.8.0',],subs=>[[\&_patch_makedepend_lc ],],},{perl=>[qr/.*/,],subs=>[[\&_patch_conf_solaris ],[\&_patch_bitrig ],[\&_patch_hints ],[\&_patch_patchlevel ],[\&_patch_develpatchperlversion ],[\&_patch_errno_gcc5 ],],},{perl=>[qr/^5\.6\.[0-2]$/,qr/^5\.7\.[0-3]$/,qr/^5\.8\.[0-8]$/,],subs=>[[\&_patch_makedepend_SH ],],},{perl=>[qr/^5\.1[0-2]/,],subs=>[[\&_patch_archive_tar_tests ],[\&_patch_odbm_file_hints_linux ],],},{perl=>[qr/^5.1([24].\d+|0.1)/,],subs=>[[\&_patch_make_ext_pl ],],},{perl=>[qr/^5\.8\.9$/,],subs=>[[\&_patch_589_perlio_c ],],},{perl=>[qr/^5\.8\.[89]$/ ],subs=>[[\&_patch_hsplit_rehash_58 ]],},{perl=>[qr/^5\.10\.1$/,qr/^5\.12\.5$/,],subs=>[[\&_patch_hsplit_rehash_510 ]],},{perl=>[qr/^5\.18\.0$/,],subs=>[[\&_patch_regmatch_pointer_5180 ]],},{perl=>[qr/^5\.20\.0$/,],subs=>[[\&_patch_cow_speed ]],},{perl=>[qr/^5\.6\.[012]$/,qr/^5\.8\.[89]$/,qr/^5\.10\.[01]$/,],subs=>[[\&_patch_preprocess_options ]],},{perl=>[qr/^5\.18\.3$/,],subs=>[[\&_patch_5183_metajson ]],},{perl=>[qr/^5\.24\.[01]$/,],subs=>[[\&_patch_time_hires ]],},{perl=>[qr/^5\.24\.3$/,qr/^5\.25\.(?:[4-9]|10)$/,qr/^5\.26\.[01]$/,qr/^5\.27\.[0-4]$/,],subs=>[[\&_patch_fp_class_denorm ]],},);sub patch_source {my$vers=shift;$vers=shift if eval {$vers->isa(__PACKAGE__)};my$source=shift || '.';if (!$vers){$vers=_determine_version($source);if ($vers){warn "Auto-guessed '$vers'\n"}else {die "You didn't provide a perl version and I don't appear to be in a perl source tree\n"}}$source=File::Spec->rel2abs($source);{my$dir=pushd($source);for my$p (grep {_is($_->{perl},$vers)}@patch){for my$s (@{$p->{subs}}){my($sub,@args)=@$s;push@args,$vers unless scalar@args;$sub->(@args)}}_process_plugin(version=>$vers,source=>$source,patchexe=>$patch_exe)}}sub _process_plugin {my%args=@_;return unless my$possible=$ENV{PERL5_PATCHPERL_PLUGIN};my ($plugin)=grep {$possible eq $_ or /\Q$possible\E$/}__PACKAGE__->plugins;unless ($plugin){warn "# You specified a plugin '",$ENV{PERL5_PATCHPERL_PLUGIN},"' that isn't installed, just thought you might be interested.\n";return}{local $@;eval "require $plugin";if ($@){die "# I tried to load '",$ENV{PERL5_PATCHPERL_PLUGIN},"' but it didn't work out. Here is what happened '$@'\n"}}{local $@;eval {$plugin->patchperl(%args,)};if ($@){warn "# Warnings from the plugin: '$@'\n"}}return 1}sub _can_run {my$command=shift;if ($^O eq 'VMS'){require VMS::DCLsym;my$syms=VMS::DCLsym->new;return$command if scalar$syms->getsym(uc$command)}require File::Spec;require ExtUtils::MakeMaker;my@possibles;if(File::Spec->file_name_is_absolute($command)){return MM->maybe_command($command)}else {for my$dir (File::Spec->path,File::Spec->curdir){next if!$dir ||!-d $dir;my$abs=File::Spec->catfile($^O eq 'MSWin32' ? Win32::GetShortPathName($dir): $dir,$command);push@possibles,$abs if$abs=MM->maybe_command($abs)}}return@possibles if wantarray;return shift@possibles}sub _is {my($s1,$s2)=@_;defined$s1!=defined$s2 and return 0;ref$s2 and ($s1,$s2)=($s2,$s1);if (ref$s1){if (ref$s1 eq 'ARRAY'){_is($_,$s2)and return 1 for @$s1;return 0}return$s2 =~ $s1}return$s1 eq $s2}sub _patch {my($patch)=@_;print "patching $_\n" for$patch =~ /^\+{3}\s+(\S+)/gm;my$diff='tmp.diff';_write_or_die($diff,$patch);die "No patch utility found\n" unless$patch_exe;local$ENV{PATCH_GET}=0;_run_or_die("$patch_exe -f -s -p0 <$diff");unlink$diff or die "unlink $diff: $!\n"}sub _write_or_die {my($file,$data)=@_;my$fh=IO::File->new(">$file")or die "$file: $!\n";$fh->print($data)}sub _run_or_die {die unless system(@_)==0}sub determine_version {my$src=shift;$src=shift if eval {$src->isa(__PACKAGE__)};$src='.' unless$src;_determine_version($src)}sub _determine_version {my ($source)=@_;my$patchlevel_h=File::Spec->catfile($source,'patchlevel.h');return unless -e $patchlevel_h;my$version;{my%defines;open my$fh,'<',$patchlevel_h;my@vers;while (<$fh>){chomp;next unless /^#define/;my ($foo,$bar)=(split /\s+/)[1,2];$defines{$foo}=$bar}if (my@wotsits=grep {defined$defines{$_}}qw(PERL_REVISION PERL_VERSION PERL_SUBVERSION)){$version=join '.',map {$defines{$_}}@wotsits}elsif (my@watsits=grep {defined$defines{$_}}qw(PATCHLEVEL SUBVERSION)){$version=sprintf '5.%03d_%02d',map {$defines{$_}}@watsits}else {return}}return$version}sub _patch_patchlevel {return if -d '.git';my$dpv=$Devel::PatchPerl::VERSION || "(unreleased)";open my$plin,"patchlevel.h" or die "Couldn't open patchlevel.h : $!";open my$plout,">patchlevel.new" or die "Couldn't write on patchlevel.new : $!";my$seen=0;while (<$plin>){if (/\t,NULL/ and $seen){print {$plout}qq{\t,"Devel::PatchPerl $dpv"\n}}$seen++ if /local_patches\[\]/;print {$plout}$_}close$plout or die "Couldn't close filehandle writing to patchlevel.new : $!";close$plin or die "Couldn't close filehandle reading from patchlevel.h : $!";unlink "patchlevel.bak" or warn "Couldn't unlink patchlevel.bak : $!" if -e "patchlevel.bak";rename "patchlevel.h","patchlevel.bak" or die "Couldn't rename patchlevel.h to patchlevel.bak : $!";rename "patchlevel.new","patchlevel.h" or die "Couldn't rename patchlevel.new to patchlevel.h : $!"}sub _patch_hints {my@os;push@os,$^O;push@os,'linux' if $^O eq 'gnukfreebsd';for my$os (@os){return unless my ($file,$data)=hint_file($os);my$path=File::Spec->catfile('hints',$file);if (-e $path){chmod 0644,$path or die "$!\n"}open my$fh,'>',$path or die "$!\n";print$fh $data;close$fh}return 1}sub _patch_db {my$ver=shift;for my$file ('ext/DB_File/DB_File.xs','Configure'){print "patching $file\n";_run_or_die($^X,'-pi.bak','-e',"s/<db.h>/<db$ver\\/db.h>/",$file);unlink "$file.bak" if -e "$file.bak"}}sub _patch_doio {_patch(<<'END')}sub _patch_sysv {my%opt=@_;return if $^O ne 'linux' or -f '/usr/include/asm/page.h';if ($opt{old_format}){_patch(<<'END')}else {_patch(<<'END')}}sub _patch_configure {_patch(<<'END')}sub _patch_makedepend_lc {_patch(<<'END')}sub _patch_makedepend_SH {my$perl=shift;SWITCH: {if ($perl eq '5.6.0'){_patch(<<'BADGER');last SWITCH}if ($perl eq '5.6.1'){_patch(<<'BADGER');last SWITCH}if ($perl eq '5.6.2'){_patch(<<'BADGER');last SWITCH}if ($perl eq '5.7.0'){_patch(<<'BADGER');last SWITCH}if ($perl eq '5.7.1'){_patch(<<'BADGER');last SWITCH}if ($perl eq '5.7.2'){_patch(<<'BADGER');last SWITCH}if ($perl eq '5.7.3'){_patch(<<'BADGER');last SWITCH}if ($perl eq '5.8.0'){_patch(<<'BADGER');last SWITCH}_patch(<<'BADGER')}}sub _patch_conf_gconvert {my$perl=shift;_patch(<<'END')}sub _patch_sort_N {system($^X,'-pi.bak','-e','s!\$sort \-n \+1!(\$sort -n -k 2 2>/dev/null || \$sort -n +1)!','Configure')}sub _patch_archive_tar_tests {my$perl=shift;if ($perl =~ /^5\.10/){_patch(<<'END')}else {_patch(<<'END')}}sub _patch_odbm_file_hints_linux {_patch(<<'END')}sub _patch_make_ext_pl {_patch(<<'END')}sub _patch_589_perlio_c {_patch(<<'END')}sub _patch_hsplit_rehash_58 {my$perl=shift;my$patch=<<'END';if ($perl =~ qr/^5\.8\.8$/){$patch =~ s/non-pathological/non-pathalogical/;$patch =~ s/triggering/triggerring/}_patch($patch)}sub _patch_hsplit_rehash_510 {_patch(<<'END')}sub _patch_bitrig {return unless $^O eq 'bitrig';my$perlver=shift;my$num=_norm_ver($perlver);return unless$num < 5.019004;unless ($num < 5.00800){_patch(<<'BOOGLE')}if ($num < 5.008009){_patch(<<'BITRIGM1')}else {_patch(<<'BITRIGMX')}if ($num < 5.008001){}elsif ($num < 5.008007){_patch(<<'BITRIGC3')}elsif ($num < 5.008009){_patch(<<'BITRIGC2')}elsif ($num < 5.013000){_patch(<<'BITRIGC1')}else {_patch(<<'BITRIGCX')}}sub _patch_conf_solaris {return unless $^O eq 'solaris';my$perlver=shift;my$num=_norm_ver($perlver);return unless$num < 5.018000;_patch(<<'BUBBLE')}sub _patch_regmatch_pointer_5180 {_patch(<<'BOBBLE')}sub _patch_makefile_sh_phony {_patch(<<'END')}sub _patch_cow_speed {_patch(<<'COWSAY')}sub _patch_preprocess_options {my$perl=shift;if ($perl =~ /^5\.(?:8|10)\./){_patch(<<'END')}elsif ($perl =~ /^5\.6\./){_patch(<<'END')}}sub _patch_5183_metajson {_patch(<<'DOGSAY')}sub _patch_handy {_patch(<<'END')}sub _replace_makedepend {_write_or_die('makedepend.SH',<<'END')}sub _patch_5_005_02 {_patch(<<'END')}sub _patch_5_005_01 {_patch(<<'END')}sub _patch_5_005 {_patch(<<'END')}sub _patch_errno_gcc5 {my$perlver=shift;my$num=_norm_ver($perlver);return unless$num < 5.021009;return if$num > 5.020002 && $num < 5.021;if ($num < 5.006){warn "The Errno GCC 5 patch only goes back as far as v5.6.0\n";warn "You will have to generate your own patch to go farther back\n";return}elsif ($num < 5.006001){_patch(<<'END')}elsif ($num < 5.007002){_patch(<<'END')}elsif ($num < 5.007003){_patch(<<'END')}elsif ($num < 5.008009){_patch(<<'END')}else {_patch(<<'END')}}sub _patch_time_hires {_patch(<<'END')}sub _patch_fp_class_denorm {my$perlver=shift;my$num=_norm_ver($perlver);if ($num < 5.025004){_patch(<<'END')}else {_patch(<<'END')}}sub _norm_ver {my$ver=shift;my@v=split(qr/[._]0*/,$ver);$v[2]||= 0;return sprintf '%d.%03d%03d',@v}sub _patch_develpatchperlversion {return if -d '.git';my$dpv=$Devel::PatchPerl::VERSION || "(unreleased)";_patch(<<"END")}qq[patchin'];
+  package Devel::PatchPerl;$Devel::PatchPerl::VERSION='1.58';use strict;use warnings;use File::pushd qw[pushd];use File::Spec;use IO::File;use Devel::PatchPerl::Hints qw[hint_file];use Module::Pluggable search_path=>['Devel::PatchPerl::Plugin'];use vars qw[@ISA @EXPORT_OK];use constant CERTIFIED=>5.029010;@ISA=qw(Exporter);@EXPORT_OK=qw(patch_source);my$patch_exe=_can_run('gpatch')|| _can_run('patch');my@patch=({perl=>[qw/5.005/,],subs=>[[\&_patch_5_005,1 ],],},{perl=>[qw/5.005_01/,],subs=>[[\&_patch_5_005_01,1 ],],},{perl=>[qw/5.005_02/,],subs=>[[\&_patch_5_005_02,1 ],],},{perl=>[qr/^5\.00[2345]/,qw/5.001n/,],subs=>[[\&_patch_handy,1 ],],},{perl=>[qw/5.005 5.005_01 5.005_02 5.005_03 5.005_04/,],subs=>[[\&_replace_makedepend,1 ],],},{perl=>[qr/^5\.00[01234]/,qw/5.005 5.005_01 5.005_02 5.005_03/,],subs=>[[\&_patch_db,1 ],],},{perl=>[qr/^5\.6\.[1-2]$/,qr/^5\.7\.[0-1]$/,],subs=>[[\&_patch_makefile_sh_phony ],],},{perl=>[qw/5.6.0 5.6.1 5.7.0 5.7.1 5.7.2 5.7.3 5.8.0/,],subs=>[[\&_patch_db,3 ],],},{perl=>[qr/^5\.004_0[1234]$/,],subs=>[[\&_patch_doio ],],},{perl=>[qw/5.005 5.005_01 5.005_02/,],subs=>[[\&_patch_sysv,old_format=>1 ],],},{perl=>[qw/5.005_03 5.005_04/,qr/^5\.6\.[0-2]$/,qr/^5\.7\.[0-3]$/,qr/^5\.8\.[0-8]$/,qr/^5\.9\.[0-5]$/ ],subs=>[[\&_patch_sysv,old_format=>0 ],],},{perl=>[qr/^5\.004_05$/,qr/^5\.005(?:_0[1-4])?$/,qr/^5\.6\.[01]$/,],subs=>[[\&_patch_configure ],[\&_patch_makedepend_lc ],],},{perl=>[qr/^5\.6\.[0-2]$/,],subs=>[[\&_patch_conf_gconvert ],[\&_patch_sort_N ],],},{perl=>['5.8.0',],subs=>[[\&_patch_makedepend_lc ],],},{perl=>[qr/.*/,],subs=>[[\&_patch_conf_solaris ],[\&_patch_bitrig ],[\&_patch_hints ],[\&_patch_patchlevel ],[\&_patch_develpatchperlversion ],[\&_patch_errno_gcc5 ],[\&_patch_conf_fwrapv ],[\&_patch_utils_h2ph ],[\&_patch_lib_h2ph ],],},{perl=>[qr/^5\.6\.[0-2]$/,qr/^5\.7\.[0-3]$/,qr/^5\.8\.[0-8]$/,],subs=>[[\&_patch_makedepend_SH ],],},{perl=>[qr/^5\.1[0-2]/,],subs=>[[\&_patch_archive_tar_tests ],[\&_patch_odbm_file_hints_linux ],],},{perl=>[qr/^5.1([24].\d+|0.1)/,],subs=>[[\&_patch_make_ext_pl ],],},{perl=>[qr/^5\.8\.9$/,],subs=>[[\&_patch_589_perlio_c ],],},{perl=>[qr/^5\.8\.[89]$/ ],subs=>[[\&_patch_hsplit_rehash_58 ]],},{perl=>[qr/^5\.10\.1$/,qr/^5\.12\.5$/,],subs=>[[\&_patch_hsplit_rehash_510 ]],},{perl=>[qr/^5\.18\.0$/,],subs=>[[\&_patch_regmatch_pointer_5180 ]],},{perl=>[qr/^5\.20\.0$/,],subs=>[[\&_patch_cow_speed ]],},{perl=>[qr/^5\.6\.[012]$/,qr/^5\.8\.[89]$/,qr/^5\.10\.[01]$/,],subs=>[[\&_patch_preprocess_options ]],},{perl=>[qr/^5\.18\.3$/,],subs=>[[\&_patch_5183_metajson ]],},{perl=>[qr/^5\.24\.[01]$/,],subs=>[[\&_patch_time_hires ]],},{perl=>[qr/^5\.24\.3$/,qr/^5\.25\.(?:[4-9]|10)$/,qr/^5\.26\.[01]$/,qr/^5\.27\.[0-4]$/,],subs=>[[\&_patch_fp_class_denorm ]],},);sub patch_source {my$vers=shift;$vers=shift if eval {$vers->isa(__PACKAGE__)};my$source=shift || '.';if (!$vers){$vers=_determine_version($source);if ($vers){warn "Auto-guessed '$vers'\n"}else {die "You didn't provide a perl version and I don't appear to be in a perl source tree\n"}}if (_norm_ver($vers)>= CERTIFIED){warn "Nothing to do '$vers' is fine\n";return}$source=File::Spec->rel2abs($source);{my$dir=pushd($source);for my$p (grep {_is($_->{perl},$vers)}@patch){for my$s (@{$p->{subs}}){my($sub,@args)=@$s;push@args,$vers unless scalar@args;$sub->(@args)}}_process_plugin(version=>$vers,source=>$source,patchexe=>$patch_exe)}}sub _process_plugin {my%args=@_;return unless my$possible=$ENV{PERL5_PATCHPERL_PLUGIN};my ($plugin)=grep {$possible eq $_ or /\Q$possible\E$/}__PACKAGE__->plugins;unless ($plugin){warn "# You specified a plugin '",$ENV{PERL5_PATCHPERL_PLUGIN},"' that isn't installed, just thought you might be interested.\n";return}{local $@;eval "require $plugin";if ($@){die "# I tried to load '",$ENV{PERL5_PATCHPERL_PLUGIN},"' but it didn't work out. Here is what happened '$@'\n"}}{local $@;eval {$plugin->patchperl(%args,)};if ($@){warn "# Warnings from the plugin: '$@'\n"}}return 1}sub _can_run {my$command=shift;if ($^O eq 'VMS'){require VMS::DCLsym;my$syms=VMS::DCLsym->new;return$command if scalar$syms->getsym(uc$command)}require File::Spec;require ExtUtils::MakeMaker;my@possibles;if(File::Spec->file_name_is_absolute($command)){return MM->maybe_command($command)}else {for my$dir (File::Spec->path,File::Spec->curdir){next if!$dir ||!-d $dir;my$abs=File::Spec->catfile($^O eq 'MSWin32' ? Win32::GetShortPathName($dir): $dir,$command);push@possibles,$abs if$abs=MM->maybe_command($abs)}}return@possibles if wantarray;return shift@possibles}sub _is {my($s1,$s2)=@_;defined$s1!=defined$s2 and return 0;ref$s2 and ($s1,$s2)=($s2,$s1);if (ref$s1){if (ref$s1 eq 'ARRAY'){_is($_,$s2)and return 1 for @$s1;return 0}return$s2 =~ $s1}return$s1 eq $s2}sub _patch {my($patch)=@_;print "patching $_\n" for$patch =~ /^\+{3}\s+(\S+)/gm;my$diff='tmp.diff';_write_or_die($diff,$patch);die "No patch utility found\n" unless$patch_exe;local$ENV{PATCH_GET}=0;_run_or_die("$patch_exe -f -s -p0 <$diff");unlink$diff or die "unlink $diff: $!\n"}sub _write_or_die {my($file,$data)=@_;my$fh=IO::File->new(">$file")or die "$file: $!\n";$fh->print($data)}sub _run_or_die {die unless system(@_)==0}sub determine_version {my$src=shift;$src=shift if eval {$src->isa(__PACKAGE__)};$src='.' unless$src;_determine_version($src)}sub _determine_version {my ($source)=@_;my$patchlevel_h=File::Spec->catfile($source,'patchlevel.h');return unless -e $patchlevel_h;my$version;{my%defines;open my$fh,'<',$patchlevel_h;my@vers;while (<$fh>){chomp;next unless /^#define/;my ($foo,$bar)=(split /\s+/)[1,2];$defines{$foo}=$bar}if (my@wotsits=grep {defined$defines{$_}}qw(PERL_REVISION PERL_VERSION PERL_SUBVERSION)){$version=join '.',map {$defines{$_}}@wotsits}elsif (my@watsits=grep {defined$defines{$_}}qw(PATCHLEVEL SUBVERSION)){$version=sprintf '5.%03d_%02d',map {$defines{$_}}@watsits}else {return}}return$version}sub _patch_patchlevel {return if -d '.git';my$dpv=$Devel::PatchPerl::VERSION || "(unreleased)";open my$plin,"patchlevel.h" or die "Couldn't open patchlevel.h : $!";open my$plout,">patchlevel.new" or die "Couldn't write on patchlevel.new : $!";my$seen=0;while (<$plin>){if (/\t,NULL/ and $seen){print {$plout}qq{\t,"Devel::PatchPerl $dpv"\n}}$seen++ if /local_patches\[\]/;print {$plout}$_}close$plout or die "Couldn't close filehandle writing to patchlevel.new : $!";close$plin or die "Couldn't close filehandle reading from patchlevel.h : $!";unlink "patchlevel.bak" or warn "Couldn't unlink patchlevel.bak : $!" if -e "patchlevel.bak";rename "patchlevel.h","patchlevel.bak" or die "Couldn't rename patchlevel.h to patchlevel.bak : $!";rename "patchlevel.new","patchlevel.h" or die "Couldn't rename patchlevel.new to patchlevel.h : $!"}sub _patch_hints {my@os;push@os,$^O;push@os,'linux' if $^O eq 'gnukfreebsd';for my$os (@os){return unless my ($file,$data)=hint_file($os);my$path=File::Spec->catfile('hints',$file);if (-e $path){chmod 0644,$path or die "$!\n"}open my$fh,'>',$path or die "$!\n";print$fh $data;close$fh}return 1}sub _patch_db {my$ver=shift;for my$file ('ext/DB_File/DB_File.xs','Configure'){print "patching $file\n";_run_or_die($^X,'-pi.bak','-e',"s/<db.h>/<db$ver\\/db.h>/",$file);unlink "$file.bak" if -e "$file.bak"}}sub _patch_doio {_patch(<<'END')}sub _patch_sysv {my%opt=@_;return if $^O ne 'linux' or -f '/usr/include/asm/page.h';if ($opt{old_format}){_patch(<<'END')}else {_patch(<<'END')}}sub _patch_configure {_patch(<<'END')}sub _patch_makedepend_lc {_patch(<<'END')}sub _patch_makedepend_SH {my$perl=shift;SWITCH: {if ($perl eq '5.6.0'){_patch(<<'BADGER');last SWITCH}if ($perl eq '5.6.1'){_patch(<<'BADGER');last SWITCH}if ($perl eq '5.6.2'){_patch(<<'BADGER');last SWITCH}if ($perl eq '5.7.0'){_patch(<<'BADGER');last SWITCH}if ($perl eq '5.7.1'){_patch(<<'BADGER');last SWITCH}if ($perl eq '5.7.2'){_patch(<<'BADGER');last SWITCH}if ($perl eq '5.7.3'){_patch(<<'BADGER');last SWITCH}if ($perl eq '5.8.0'){_patch(<<'BADGER');last SWITCH}_patch(<<'BADGER')}}sub _patch_conf_gconvert {my$perl=shift;_patch(<<'END')}sub _patch_sort_N {system($^X,'-pi.bak','-e','s!\$sort \-n \+1!(\$sort -n -k 2 2>/dev/null || \$sort -n +1)!','Configure')}sub _patch_archive_tar_tests {my$perl=shift;if ($perl =~ /^5\.10/){_patch(<<'END')}else {_patch(<<'END')}}sub _patch_odbm_file_hints_linux {_patch(<<'END')}sub _patch_make_ext_pl {_patch(<<'END')}sub _patch_589_perlio_c {_patch(<<'END')}sub _patch_hsplit_rehash_58 {my$perl=shift;my$patch=<<'END';if ($perl =~ qr/^5\.8\.8$/){$patch =~ s/non-pathological/non-pathalogical/;$patch =~ s/triggering/triggerring/}_patch($patch)}sub _patch_hsplit_rehash_510 {_patch(<<'END')}sub _patch_bitrig {return unless $^O eq 'bitrig';my$perlver=shift;my$num=_norm_ver($perlver);return unless$num < 5.019004;unless ($num < 5.00800){_patch(<<'BOOGLE')}if ($num < 5.008009){_patch(<<'BITRIGM1')}else {_patch(<<'BITRIGMX')}if ($num < 5.008001){}elsif ($num < 5.008007){_patch(<<'BITRIGC3')}elsif ($num < 5.008009){_patch(<<'BITRIGC2')}elsif ($num < 5.013000){_patch(<<'BITRIGC1')}else {_patch(<<'BITRIGCX')}}sub _patch_conf_solaris {return unless $^O eq 'solaris';my$perlver=shift;my$num=_norm_ver($perlver);return unless$num < 5.018000;_patch(<<'BUBBLE')}sub _patch_regmatch_pointer_5180 {_patch(<<'BOBBLE')}sub _patch_makefile_sh_phony {_patch(<<'END')}sub _patch_cow_speed {_patch(<<'COWSAY')}sub _patch_preprocess_options {my$perl=shift;if ($perl =~ /^5\.(?:8|10)\./){_patch(<<'END')}elsif ($perl =~ /^5\.6\./){_patch(<<'END')}}sub _patch_5183_metajson {_patch(<<'DOGSAY')}sub _patch_handy {_patch(<<'END')}sub _replace_makedepend {_write_or_die('makedepend.SH',<<'END')}sub _patch_5_005_02 {_patch(<<'END')}sub _patch_5_005_01 {_patch(<<'END')}sub _patch_5_005 {_patch(<<'END')}sub _patch_errno_gcc5 {my$perlver=shift;my$num=_norm_ver($perlver);return unless$num < 5.021009;return if$num > 5.020002 && $num < 5.021;if ($num < 5.006){warn "The Errno GCC 5 patch only goes back as far as v5.6.0\n";warn "You will have to generate your own patch to go farther back\n";return}elsif ($num < 5.006001){_patch(<<'END')}elsif ($num < 5.007002){_patch(<<'END')}elsif ($num < 5.007003){_patch(<<'END')}elsif ($num < 5.008009){_patch(<<'END')}else {_patch(<<'END')}}sub _patch_time_hires {_patch(<<'END')}sub _patch_fp_class_denorm {my$perlver=shift;my$num=_norm_ver($perlver);if ($num < 5.025004){_patch(<<'END')}else {_patch(<<'END')}}sub _norm_ver {my$ver=shift;my@v=split(qr/[._]0*/,$ver);$v[2]||= 0;return sprintf '%d.%03d%03d',@v}sub _patch_develpatchperlversion {return if -d '.git';my$dpv=$Devel::PatchPerl::VERSION || "(unreleased)";_patch(<<"END")}sub _patch_conf_fwrapv {my$perlver=shift;my$num=_norm_ver($perlver);return unless$num < 5.019011;_patch(<<'FWRAPV')}sub _patch_utils_h2ph {my$perlver=shift;my$num=_norm_ver($perlver);return unless$num < 5.021010;_patch(<<'UH2PH')}sub _patch_lib_h2ph {my$perlver=shift;my$num=_norm_ver($perlver);return unless$num < 5.021010;if ($num >= 5.013005){_patch(<<'LH2PH1')}elsif ($num >= 5.013001){_patch(<<'LH2PH2')}elsif ($num >= 5.010001){_patch(<<'LH2PH3')}}qq[patchin'];
   --- doio.c.org  2004-06-07 23:14:45.000000000 +0200
   +++ doio.c  2003-11-04 08:03:03.000000000 +0100
   @@ -75,6 +75,16 @@
@@ -6984,10 +6984,108 @@ $fatpacked{"Devel/PatchPerl.pm"} = '#line '.(1+__LINE__).' "'.__FILE__."\"\n".<<
    \$test -f \$src/patchlevel.h && \
    awk '/^#define[ 	]+PERL_/ {printf "\%s=\%s\\n",\$2,\$3}' \$src/patchlevel.h >>config.sh
   END
+  diff --git a/Configure b/Configure
+  index 15b3da1769..791889a2ab 100755
+  --- a/Configure
+  +++ b/Configure
+  @@ -4643,6 +4643,22 @@ case "$gccversion" in
+       $rm -f try try.*
+   esac
+   
+  +# gcc 4.9 by default does some optimizations that break perl.
+  +# see ticket 121505.
+  +#
+  +# The -fwrapv disables those optimizations (and probably others,) so
+  +# for gcc 4.9 (and later, since the optimizations probably won't go
+  +# away), add -fwrapv unless the user requests -fno-wrapv, which
+  +# disables -fwrapv, or if the user requests -fsanitize=undefined,
+  +# which turns the overflows -fwrapv ignores into runtime errors.
+  +case "$gccversion" in
+  +4.[3-9].*|4.[1-9][0-9]*|[5-9].*|[1-9][0-9]*)
+  +    case "$ccflags" in
+  +    *-fno-wrapv*|*-fsanitize=undefined*|*-fwrapv*) ;;
+  +    *) ccflags="$ccflags -fwrapv" ;;
+  +    esac
+  +esac
+  +
+   : What should the include directory be ?
+   : Use sysroot if set, so findhdr looks in the right place.
+   echo " "
+  FWRAPV
+  --- utils/h2ph.PL
+  +++ utils/h2ph.PL
+  @@ -788,6 +788,11 @@ sub build_preamble_if_necessary
+   
+       open  PREAMBLE, ">$preamble" or die "Cannot open $preamble:  $!";
+   	print PREAMBLE "# This file was created by h2ph version $VERSION\n";
+  +        # Prevent non-portable hex constants from warning.
+  +        #
+  +        # We still produce an overflow warning if we can't represent
+  +        # a hex constant as an integer.
+  +        print PREAMBLE "no warnings qw(portable);\n";
+   
+   	foreach (sort keys %define) {
+   	    if ($opt_D) {
+  @@ -814,6 +819,18 @@ DEFINE
+   		# integer:
+   		print PREAMBLE
+   		    "unless (defined &$_) { sub $_() { $1 } }\n\n";
+  +            } elsif ($define{$_} =~ /^([+-]?0x[\da-f]+)U?L{0,2}$/i) {
+  +                # hex integer
+  +                # Special cased, since perl warns on hex integers
+  +                # that can't be represented in a UV.
+  +                #
+  +                # This way we get the warning at time of use, so the user
+  +                # only gets the warning if they happen to use this
+  +                # platform-specific definition.
+  +                my $code = $1;
+  +                $code = "hex('$code')" if length $code > 10;
+  +                print PREAMBLE
+  +                    "unless (defined &$_) { sub $_() { $code } }\n\n";
+   	    } elsif ($define{$_} =~ /^\w+$/) {
+   		my $def = $define{$_};
+   		if ($isatype{$def}) {
+  UH2PH
+  --- lib/h2ph.t
+  +++ lib/h2ph.t
+  @@ -48,7 +48,7 @@ $result = runperl( progfile => '_h2ph_pre.ph',
+                      stderr => 1 );
+   like( $result, qr/syntax OK$/, "preamble compiles");
+   
+  -$result = runperl( switches => ["-w"],
+  +$result = runperl( switches => ['-I.', "-w"],
+                      stderr => 1,
+                      prog => <<'PROG' );
+   $SIG{__WARN__} = sub { die $_[0] }; require q(lib/h2ph.pht);
+  LH2PH1
+  --- lib/h2ph.t
+  +++ lib/h2ph.t
+  @@ -48,7 +48,7 @@ $result = runperl( progfile => '_h2ph_pre.ph',
+                      stderr => 1 );
+   like( $result, qr/syntax OK$/, "preamble compiles");
+   
+  -$result = runperl( switches => ["-w"], 
+  +$result = runperl( switches => ['-I.', "-w"], 
+                      stderr => 1,
+                      prog => <<'PROG' );
+   $SIG{__WARN__} = sub { die $_[0] }; require q(lib/h2ph.pht);
+  LH2PH2
+  --- lib/h2ph.t
+  +++ lib/h2ph.t
+  @@ -41,7 +41,7 @@ $result = runperl( progfile => 'lib/h2ph.pht',
+                      stderr => 1 );
+   like( $result, qr/syntax OK$/, "output compiles");
+   
+  -$result = runperl( switches => ["-w"], 
+  +$result = runperl( switches => ['-I.',"-w"], 
+                      prog => '$SIG{__WARN__} = sub { die $_[0] }; require q(lib/h2ph.pht);');
+   is( $result, '', "output free of warnings" );
+   
+  LH2PH3
 DEVEL_PATCHPERL
 
 $fatpacked{"Devel/PatchPerl/Hints.pm"} = '#line '.(1+__LINE__).' "'.__FILE__."\"\n".<<'DEVEL_PATCHPERL_HINTS';
-  package Devel::PatchPerl::Hints;$Devel::PatchPerl::Hints::VERSION='1.52';use strict;use warnings;use MIME::Base64 qw[decode_base64];use File::Spec;our@ISA=qw[Exporter];our@EXPORT_OK=qw[hint_file hints];my%hints=('bitrig'=>'IyBoaW50cy9vcGVuYnNkLnNoCiMKIyBoaW50cyBmaWxlIGZvciBPcGVuQlNEOyBUb2RkIE1pbGxl
+  package Devel::PatchPerl::Hints;$Devel::PatchPerl::Hints::VERSION='1.58';use strict;use warnings;use MIME::Base64 qw[decode_base64];use File::Spec;our@ISA=qw[Exporter];our@EXPORT_OK=qw[hint_file hints];my%hints=('bitrig'=>'IyBoaW50cy9vcGVuYnNkLnNoCiMKIyBoaW50cyBmaWxlIGZvciBPcGVuQlNEOyBUb2RkIE1pbGxl
   ciA8bWlsbGVydEBvcGVuYnNkLm9yZz4KIyBFZGl0ZWQgdG8gYWxsb3cgQ29uZmlndXJlIGNvbW1h
   bmQtbGluZSBvdmVycmlkZXMgYnkKIyAgQW5keSBEb3VnaGVydHkgPGRvdWdoZXJhQGxhZmF5ZXR0
   ZS5lZHU+CiMKIyBUbyBidWlsZCB3aXRoIGRpc3RyaWJ1dGlvbiBwYXRocywgdXNlOgojCS4vQ29u
@@ -7691,371 +7789,376 @@ $fatpacked{"Devel/PatchPerl/Hints.pm"} = '#line '.(1+__LINE__).' "'.__FILE__."\"
   aWYgWyAiWCRnY2N2ZXJzaW9uIiA9ICJYIiBdOyB0aGVuCgkJIyBEb25lIHRvbyBsYXRlIGluIENv
   bmZpZ3VyZSBpZiBoaW50ZWQKCQlnY2N2ZXJzaW9uPWAkY2MgLWR1bXB2ZXJzaW9uYAoJCWZpCgkg
   ICAgY2FzZSAiJGdjY3ZlcnNpb24iIGluCgkJWzAxMl0qKSAjIEhQLVVYIGFuZCBnY2MtMi4qIGJy
-  ZWFrIFVJTlQzMl9NQVggOi0oCgkJCWNjZmxhZ3M9IiRjY2ZsYWdzIC1EVUlOVDMyX01BWF9CUk9L
-  RU4iCgkJCTs7CgkJWzM0XSopICMgR0NDIChib3RoIDMyYml0IGFuZCA2NGJpdCkgd2lsbCBkZWZp
-  bmUgX19TVERDX0VYVF9fCiAgICAgICAgICAgICAgICAgICAgICAgIyBieSBkZWZhdWx0IHdoZW4g
-  dXNpbmcgR0NDIDMuMCBhbmQgbmV3ZXIgdmVyc2lvbnMgb2YKICAgICAgICAgICAgICAgICAgICAg
-  ICAjIHRoZSBjb21waWxlci4KICAgICAgICAgICAgICAgICAgICAgICBjcHBmbGFncz0iJGNjX2Nw
-  cGZsYWdzIgogICAgICAgICAgICAgICAgICAgICAgIDs7CgkJZXNhYwoJICAgIGNhc2UgImBnZXRj
-  b25mIEtFUk5FTF9CSVRTIDI+L2Rldi9udWxsYCIgaW4KCQkqNjQqKQoJCSAgICBlY2hvICJtYWlu
-  KCl7fSI+dHJ5LmMKCQkgICAgY2FzZSAiJGdjY3ZlcnNpb24iIGluCgkJCVszNF0qKQoJCQkgICAg
-  Y2FzZSAiJGFyY2huYW1lIiBpbgogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgUEEtUklT
-  QyopCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgY2FzZSAiJGNjZmxhZ3MiIGlu
-  CiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICotbXBhLXJpc2MqKSA7Owog
-  ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAqKSBjY2ZsYWdzPSIkY2NmbGFn
-  cyAtbXBhLXJpc2MtMi0wIiA7OwogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg
-  ICBlc2FjCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgOzsKCQkJCWVzYWMKCQkJ
-  ICAgIDs7CgkJCSopICAjIGdjYyB3aXRoIGdhcyB3aWxsIG5vdCBhY2NlcHQgK0RBMi4wCgkJCSAg
-  ICBjYXNlICJgJGNjIC1jIC1XYSwrREEyLjAgdHJ5LmMgMj4mMWAiIGluCgkJCQkqIitEQTIuMCIq
-  KQkJIyBnYXMKCQkJCSAgICBnbnVfYXM9eWVzCgkJCQkgICAgOzsKCQkJCSopCQkJIyBIUGFzCgkJ
-  CQkgICAgY2NmbGFncz0iJGNjZmxhZ3MgLVdhLCtEQTIuMCIKCQkJCSAgICA7OwoJCQkJZXNhYwoJ
-  CQkgICAgOzsKCQkJZXNhYwoJCSAgICAjIGdjYyB3aXRoIGdsZCB3aWxsIG5vdCBhY2NlcHQgK3Zu
-  b2NvbXBhdHdhcm5pbmdzCgkJICAgIGNhc2UgImAkY2MgLW8gdHJ5IC1XbCwrdm5vY29tcGF0d2Fy
-  bmluZ3MgdHJ5LmMgMj4mMWAiIGluCgkJCSoiK3Zub2NvbXBhdCIqKQkJIyBnbGQKCQkJICAgIGdu
-  dV9sZD15ZXMKCQkJICAgIDs7CgkJCSopCQkJIyBIUGxkCgkJCSAgIGNhc2UgIiRnY2N2ZXJzaW9u
-  IiBpbgoJCQkgICAgICAgWzEyXSopCgkJCQkgICAjIFdoeSBub3QgMyBhcyB3ZWxsIGhlcmU/CgkJ
-  CQkgICAjIFNpbmNlIG5vdCByZWxldmFudCB0byBJQTY0LCBub3QgY2hhbmdlZC4KCQkJCSAgIGxk
-  ZmxhZ3M9IiRsZGZsYWdzIC1XbCwrdm5vY29tcGF0d2FybmluZ3MiCgkJCQkgICBjY2ZsYWdzPSIk
-  Y2NmbGFncyAtV2wsK3Zub2NvbXBhdHdhcm5pbmdzIgoJCQkJICAgOzsKCQkJICAgICAgIGVzYWMK
-  CQkJICAgIDs7CgkJCWVzYWMKCQkgICAgcm0gLWYgdHJ5LmMKCQkgICAgOzsKCQllc2FjCgkgICAg
-  OzsKICAgICopICAgICAgY2Npc2djYz0nJwoJICAgICMgV2hhdCBjYW5ub3QgYmUgdXNlIGluIGNv
-  bWJpbmF0aW9uIHdpdGggY2NhY2hlIGxpbmtzIDooCgkgICAgY2NfZm91bmQ9IiIKCSAgICBmb3Ig
-  cCBpbiBgZWNobyAkUEFUSCB8IHRyIDogJyAnJ2AgOyBkbwoJCXg9IiRwL2NjIgoJCWlmIFsgLWYg
-  JHggXSAmJiBbIC14ICR4IF07IHRoZW4KCQkgICAgaWYgWyAtaCAkeCBdOyB0aGVuCgkJCWw9YGxz
-  IC1sICR4IHwgc2VkICdzLC4qLT4gLCwnYAoJCQljYXNlICRsIGluCgkJCSAgICAvKikgeD0kbAkJ
-  OzsKCQkJICAgICopICB4PSIkcC8kbCIJOzsKCQkJICAgIGVzYWMKCQkJZmkKCQkgICAgeD1gZWNo
-  byAkeCB8IHNlZCAncywvXC4vLC8sZydgCgkJICAgIGNhc2UgJHggaW4KCQkJKmNjYWNoZSopIDs7
-  CgkJCSopIFsgLXogIiRjY19mb3VuZCIgXSAmJiBjY19mb3VuZD0keCA7OwoJCQllc2FjCgkJICAg
-  IGZpCgkJZG9uZQoJICAgIFsgLXogIiRjY19mb3VuZCIgXSAmJiBjY19mb3VuZD1gd2hpY2ggY2Ng
-  CgkgICAgd2hhdCAkY2NfZm91bmQgPiY0CgkgICAgY2N2ZXJzaW9uPWB3aGF0ICRjY19mb3VuZCB8
-  IGF3ayAnL0NvbXBpbGVyL3twcmludCAkMn0vSXRhbml1bS97cHJpbnQgJDYsJDd9L2ZvciBJbnRl
-  Z3JpdHkve3ByaW50ICQ2LCQ3fSdgCgkgICAgY2FzZSAiJGNjZmxhZ3MiIGluCiAgICAgICAgICAg
-  ICAgICItQWUgIiopIDs7CgkJKikgIGNjZmxhZ3M9Ii1BZSAkY2NfY3BwZmxhZ3MiCgkJICAgICMg
-  K3Zub2NvbXBhdHdhcm5pbmdzIG5vdCBrbm93biBpbiAxMC4xMCBhbmQgb2xkZXIKCQkgICAgaWYg
-  WyAkeHhPc1JldiAtZ2UgMTAyMCBdOyB0aGVuCgkJCWNjZmxhZ3M9IiRjY2ZsYWdzIC1XbCwrdm5v
-  Y29tcGF0d2FybmluZ3MiCgkJCWZpCgkJICAgIDs7CiAgICAgICAgICAgICAgIGVzYWMKCSAgICAj
-  IE5lZWRlZCBiZWNhdXNlIGNwcCBkb2VzIG9ubHkgc3VwcG9ydCAtQWEgKG5vdCAtQWUpCgkgICAg
-  Y3BwbGFzdD0nLScKCSAgICBjcHBtaW51cz0nLScKCSAgICBjcHBzdGRpbj0nY2MgLUUgLUFhIC1E
-  X19TVERDX0VYVF9fJwoJICAgIGNwcHJ1bj0kY3Bwc3RkaW4KIwkgICAgY2FzZSAiJGRfY2FzdGkz
-  MiIgaW4KIwkJIiIpIGRfY2FzdGkzMj0ndW5kZWYnIDs7CiMJCWVzYWMKCSAgICA7OwogICAgZXNh
-  YwoKIyBXaGVuIEhQLVVYIHJ1bnMgYSBzY3JpcHQgd2l0aCAiIyEiLCBpdCBzZXRzIGFyZ3ZbMF0g
-  dG8gdGhlIHNjcmlwdCBuYW1lLgp0b2tlX2NmbGFncz0nY2NmbGFncz0iJGNjZmxhZ3MgLURBUkdf
-  WkVST19JU19TQ1JJUFQiJwoKIyMjIDY0IEJJVE5FU1MKCiMgU29tZSBnY2MgdmVyc2lvbnMgZG8g
-  bmF0aXZlIDY0IGJpdCBsb25nIChlLmcuIDIuOS1ocHBhLTAwMDMxMCBhbmQgZ2NjLTMuMCkKIyBX
-  ZSBoYXZlIHRvIGZvcmNlIDY0Yml0bmVzcyB0byBnbyBzZWFyY2ggdGhlIHJpZ2h0IGxpYnJhcmll
-  cwogICAgZ2NjXzY0bmF0aXZlPW5vCmNhc2UgIiRjY2lzZ2NjIiBpbgogICAgJGRlZmluZXx0cnVl
-  fFtZeV0pCgllY2hvICcjaW5jbHVkZSA8c3RkaW8uaD5cbmludCBtYWluKCl7bG9uZyBsO3ByaW50
-  ZigiJWRcXG4iLHNpemVvZihsKSk7fSc+dHJ5LmMKCSRjYyAtbyB0cnkgJGNjZmxhZ3MgJGxkZmxh
-  Z3MgdHJ5LmMKCWlmIFsgImB0cnlgIiA9ICI4IiBdOyB0aGVuCgkgICAgY2FzZSAiJHVzZTY0Yml0
-  YWxsIiBpbgoJCSRkZWZpbmV8dHJ1ZXxbWXldKSA7OwoJCSopICBjYXQgPDxFT00gPiY0CgoqKiog
-  VGhpcyB2ZXJzaW9uIG9mIGdjYyB1c2VzIDY0IGJpdCBsb25ncy4gLUR1c2U2NGJpdGFsbCBpcwoq
-  KiogaW1wbGljaXRseSBzZXQgdG8gZW5hYmxlIGNvbnRpbnVhdGlvbgpFT00KCQllc2FjCgkgICAg
-  dXNlNjRiaXRhbGw9JGRlZmluZQoJICAgIGdjY182NG5hdGl2ZT15ZXMKCSAgICBmaQoJOzsKICAg
-  IGVzYWMKCmNhc2UgIiR1c2U2NGJpdGFsbCIgaW4KICAgICRkZWZpbmV8dHJ1ZXxbeVldKikgdXNl
-  NjRiaXRpbnQ9IiRkZWZpbmUiIDs7CiAgICBlc2FjCgpjYXNlICIkdXNlbW9yZWJpdHMiIGluCiAg
-  ICAkZGVmaW5lfHRydWV8W3lZXSopIHVzZTY0Yml0aW50PSIkZGVmaW5lIjsgdXNlbG9uZ2RvdWJs
-  ZT0iJGRlZmluZSIgOzsKICAgIGVzYWMKCiMgVGhlcmUgaXMgYSB3ZWlyZCBwcmUtQzk5IGxvbmcg
-  ZG91YmxlIChhIHN0cnVjdCBvZiBmb3VyIHVpbjMyX3QpCiMgaW4gSFAtVVggMTAuMjAgYnV0IGJl
-  eW9uZCBzdHJ0b2xkKCkgdGhlcmUncyBubyBzdXBwb3J0IGZvciB0aGVtCiMgZm9yIGV4YW1wbGUg
-  aW4gPG1hdGguaD4uCmNhc2UgIiR1c2Vsb25nZG91YmxlIiBpbgogICAgJGRlZmluZXx0cnVlfFt5
-  WV0qKQoJaWYgWyAiJHh4T3NSZXZNYWpvciIgLWx0IDExIF07IHRoZW4KCSAgICBjYXQgPDxFT00g
-  PiY0CgoqKiogdXNlbG9uZ2RvdWJsZSAob3IgdXNlbW9yZWJpdHMpIGlzIG5vdCBzdXBwb3J0ZWQg
-  b24gSFAtVVggJHh4T3NSZXZNYWpvci4KKioqIFlvdSBuZWVkIGF0IGxlYXN0IEhQLVVYIDExLjAu
-  CioqKiBDYW5ub3QgY29udGludWUsIGFib3J0aW5nLgpFT00KCSAgICBleGl0IDEKCWZpCgk7Owog
-  ICAgZXNhYwoKIyBDb25maWd1cmUgbG9uZyBkb3VibGUgc2NhbiB3aWxsIGRldGVjdCB0aGUgSFAt
-  VVggMTAuMjAgImxvbmcgZG91YmxlIgojIChhIHN0cnVjdCBvZiBmb3VyIHVpbjMyX3QpIGFuZCB0
-  aGluayBpdCBpcyBJRUVFIHF1YWQuICBNYWtlIGl0IG5vdCBzby4KaWYgWyAiJHh4T3NSZXZNYWpv
-  ciIgLWx0IDExIF07IHRoZW4KICAgIGRfbG9uZ2RibD0iJHVuZGVmIgogICAgbG9uZ2RibHNpemU9
-  OCAjIE1ha2UgaXQgZG91YmxlLgpmaQoKY2FzZSAiJGFyY2huYW1lIiBpbgogICAgSUE2NCopCgkj
-  IFdoaWxlIGhlcmUsIG92ZXJyaWRlIHNvPXNsIGF1dG8tZGV0ZWN0aW9uCglzbz0nc28nCgk7Owog
-  ICAgZXNhYwoKY2FzZSAiJHVzZTY0Yml0YWxsIiBpbgogICAgJGRlZmluZXx0cnVlfFtZeV0pCgoJ
-  aWYgWyAiJHh4T3NSZXZNYWpvciIgLWx0IDExIF07IHRoZW4KCSAgICBjYXQgPDxFT00gPiY0Cgoq
-  KiogNjQtYml0IGNvbXBpbGF0aW9uIGlzIG5vdCBzdXBwb3J0ZWQgb24gSFAtVVggJHh4T3NSZXZN
-  YWpvci4KKioqIFlvdSBuZWVkIGF0IGxlYXN0IEhQLVVYIDExLjAuCioqKiBDYW5ub3QgY29udGlu
-  dWUsIGFib3J0aW5nLgpFT00KCSAgICBleGl0IDEKCSAgICBmaQoKCWlmIFsgJHh4T3NSZXYgLWVx
-  IDExMDAgXTsgdGhlbgoJICAgICMgSFAtVVggMTEuMDAgdXNlcyBvbmx5IDQ4IGJpdHMgaW50ZXJu
-  YWxseSBpbiA2NGJpdCBtb2RlLCBub3QgNjQKCSAgICAjIGZvcmNlIG1pbi9tYXggdG8gMioqNDct
-  MQoJICAgIHNHTVRJTUVfbWF4PTE0MDczNzQ4ODM1NTMyNwoJICAgIHNHTVRJTUVfbWluPS02MjE2
-  NzIxOTIwMAoJICAgIHNMT0NBTFRJTUVfbWF4PTE0MDczNzQ4ODM1NTMyNwoJICAgIHNMT0NBTFRJ
-  TUVfbWluPS02MjE2NzIxOTIwMAoJICAgIGZpCgoJIyBTZXQgbGliYyBhbmQgdGhlIGxpYnJhcnkg
-  cGF0aHMKCWNhc2UgIiRhcmNobmFtZSIgaW4KCSAgICBQQS1SSVNDKikKCQlsb2NsaWJwdGg9IiRs
-  b2NsaWJwdGggL2xpYi9wYTIwXzY0IgoJCWxpYmM9Jy9saWIvcGEyMF82NC9saWJjLnNsJyA7OwoJ
-  ICAgIElBNjQqKQoJCWxvY2xpYnB0aD0iJGxvY2xpYnB0aCAvdXNyL2xpYi9ocHV4NjQiCgkJbGli
-  Yz0nL3Vzci9saWIvaHB1eDY0L2xpYmMuc28nIDs7CgkgICAgZXNhYwoJaWYgWyAhIC1mICIkbGli
-  YyIgXTsgdGhlbgoJICAgIGNhdCA8PEVPTSA+JjQKCioqKiBZb3UgZG8gbm90IHNlZW0gdG8gaGF2
-  ZSB0aGUgNjQtYml0IGxpYmMuCioqKiBJIGNhbm5vdCBmaW5kIHRoZSBmaWxlICRsaWJjLgoqKiog
-  Q2Fubm90IGNvbnRpbnVlLCBhYm9ydGluZy4KRU9NCgkgICAgZXhpdCAxCgkgICAgZmkKCgljYXNl
-  ICIkY2Npc2djYyIgaW4KCSAgICAkZGVmaW5lfHRydWV8W1l5XSkKCQkjIFRoZSBmaXhlZCBzb2Nr
-  ZXQuaCBoZWFkZXIgZmlsZSBpcyB3cm9uZyBmb3IgZ2NjLTQueAoJCSMgb24gUEEtUklTQzIuMFcs
-  IHNvIFNvY2tfdHlwZV90IGlzIHNpemVfdCB3aGljaCBpcwoJCSMgdW5zaWduZWQgbG9uZyB3aGlj
-  aCBpcyA2NGJpdCB3aGljaCBpcyB0b28gbG9uZwoJCWNhc2UgIiRnY2N2ZXJzaW9uIiBpbgoJCSAg
-  ICA0KikgY2FzZSAiJGFyY2huYW1lIiBpbgoJCQkgICAgUEEtUklTQyopIHNvY2tzaXpldHlwZT1p
-  bnQgOzsKCQkJICAgIGVzYWMKCQkJOzsKCQkgICAgZXNhYwoKCQkjIEZvciB0aGUgbW9tZW50LCBk
-  b24ndCBjYXJlIHRoYXQgaXQgYWluJ3Qgc3VwcG9ydGVkICh5ZXQpCgkJIyBieSBnY2MgKHVwIHRv
-  IGFuZCBpbmNsdWRpbmcgMi45NS4zKSwgY2F1c2UgaXQnbGwgY3Jhc2gKCQkjIGFueXdheS4gRXhw
-  ZWN0IGF1dG8tZGV0ZWN0aW9uIG9mIDY0LWJpdCBlbmFibGVkIGdjYyBvbgoJCSMgSFAtVVggc29v
-  biwgaW5jbHVkaW5nIGEgdXNlci1mcmllbmRseSBleGl0CgkJY2FzZSAkZ2NjXzY0bmF0aXZlIGlu
-  CgkJICAgIG5vKSBjYXNlICIkZ2NjdmVyc2lvbiIgaW4KCQkJICAgIFsxMjM0XSopCgkJCQljY2Zs
-  YWdzPSIkY2NmbGFncyAtbWxwNjQiCgkJCQljYXNlICIkYXJjaG5hbWUiIGluCgkJCQkgICAgUEEt
-  UklTQyopCgkJCQkJbGRmbGFncz0iJGxkZmxhZ3MgLVdsLCtERDY0IgoJCQkJCTs7CgkJCQkgICAg
-  SUE2NCopCgkJCQkJbGRmbGFncz0iJGxkZmxhZ3MgLW1scDY0IgoJCQkJCTs7CgkJCQkgICAgZXNh
-  YwoJCQkJOzsKCQkJICAgIGVzYWMKCQkJOzsKCQkgICAgZXNhYwoJCTs7CgkgICAgKikKCQljYXNl
-  ICIkdXNlNjRiaXRhbGwiIGluCgkJICAgICRkZWZpbmV8dHJ1ZXxbeVldKikKCQkJY2NmbGFncz0i
-  JGNjZmxhZ3MgK0RENjQiCgkJCWxkZmxhZ3M9IiRsZGZsYWdzICtERDY0IgoJCQk7OwoJCSAgICBl
-  c2FjCgkJOzsKCSAgICBlc2FjCgoJIyBSZXNldCB0aGUgbGlicmFyeSBjaGVja2VyIHRvIG1ha2Ug
-  c3VyZSBsaWJyYXJpZXMKCSMgYXJlIHRoZSByaWdodCB0eXBlCgkjIChOT1RFOiBvbiBJQTY0LCB0
-  aGlzIGRvZXNuJ3Qgd29yayB3aXRoIC5hIGZpbGVzLikKCWxpYnNjaGVjaz0nY2FzZSAiYC91c3Iv
-  YmluL2ZpbGUgJHh4eGAiIGluCgkJICAgICAgICpFTEYtNjQqfCpMUDY0KnwqUEEtUklTQzIuMCop
-  IDs7CgkJICAgICAgICopIHh4eD0vbm8vNjQtYml0JHh4eCA7OwoJCSAgICAgICBlc2FjJwoKCTs7
-  CgogICAgKikJIyBOb3QgaW4gNjQtYml0IG1vZGUKCgljYXNlICIkYXJjaG5hbWUiIGluCgkgICAg
-  UEEtUklTQyopCgkJbGliYz0nL2xpYi9saWJjLnNsJyA7OwoJICAgIElBNjQqKQoJCWxvY2xpYnB0
-  aD0iJGxvY2xpYnB0aCAvdXNyL2xpYi9ocHV4MzIiCgkJbGliYz0nL3Vzci9saWIvaHB1eDMyL2xp
-  YmMuc28nIDs7CgkgICAgZXNhYwoJOzsKICAgIGVzYWMKCiMgQnkgc2V0dGluZyB0aGUgZGVmZXJy
-  ZWQgZmxhZyBiZWxvdywgdGhpcyBtZWFucyB0aGF0IGlmIHlvdSBydW4gcGVybAojIG9uIGEgc3lz
-  dGVtIHRoYXQgZG9lcyBub3QgaGF2ZSB0aGUgcmVxdWlyZWQgc2hhcmVkIGxpYnJhcnkgdGhhdCB5
-  b3UKIyBsaW5rZWQgaXQgd2l0aCwgaXQgd2lsbCBkaWUgd2hlbiB5b3UgdHJ5IHRvIGFjY2VzcyBh
-  IHN5bWJvbCBpbiB0aGUKIyAobWlzc2luZykgc2hhcmVkIGxpYnJhcnkuICBJZiB5b3Ugd291bGQg
-  cmF0aGVyIGtub3cgYXQgcGVybCBzdGFydHVwCiMgdGltZSB0aGF0IHlvdSBhcmUgbWlzc2luZyBh
-  biBpbXBvcnRhbnQgc2hhcmVkIGxpYnJhcnksIHN3aXRjaCB0aGUKIyBjb21tZW50cyBzbyB0aGF0
-  IGltbWVkaWF0ZSwgcmF0aGVyIHRoYW4gZGVmZXJyZWQgbG9hZGluZyBpcwojIHBlcmZvcm1lZC4g
-  IEV2ZW4gd2l0aCBpbW1lZGlhdGUgbG9hZGluZywgeW91IGNhbiBwb3N0cG9uZSBlcnJvcnMgZm9y
-  CiMgdW5kZWZpbmVkIChvciBtdWx0aXBseSBkZWZpbmVkKSByb3V0aW5lcyB1bnRpbCBhY3R1YWwg
-  YWNjZXNzIGJ5CiMgYWRkaW5nIHRoZSAibm9uZmF0YWwiIG9wdGlvbi4KIyBjY2RsZmxhZ3M9Ii1X
-  bCwtRSAtV2wsLUIsaW1tZWRpYXRlICRjY2RsZmxhZ3MiCiMgY2NkbGZsYWdzPSItV2wsLUUgLVds
-  LC1CLGltbWVkaWF0ZSwtQixub25mYXRhbCAkY2NkbGZsYWdzIgppZiBbICIkZ251X2xkIiA9ICJ5
-  ZXMiIF07IHRoZW4KICAgIGNjZGxmbGFncz0iLVdsLC1FICRjY2RsZmxhZ3MiCmVsc2UKICAgIGNj
-  ZGxmbGFncz0iLVdsLC1FIC1XbCwtQixkZWZlcnJlZCAkY2NkbGZsYWdzIgogICAgZmkKCgojIyMg
-  Q09NUElMRVIgU1BFQ0lGSUNTCgojIyBMb2NhbCByZXN0cmljdGlvbnMgKHBvaW50IHRvIFJFQURN
-  RS5ocHV4IHRvIGxpZnQgdGhlc2UpCgojIyBPcHRpbWl6YXRpb24gbGltaXRzCmNhdCA+dHJ5LmMg
-  PDxFT0YKI2luY2x1ZGUgPHN0ZGlvLmg+CiNpbmNsdWRlIDxzeXMvcmVzb3VyY2UuaD4KCmludCBt
-  YWluICgpCnsKICAgIHN0cnVjdCBybGltaXQgcmw7CiAgICBpbnQgaSA9IGdldHJsaW1pdCAoUkxJ
-  TUlUX0RBVEEsICZybCk7CiAgICBwcmludGYgKCIlZFxuIiwgKGludCkocmwucmxpbV9jdXIgLyAo
-  MTAyNCAqIDEwMjQpKSk7CiAgICB9IC8qIG1haW4gKi8KRU9GCiRjYyAtbyB0cnkgJGNjZmxhZ3Mg
-  JGxkZmxhZ3MgdHJ5LmMKCW1heGRzaXo9YHRyeWAKcm0gLWYgdHJ5IHRyeS5jIGNvcmUKaWYgWyAk
-  bWF4ZHNpeiAtbGUgNjQgXTsgdGhlbgogICAgIyA2NCBNYiBpcyBwcm9iYWJseSBub3QgZW5vdWdo
-  IHRvIG9wdGltaXplIHRva2UuYwogICAgIyBhbmQgcmVnZXhwLmMgd2l0aCAtTzIKICAgIGNhdCA8
-  PEVPTSA+JjQKWW91ciBrZXJuZWwgbGltaXRzIHRoZSBkYXRhIHNlY3Rpb24gb2YgeW91ciBwcm9n
-  cmFtcyB0byAkbWF4ZHNpeiBNYiwKd2hpY2ggaXMgKHNhZGx5KSBub3QgZW5vdWdoIHRvIGZ1bGx5
-  IG9wdGltaXplIHNvbWUgcGFydHMgb2YgdGhlCnBlcmwgYmluYXJ5LiBJJ2xsIHRyeSB0byB1c2Ug
-  YSBsb3dlciBvcHRpbWl6YXRpb24gbGV2ZWwgZm9yCnRob3NlIHBhcnRzLiBJZiB5b3UgYXJlIGEg
-  c3lzYWRtaW4sIGFuZCB5b3UgKmRvKiB3YW50IGZ1bGwKb3B0aW1pemF0aW9uLCByYWlzZSB0aGUg
-  J21heGRzaXonIGtlcm5lbCBjb25maWd1cmF0aW9uIHBhcmFtZXRlcgp0byBhdCBsZWFzdCAweDA4
-  MDAwMDAwICgxMjggTWIpIGFuZCByZWJ1aWxkIHlvdXIga2VybmVsLgpFT00KcmVnZXhlY19jZmxh
-  Z3M9JycKZG9vcF9jZmxhZ3M9JycKb3BfY2ZsYWdzPScnCm9wbWluaV9jZmxhZ3M9JycKcGVybG1h
-  aW5fY2ZsYWdzPScnCiAgICBmaQoKY2FzZSAiJGNjaXNnY2MiIGluCiAgICAkZGVmaW5lfHRydWV8
-  W1l5XSkKCgljYXNlICIkb3B0aW1pemUiIGluCgkgICAgIiIpICAgICAgICAgICBvcHRpbWl6ZT0i
-  LWcgLU8iIDs7CgkgICAgKk9bMzQ1Njc4OV0qKSBvcHRpbWl6ZT1gZWNobyAiJG9wdGltaXplIiB8
-  IHNlZCAtZSAncy9PWzMtOV0vTzIvJ2AgOzsKCSAgICBlc2FjCgkjbGQ9IiRjYyIKCWxkPS91c3Iv
-  YmluL2xkCgljY2NkbGZsYWdzPSctZlBJQycKCSNsZGRsZmxhZ3M9Jy1zaGFyZWQnCglsZGRsZmxh
-  Z3M9Jy1iJwoJY2FzZSAiJG9wdGltaXplIiBpbgoJICAgICotZyotTyp8Ki1PKi1nKikKCQkjIGdj
-  YyB3aXRob3V0IGdhcyB3aWxsIG5vdCBhY2NlcHQgLWcKCQllY2hvICJtYWluKCl7fSI+dHJ5LmMK
-  CQljYXNlICJgJGNjICRvcHRpbWl6ZSAtYyB0cnkuYyAyPiYxYCIgaW4KCQkgICAgKiItZyBvcHRp
-  b24gZGlzYWJsZWQiKikKCQkJc2V0IGBlY2hvICJYICRvcHRpbWl6ZSAiIHwgc2VkIC1lICdzLyAt
-  ZyAvIC8nYAoJCQlzaGlmdAoJCQlvcHRpbWl6ZT0iJCoiCgkJCTs7CgkJICAgIGVzYWMKCQk7OwoJ
-  ICAgIGVzYWMKCWlmIFsgJG1heGRzaXogLWxlIDY0IF07IHRoZW4KCSAgICBjYXNlICIkb3B0aW1p
-  emUiIGluCgkJKk8yKikJb3B0PWBlY2hvICIkb3B0aW1pemUiIHwgc2VkIC1lICdzL08yL08xLydg
-  CgkJCXRva2VfY2ZsYWdzPSIkdG9rZV9jZmxhZ3M7b3B0aW1pemU9XCIkb3B0XCIiCgkJCXJlZ2V4
-  ZWNfY2ZsYWdzPSJvcHRpbWl6ZT1cIiRvcHRcIiIKCQkJOzsKCQllc2FjCgkgICAgZmkKCTs7Cgog
-  ICAgKikKCWNhc2UgIiRvcHRpbWl6ZSIgaW4KCSAgICAiIikgICAgICAgICAgIG9wdGltaXplPSIr
-  TzIgK09ub2xpbWl0IiA7OwoJICAgICpPWzM0NTY3ODldKikgb3B0aW1pemU9YGVjaG8gIiRvcHRp
-  bWl6ZSIgfCBzZWQgLWUgJ3MvT1szLTldL08yLydgIDs7CgkgICAgZXNhYwoJY2FzZSAiJG9wdGlt
-  aXplIiBpbgoJICAgICotTyp8XAoJICAgICpPMiopICAgb3B0PWBlY2hvICIkb3B0aW1pemUiIHwg
-  c2VkIC1lICdzLy1PLytPMi8nIC1lICdzL08yL08xLycgLWUgJ3MvICorT25vbGltaXQvLydgCgkJ
-  ICAgIDs7CgkgICAgKikgICAgICBvcHQ9IiRvcHRpbWl6ZSIKCQkgICAgOzsKCSAgICBlc2FjCglj
-  YXNlICIkYXJjaG5hbWUiIGluCgkgICAgUEEtUklTQzIuMCkKCQljYXNlICIkY2N2ZXJzaW9uIiBp
-  bgoJCSAgICBCLjExLjExLiopCgkJCSMgb3BtaW5pLmMgYW5kIG9wLmMgd2l0aCArTzIgbWFrZXMg
-  dGhlIGNvbXBpbGVyIGRpZQoJCQkjIG9mIGludGVybmFsIGVycm9yLCBmb3IgcGVybG1haW4uYyBv
-  bmx5ICtPMCAobm8gb3B0KQogICAgICAgICAgICAgICAgICAgICAgICAjIHdvcmtzLgoJCQljYXNl
-  ICIkb3B0aW1pemUiIGluCgkJCSpPMiopCW9wdD1gZWNobyAiJG9wdGltaXplIiB8IHNlZCAtZSAn
-  cy9PMi9PMS8nYAoJCQkJb3BtaW5pX2NmbGFncz0ib3B0aW1pemU9XCIkb3B0XCIiCgkJCQlvcF9j
-  ZmxhZ3M9Im9wdGltaXplPVwiJG9wdFwiIgoJCQkJcGVybG1haW5fY2ZsYWdzPSJvcHRpbWl6ZT1c
-  IlwiIgoJCQkJOzsKCQkJZXNhYwoJCSAgICBlc2FjCgkJOzsKCSAgICBJQTY0KikKCQljYXNlICIk
-  Y2N2ZXJzaW9uIiBpbgoJCSAgICBCMzkxMEIqQS4wNi4wWzEyMzQ1XSkKCQkJIyA+IGNjIC0tdmVy
-  c2lvbgoJCQkjIGNjOiBIUCBhQysrL0FOU0kgQyBCMzkxMEIgQS4wNi4wNSBbSnVsIDI1IDIwMDVd
-  CgkJCSMgSGFzIG9wdGltaXppbmcgcHJvYmxlbXMgd2l0aCAtTzIgYW5kIHVwIGZvciBib3RoCgkJ
-  CSMgbWFpbnQgKDUuOC44KykgYW5kIGJsZWFkICg1LjkuMyspCgkJCSMgLU8xLytPMSBwYXNzZWQg
-  YWxsIHRlc3RzIChtKScwNSBbIDEwIEphbiAyMDA1IF0KCQkJb3B0aW1pemU9IiRvcHQiCQkJOzsK
-  CQkJQjM5MTBCKkEuMDYuMTUpCgkJCSMgPiBjYyAtLXZlcnNpb24KCQkJIyBjYzogSFAgQy9hQysr
-  IEIzOTEwQiBBLjA2LjE1IFtNYXkgMTYgMjAwN10KCQkJIyBIYXMgb3B0aW1pemluZyBwcm9ibGVt
-  cyB3aXRoICtPMiBmb3IgYmxlYWQgKDUuMTcuNCksCgkJCSMgc2VlIGh0dHBzOi8vcnQucGVybC5v
-  cmc6NDQzL3J0My9UaWNrZXQvRGlzcGxheS5odG1sP2lkPTEwMzY2OC4KCQkJIwoJCQkjICtPMiAr
-  T25vbGltaXQgK09ub3Byb2NlbGltICArT3N0b3JlX29yZGVyaW5nIFwKCQkJIyArT25vbGliY2Fs
-  bHM9c3RyY21wCgkJCSMgcGFzc2VzIGFsbCB0ZXN0cyAod2l0aC93aXRob3V0IC1EREVCVUdHSU5H
-  KSBbTm92IDE3IDIwMTFdCgkJCWNhc2UgIiRvcHRpbWl6ZSIgaW4KCQkJCSpPMiopIG9wdGltaXpl
-  PSIkb3B0aW1pemUgK09ub3Byb2NlbGltICtPc3RvcmVfb3JkZXJpbmcgK09ub2xpYmNhbGxzPXN0
-  cmNtcCIgOzsKCQkJCWVzYWMKCQkJOzsKCQkgICAgKikgIGRvb3BfY2ZsYWdzPSJvcHRpbWl6ZT1c
-  IiRvcHRcIiIKCQkJb3BfY2ZsYWdzPSJvcHRpbWl6ZT1cIiRvcHRcIiIJOzsKCQkgICAgZXNhYwoJ
-  CTs7CgkgICAgZXNhYwoJaWYgWyAkbWF4ZHNpeiAtbGUgNjQgXTsgdGhlbgoJICAgIHRva2VfY2Zs
-  YWdzPSIkdG9rZV9jZmxhZ3M7b3B0aW1pemU9XCIkb3B0XCIiCgkgICAgcmVnZXhlY19jZmxhZ3M9
-  Im9wdGltaXplPVwiJG9wdFwiIgoJICAgIGZpCglsZD0vdXNyL2Jpbi9sZAoJY2NjZGxmbGFncz0n
-  K1onCglsZGRsZmxhZ3M9Jy1iICt2bm9jb21wYXR3YXJuaW5ncycKCTs7CiAgICBlc2FjCgojIyBM
-  QVJHRUZJTEVTCmlmIFsgJHh4T3NSZXYgLWx0IDEwMjAgXTsgdGhlbgogICAgdXNlbGFyZ2VmaWxl
-  cz0iJHVuZGVmIgogICAgZmkKCiNjYXNlICIkdXNlbGFyZ2VmaWxlcy0kY2Npc2djYyIgaW4KIyAg
-  ICAiJGRlZmluZS0kZGVmaW5lInwnLWRlZmluZScpCiMJY2F0IDw8RU9NID4mNAojCiMqKiogSSdt
-  IGlnbm9yaW5nIGxhcmdlIGZpbGVzIGZvciB0aGlzIGJ1aWxkIGJlY2F1c2UKIyoqKiBJIGRvbid0
-  IGtub3cgaG93IHRvIGRvIHVzZSBsYXJnZSBmaWxlcyBpbiBIUC1VWCB1c2luZyBnY2MuCiMKI0VP
-  TQojCXVzZWxhcmdlZmlsZXM9IiR1bmRlZiIKIwk7OwojICAgIGVzYWMKCiMgT25jZSB3ZSBoYXZl
-  IHRoZSBjb21waWxlciBmbGFncyBkZWZpbmVkLCBDb25maWd1cmUgd2lsbAojIGV4ZWN1dGUgdGhl
-  IGZvbGxvd2luZyBjYWxsLWJhY2sgc2NyaXB0LiBTZWUgaGludHMvUkVBRE1FLmhpbnRzCiMgZm9y
-  IGRldGFpbHMuCmNhdCA+IFVVL2NjLmNidSA8PCdFT0NCVScKIyBUaGlzIHNjcmlwdCBVVS9jYy5j
-  YnUgd2lsbCBnZXQgJ2NhbGxlZC1iYWNrJyBieSBDb25maWd1cmUgYWZ0ZXIgaXQKIyBoYXMgcHJv
-  bXB0ZWQgdGhlIHVzZXIgZm9yIHRoZSBDIGNvbXBpbGVyIHRvIHVzZS4KCiMgQ29tcGlsZSBhbmQg
-  cnVuIHRoZSBhIHRlc3QgY2FzZSB0byBzZWUgaWYgYSBjZXJ0YWluIGdjYyBidWcgaXMKIyBwcmVz
-  ZW50LiBJZiBzbywgbG93ZXIgdGhlIG9wdGltaXphdGlvbiBsZXZlbCB3aGVuIGNvbXBpbGluZwoj
-  IHBwX3BhY2suYy4gIFRoaXMgd29ya3MgYXJvdW5kIGEgYnVnIGluIHVucGFjay4KCmlmIHRlc3Qg
-  LXogIiRjY2lzZ2NjIiAtYSAteiAiJGdjY3ZlcnNpb24iOyB0aGVuCiAgICA6IG5vIHRlc3RzIG5l
-  ZWRlZCBmb3IgSFBjCmVsc2UKICAgIGVjaG8gIiAiCiAgICBlY2hvICJUZXN0aW5nIGZvciBhIGNl
-  cnRhaW4gZ2NjIGJ1ZyBpcyBmaXhlZCBpbiB5b3VyIGNvbXBpbGVyLi4uIgoKICAgICMgVHJ5IGNv
-  bXBpbGluZyB0aGUgdGVzdCBjYXNlLgogICAgaWYgJGNjIC1vIHQwMDEgLU8gJGNjZmxhZ3MgJGxk
-  ZmxhZ3MgLWxtIC4uL2hpbnRzL3QwMDEuYzsgdGhlbgogICAgICAgZ2NjYnVnPWAkcnVuIC4vdDAw
-  MWAKICAgICAgIGNhc2UgIiRnY2NidWciIGluCiAgICAgICAgICAgKmZhaWxzKikKICAgICAgICAg
-  ICAgICAgY2F0ID4mNCA8PEVPRgpUaGlzIEMgY29tcGlsZXIgKCRnY2N2ZXJzaW9uKSBpcyBrbm93
-  biB0byBoYXZlIG9wdGltaXplcgpwcm9ibGVtcyB3aGVuIGNvbXBpbGluZyBwcF9wYWNrLmMuCgpE
-  aXNhYmxpbmcgb3B0aW1pemF0aW9uIGZvciBwcF9wYWNrLmMuCkVPRgogICAgICAgICAgICAgICBj
-  YXNlICIkcHBfcGFja19jZmxhZ3MiIGluCiAgICAgICAgICAgICAgICAgICAnJykgcHBfcGFja19j
-  ZmxhZ3M9J29wdGltaXplPScKICAgICAgICAgICAgICAgICAgICAgICBlY2hvICJwcF9wYWNrX2Nm
-  bGFncz0nb3B0aW1pemU9XCJcIiciID4+IGNvbmZpZy5zaCA7OwogICAgICAgICAgICAgICAgICAg
-  KikgIGVjaG8gIllvdSBzcGVjaWZpZWQgcHBfcGFja19jZmxhZ3MgeW91cnNlbGYsIHNvIHdlJ2xs
-  IGdvIHdpdGggeW91ciB2YWx1ZS4iID4mNCA7OwogICAgICAgICAgICAgICAgICAgZXNhYwogICAg
-  ICAgICAgICAgICA7OwogICAgICAgICAgICopICBlY2hvICJZb3VyIGNvbXBpbGVyIGlzIG9rLiIg
-  PiY0CiAgICAgICAgICAgICAgIDs7CiAgICAgICAgICAgZXNhYwogICAgZWxzZQogICAgICAgZWNo
-  byAiICIKICAgICAgIGVjaG8gIioqKiBXSE9BIFRIRVJFISEhICoqKiIgPiY0CiAgICAgICBlY2hv
-  ICIgICAgWW91ciBDIGNvbXBpbGVyIFwiJGNjXCIgZG9lc24ndCBzZWVtIHRvIGJlIHdvcmtpbmch
-  IiA+JjQKICAgICAgIGNhc2UgIiRrbm93aXRhbGwiIGluCiAgICAgICAgICAgJycpIGVjaG8gIiAg
-  ICBZb3UnZCBiZXR0ZXIgc3RhcnQgaHVudGluZyBmb3Igb25lIGFuZCBsZXQgbWUga25vdyBhYm91
-  dCBpdC4iID4mNAogICAgICAgICAgICAgICBleGl0IDEKICAgICAgICAgICAgICAgOzsKICAgICAg
-  ICAgICBlc2FjCiAgICAgICBmaQoKICAgIHJtIC1mIHQwMDEkX28gdDAwMSRfZXhlCiAgICBmaQpF
-  T0NCVQoKY2F0ID5jb25maWcuYXJjaCA8PCdFT0NCVScKIyBUaGlzIHNjcmlwdCBVVS9jb25maWcu
-  YXJjaCB3aWxsIGdldCAnY2FsbGVkLWJhY2snIGJ5IENvbmZpZ3VyZSBhZnRlcgojIGFsbCBvdGhl
-  ciBjb25maWd1cmF0aW9ucyBhcmUgZG9uZSBqdXN0IGJlZm9yZSBjb25maWcuaCBpcyBnZW5lcmF0
-  ZWQKY2FzZSAiJGFyY2huYW1lOiRvcHRpbWl6ZSIgaW4KICBQQSo6Ki1nKlstK11PKnxQQSo6Klst
-  K11PKi1nKikKICAgIGNhc2UgIiRjY2ZsYWdzIiBpbgogICAgICAqREQ2NCopIDs7CiAgICAgICop
-  IGNhc2UgIiRjY3ZlcnNpb24iIGluCgkgICMgT25seSBvbiBQQS1SSVNDLiBCMzkxMEIgKGFDQykg
-  aXMgbm90IGZhdWx0eQoJICAjIEIuMTEuKiBhbmQgQS4xMC4qIGFyZQoJICBbQUJdLjEqKQoJICAg
-  ICAgIyBjYzogZXJyb3IgMTQxNDogQ2FuJ3QgaGFuZGxlIHByZXByb2Nlc3NlZCBmaWxlIGZvby5p
-  IGlmIC1nIGFuZCAtTyBzcGVjaWZpZWQuCgkgICAgICBlY2hvICJIUC1VWCBDLUFOU0ktQyBvbiBQ
-  QS1SSVNDIGRvZXMgbm90IGFjY2VwdCBib3RoIC1nIGFuZCAtTyBvbiBwcmVwcm9jZXNzZWQgZmls
-  ZXMiID4mNAoJICAgICAgZWNobyAid2hlbiBjb21waWxpbmcgaW4gMzJiaXQgbW9kZS4gVGhlIG9w
-  dGltaXplciB3aWxsIGJlIGRpc2FibGVkLiIgPiY0CgkgICAgICBvcHRpbWl6ZT1gZWNobyAiJG9w
-  dGltaXplIiB8IHNlZCAtZSAncy9bLStdT1swLTldKi8vJyAtZSAncy8rT25vbGltaXQvLycgLWUg
-  J3MvXiAqLy8nYAoJICAgICAgOzsKCSAgZXNhYwogICAgICBlc2FjCiAgZXNhYwpFT0NCVQoKY2F0
-  ID5VVS91c2VsYXJnZWZpbGVzLmNidSA8PCdFT0NCVScKIyBUaGlzIHNjcmlwdCBVVS91c2VsYXJn
-  ZWZpbGVzLmNidSB3aWxsIGdldCAnY2FsbGVkLWJhY2snIGJ5IENvbmZpZ3VyZQojIGFmdGVyIGl0
-  IGhhcyBwcm9tcHRlZCB0aGUgdXNlciBmb3Igd2hldGhlciB0byB1c2UgbGFyZ2UgZmlsZXMuCgpj
-  YXNlICIkYXJjaG5hbWU6JHVzZTY0Yml0YWxsOiR1c2U2NGJpdGludCIgaW4KICAgICotTFA2NCo6
-  dW5kZWY6ZGVmaW5lKQoJYXJjaG5hbWU9YGVjaG8gIiRhcmNobmFtZSIgfCBzZWQgJ3MvLUxQNjQv
-  LTY0aW50LydgCgllY2hvICJBcmNobmFtZSBjaGFuZ2VkIHRvICRhcmNobmFtZSIKCTs7CiAgICBl
-  c2FjCgpjYXNlICIkdXNlbGFyZ2VmaWxlcyIgaW4KICAgICIifCRkZWZpbmV8dHJ1ZXxbeVldKikK
-  CSMgdGhlcmUgYXJlIGxhcmdlZmlsZSBmbGFncyBhdmFpbGFibGUgdmlhIGdldGNvbmYoMSkKCSMg
-  YnV0IHdlIGNoZWF0IGZvciBub3cuICAoS2VlcCB0aGF0IGluIHRoZSBsZWZ0IG1hcmdpbi4pCmNj
-  ZmxhZ3NfdXNlbGFyZ2VmaWxlcz0iLURfTEFSR0VGSUxFX1NPVVJDRSAtRF9GSUxFX09GRlNFVF9C
-  SVRTPTY0IgoKCWNhc2UgIiAkY2NmbGFncyAiIGluCgkqIiAkY2NmbGFnc191c2VsYXJnZWZpbGVz
-  ICIqKSA7OwoJKikgY2NmbGFncz0iJGNjZmxhZ3MgJGNjZmxhZ3NfdXNlbGFyZ2VmaWxlcyIgOzsK
-  CWVzYWMKCglpZiB0ZXN0IC16ICIkY2Npc2djYyIgLWEgLXogIiRnY2N2ZXJzaW9uIjsgdGhlbgoJ
-  ICAgICMgVGhlIHN0cmljdCBBTlNJIG1vZGUgKC1BYSkgZG9lc24ndCBsaWtlIGxhcmdlIGZpbGVz
-  LgoJICAgIGNjZmxhZ3M9YGVjaG8gIiAkY2NmbGFncyAifHNlZCAnc0AgLUFhIEAgQGcnYAoJICAg
-  IGNhc2UgIiRjY2ZsYWdzIiBpbgoJCSotQWUqKSA7OwoJCSopICAgICBjY2ZsYWdzPSIkY2NmbGFn
-  cyAtQWUiIDs7CgkJZXNhYwoJICAgIGZpCgk7OwogICAgZXNhYwpFT0NCVQoKIyBUSFJFQURJTkcK
-  CiMgVGhpcyBzY3JpcHQgVVUvdXNldGhyZWFkcy5jYnUgd2lsbCBnZXQgJ2NhbGxlZC1iYWNrJyBi
-  eSBDb25maWd1cmUKIyBhZnRlciBpdCBoYXMgcHJvbXB0ZWQgdGhlIHVzZXIgZm9yIHdoZXRoZXIg
-  dG8gdXNlIHRocmVhZHMuCmNhdCA+VVUvdXNldGhyZWFkcy5jYnUgPDwnRU9DQlUnCmNhc2UgIiR1
-  c2V0aHJlYWRzIiBpbgogICAgJGRlZmluZXx0cnVlfFt5WV0qKQoJaWYgWyAiJHh4T3NSZXZNYWpv
-  ciIgLWx0IDEwIF07IHRoZW4KCSAgICBjYXQgPDxFT00gPiY0CgpIUC1VWCAkeHhPc1Jldk1ham9y
-  IGNhbm5vdCBzdXBwb3J0IFBPU0lYIHRocmVhZHMuCkNvbnNpZGVyIHVwZ3JhZGluZyB0byBhdCBs
-  ZWFzdCBIUC1VWCAxMS4KQ2Fubm90IGNvbnRpbnVlLCBhYm9ydGluZy4KRU9NCgkgICAgZXhpdCAx
-  CgkgICAgZmkKCglpZiBbICIkeHhPc1Jldk1ham9yIiAtZXEgMTAgXTsgdGhlbgoJICAgICMgVW5k
-  ZXIgMTAuWCwgYSB0aHJlYWRlZCBwZXJsIGNhbiBiZSBidWlsdAoJICAgIGlmIFsgLWYgL3Vzci9p
-  bmNsdWRlL3B0aHJlYWQuaCBdOyB0aGVuCgkJaWYgWyAtZiAvdXNyL2xpYi9saWJjbWEuc2wgXTsg
-  dGhlbgoJCSAgICAjIERDRSAoZnJvbSBDb3JlIE9TIENEKSBpcyBpbnN0YWxsZWQKCgkJICAgIyBD
-  aGVjayBpZiBpdCBpcyBwcmlzdGluZSwgb3IgcGF0Y2hlZAoJCSAgIGNtYXZzbj1gd2hhdCAvdXNy
-  L2xpYi9saWJjbWEuc2wgMj4mMSB8IGdyZXAgMTk5NmAKCQkgICBpZiBbICEgLXogIiRjbWF2c24i
-  IF07IHRoZW4KCQkgICAgICAgY2F0IDw8RU9NID4mNAoHCioqKioqKioqKioqKioqKioqKioqKioq
-  KioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKgoKUGVy
-  bCB3aWxsIHN1cHBvcnQgdGhyZWFkaW5nIHRocm91Z2ggL3Vzci9saWIvbGliY21hLnNsIGZyb20K
-  dGhlIEhQIERDRSBwYWNrYWdlLCBidXQgdGhlIHZlcnNpb24gZm91bmQgaXMgdG9vIG9sZCB0byBi
-  ZQpyZWxpYWJsZS4KCklmIHlvdSBhcmUgbm90IGRlcGVuZGluZyBvbiB0aGlzIHNwZWNpZmljIHZl
-  cnNpb24gb2YgdGhlIGxpYnJhcnksCmNvbnNpZGVyIHRvIHVwZ3JhZGUgdXNpbmcgcGF0Y2ggUEhT
-  U18yMzY3MiAocmVhZCBSRUFETUUuaHB1eCkKCioqKioqKioqKioqKioqKioqKioqKioqKioqKioq
-  KioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKgoKKHNsZWVwaW5n
-  IGZvciAxMCBzZWNvbmRzLi4uKQpFT00KCQkgICAgICAgc2xlZXAgMTAKCQkgICAgICAgZmkKCgkJ
-  ICAgICMgSXQgbmVlZHMgIyBsaWJjbWEgYW5kIE9MRF9QVEhSRUFEU19BUEkuIEFsc28KCQkgICAg
-  IyA8cHRocmVhZC5oPiBuZWVkcyB0byBiZSAjaW5jbHVkZWQgYmVmb3JlIGFueQoJCSAgICAjIG90
-  aGVyIGluY2x1ZGVzIChpbiBwZXJsLmgpCgoJCSAgICAjIEhQLVVYIDEwLlggdXNlcyB0aGUgb2xk
-  IHB0aHJlYWRzIEFQSQoJCSAgICBkX29sZHB0aHJlYWRzPSIkZGVmaW5lIgoKCQkgICAgIyBpbmNs
-  dWRlIGxpYmNtYSBiZWZvcmUgYWxsIHRoZSBvdGhlcnMKCQkgICAgbGlic3dhbnRlZD0iY21hICRs
-  aWJzd2FudGVkIgoKCQkgICAgIyB0ZWxsIHBlcmwuaCB0byBpbmNsdWRlIDxwdGhyZWFkLmg+IGJl
-  Zm9yZSBvdGhlcgoJCSAgICAjIGluY2x1ZGUgZmlsZXMKCQkgICAgY2NmbGFncz0iJGNjZmxhZ3Mg
-  LURQVEhSRUFEX0hfRklSU1QiCiMgRmlyc3QgY29sdW1uIG9uIHB1cnBvc2U6CiMgdGhpcyBpcyBu
-  b3QgYSBzdGFuZGFyZCBDb25maWd1cmUgdmFyaWFibGUKIyBidXQgd2UgbmVlZCB0byBnZXQgdGhp
-  cyBub3RpY2VkLgpwdGhyZWFkX2hfZmlyc3Q9IiRkZWZpbmUiCgoJCSAgICAjIEhQLVVYIDEwLlgg
-  c2VlbXMgdG8gaGF2ZSBubyBlYXN5CgkJICAgICMgd2F5IG9mIGRldGVjdGluZyB0aGVzZSAqdGlt
-  ZV9yIHByb3Rvcy4KCQkgICAgZF9nbXRpbWVfcl9wcm90bz0nZGVmaW5lJwoJCSAgICBnbXRpbWVf
-  cl9wcm90bz0nUkVFTlRSQU5UX1BST1RPX0lfVFMnCgkJICAgIGRfbG9jYWx0aW1lX3JfcHJvdG89
-  J2RlZmluZScKCQkgICAgbG9jYWx0aW1lX3JfcHJvdG89J1JFRU5UUkFOVF9QUk9UT19JX1RTJwoK
-  CQkgICAgIyBBdm9pZCB0aGUgcG9pc29ub3VzIGNvbmZsaWN0aW5nIChhbmQgaXJyZWxldmFudCkK
-  CQkgICAgIyBwcm90b3R5cGVzIG9mIHNldGtleSAoKS4KCQkgICAgaV9jcnlwdD0iJHVuZGVmIgoK
-  CQkgICAgIyBDTUEgcmVkZWZpbmVzIHNlbGVjdCB0byBjbWFfc2VsZWN0LCBhbmQgY21hX3NlbGVj
-  dAoJCSAgICAjIGV4cGVjdHMgaW50ICogaW5zdGVhZCBvZiBmZF9zZXQgKiAoanVzdCBsaWtlIDku
-  WCkKCQkgICAgc2VsZWN0dHlwZT0naW50IConCgoJCWVsaWYgWyAtZiAvdXNyL2xpYi9saWJwdGhy
-  ZWFkLnNsIF07IHRoZW4KCQkgICAgIyBQVEggcGFja2FnZSBpcyBpbnN0YWxsZWQKCQkgICAgbGli
-  c3dhbnRlZD0icHRocmVhZCAkbGlic3dhbnRlZCIKCQllbHNlCgkJICAgIGxpYnN3YW50ZWQ9Im5v
-  X3RocmVhZHNfYXZhaWxhYmxlIgoJCSAgICBmaQoJICAgIGVsc2UKCQlsaWJzd2FudGVkPSJub190
-  aHJlYWRzX2F2YWlsYWJsZSIKCQlmaQoKCSAgICBpZiBbICRsaWJzd2FudGVkID0gIm5vX3RocmVh
-  ZHNfYXZhaWxhYmxlIiBdOyB0aGVuCgkJY2F0IDw8RU9NID4mNAoKSW4gSFAtVVggMTAuWCBmb3Ig
-  UE9TSVggdGhyZWFkcyB5b3UgbmVlZCBib3RoIG9mIHRoZSBmaWxlcwovdXNyL2luY2x1ZGUvcHRo
-  cmVhZC5oIGFuZCBlaXRoZXIgL3Vzci9saWIvbGliY21hLnNsIG9yIC91c3IvbGliL2xpYnB0aHJl
-  YWQuc2wuCkVpdGhlciB5b3UgbXVzdCB1cGdyYWRlIHRvIEhQLVVYIDExIG9yIGluc3RhbGwgYSBw
-  b3NpeCB0aHJlYWQgbGlicmFyeToKCiAgICBEQ0UtQ29yZVRvb2xzIGZyb20gSFAtVVggMTAuMjAg
-  SGFyZHdhcmUgRXh0ZW5zaW9ucyAzLjAgQ0QgKEIzOTIwLTEzOTQxKQoKb3IKCiAgICBQVEggcGFj
-  a2FnZSBmcm9tIGUuZy4gaHR0cDovL2hwdXguY29ubmVjdC5vcmcudWsvaHBwZC9ocHV4L0dudS9w
-  dGgtMi4wLjcvCgpDYW5ub3QgY29udGludWUsIGFib3J0aW5nLgpFT00KCQlleGl0IDEKCQlmaQoJ
-  ZWxzZQoJICAgICMgMTIgbWF5IHdhbnQgdXBwaW5nIHRoZSBfUE9TSVhfQ19TT1VSQ0UgZGF0ZXN0
-  YW1wLi4uCgkgICAgY2NmbGFncz0iIC1EX1BPU0lYX0NfU09VUkNFPTE5OTUwNkwgLURfUkVFTlRS
-  QU5UICRjY2ZsYWdzIgoJICAgIHNldCBgZWNobyBYICIkbGlic3dhbnRlZCAifCBzZWQgLWUgJ3Mv
-  IGMgLyBwdGhyZWFkIGMgLydgCgkgICAgc2hpZnQKCSAgICBsaWJzd2FudGVkPSIkKiIKCgkgICAg
-  IyBIUC1VWCAxMS5YIHNlZW1zIHRvIGhhdmUgbm8gZWFzeQoJICAgICMgd2F5IG9mIGRldGVjdGlu
-  ZyB0aGVzZSAqdGltZV9yIHByb3Rvcy4KCSAgICBkX2dtdGltZV9yX3Byb3RvPSdkZWZpbmUnCgkg
-  ICAgZ210aW1lX3JfcHJvdG89J1JFRU5UUkFOVF9QUk9UT19TX1RTJwoJICAgIGRfbG9jYWx0aW1l
-  X3JfcHJvdG89J2RlZmluZScKCSAgICBsb2NhbHRpbWVfcl9wcm90bz0nUkVFTlRSQU5UX1BST1RP
-  X1NfVFMnCgkgICAgZmkKCTs7CiAgICBlc2FjCkVPQ0JVCgojIFRoZXJlIHVzZWQgdG8gYmU6CiMg
-  IFRoZSBteXN0ZXJpb3VzIGlvX3hzIG1lbW9yeSBjb3JydXB0aW9uIGluIDExLjAwIDMyYml0IHNl
-  ZW1zIHRvIGdldAojICBmaXhlZCBieSBub3QgdXNpbmcgUGVybCdzIG1hbGxvYy4gIEZsaXAgc2lk
-  ZSBpcyBwZXJmb3JtYW5jZSBsb3NzLgojICBTbyB3ZSB3YW50IG15bWFsbG9jIGZvciBhbGwgc2l0
-  dWF0aW9ucyBwb3NzaWJsZQojIFRoYXQgc2V0IHVzZW15bWFsbG9jIHRvICduJyBmb3IgdGhyZWFk
-  ZWQgYnVpbGRzIGFuZCBub24tZ2NjIDMyYml0CiMgIG5vbi1kZWJ1Z2dpbmcgYnVpbGRzIGFuZCAn
-  eScgZm9yIGFsbCBvdGhlcnMKCnVzZW15bWFsbG9jPSduJwpjYXNlICIkdXNlcGVybGlvIiBpbgog
-  ICAgJHVuZGVmfGZhbHNlfFtuTl0qKSB1c2VteW1hbGxvYz0neScgOzsKICAgIGVzYWMKCiMgbWFs
-  bG9jIHdyYXAgd29ya3MKY2FzZSAiJHVzZW1hbGxvY3dyYXAiIGluCiAgICAnJykgdXNlbWFsbG9j
-  d3JhcD0nZGVmaW5lJyA7OwogICAgZXNhYwoKIyBjdGltZV9yICgpIGFuZCBhc2N0aW1lX3IgKCkg
-  c2VlbSB0byBoYXZlIGlzc3VlcyBmb3IgdmVyc2lvbnMgYmVmb3JlCiMgSFAtVVggMTEKaWYgWyAk
-  eHhPc1Jldk1ham9yIC1sdCAxMSBdOyB0aGVuCiAgICBkX2N0aW1lX3I9IiR1bmRlZiIKICAgIGRf
-  YXNjdGltZV9yPSIkdW5kZWYiCiAgICBmaQoKIyBmcGNsYXNzaWZ5ICgpIGlzIGEgbWFjcm8sIHRo
-  ZSBsaWJyYXJ5IGNhbGwgaXMgRnBjbGFzc2lmeQojIFNpbWlsYXJseSB3aXRoIHRoZSBvdGhlcnMg
-  YmVsb3cuCmRfZnBjbGFzc2lmeT0nZGVmaW5lJwpkX2lzbmFuPSdkZWZpbmUnCmRfaXNpbmY9J2Rl
-  ZmluZScKZF9pc2Zpbml0ZT0nZGVmaW5lJwpkX3Vub3JkZXJlZD0nZGVmaW5lJwojIE5leHQgb25l
-  KHMpIG5lZWQgdGhlIGxlYWRpbmcgdGFiLiAgVGhlc2UgYXJlIHNwZWNpYWwgJ2hpbnQnIHN5bWJv
-  bHMgdGhhdAojIGFyZSBub3QgdG8gYmUgcHJvcGFnYXRlZCB0byBjb25maWcuc2gsIGFsbCByZWxh
-  dGVkIHRvIHB0aHJlYWRzIGRyYWZ0IDQKIyBpbnRlcmZhY2VzLgpjYXNlICIkZF9vbGRwdGhyZWFk
-  cyIgaW4KICAgICcnfCR1bmRlZikKCWRfY3J5cHRfcl9wcm90bz0ndW5kZWYnCglkX2dldGdyZW50
-  X3JfcHJvdG89J3VuZGVmJwoJZF9nZXRwd2VudF9yX3Byb3RvPSd1bmRlZicKCWRfc3RyZXJyb3Jf
-  cl9wcm90bz0ndW5kZWYnCgk7OwogICAgZXNhYwoKIyBILk1lcmlqbiBzYXlzIGl0J3Mgbm90IDE5
-  OTggYW55bW9yZTogT0RCTSBpcyBub3QgbmVlZGVkLAojIGFuZCBpdCBzZWVtcyB0byBiZSBidWdn
-  eSBpbiBIUC1VWCBhbnl3YXkuCmlfZGJtPXVuZGVmCgojIEluIEhQLVVYZXMgcHJpb3IgdG8gMTEu
-  MjMgc3RydG9sZCgpIHJldHVybmVkIGEgSFAtVVgKIyBzcGVjaWZpYyB1bmlvbiBjYWxsZWQgbG9u
-  Z19kb3VibGUsIG5vdCBhIEM5OSBsb25nIGRvdWJsZS4KY2FzZSAiYGdyZXAgJ2RvdWJsZSBzdHJ0
-  b2xkLmNvbnN0JyAvdXNyL2luY2x1ZGUvc3RkbGliLmhgIiBpbgoqImxvbmcgZG91YmxlIHN0cnRv
-  bGQiKikgOzsgIyBzdHJ0b2xkIHNob3VsZCBiZSBzYWZlLgoqKSBlY2hvICJMb29rcyBsaWtlIHlv
-  dXIgc3RydG9sZCgpIGlzIG5vbi1zdGFuZGFyZC4uLiIgPiY0CiAgIGRfc3RydG9sZD11bmRlZiA7
-  Owplc2FjCgojIEluIHByZS0xMSBIUC1VWGVzIHRoZXJlIHJlYWxseSBpc24ndCBpc2Zpbml0ZSgp
-  LCBkZXNwaXRlIHdoYXQKIyBDb25maWd1cmUgbWlnaHQgdGhpbmsuIChUaGVyZSBpcyBmaW5pdGUo
-  KSwgdGhvdWdoLikKY2FzZSAiYGdyZXAgJ2lzZmluaXRlJyAvdXNyL2luY2x1ZGUvbWF0aC5oYCIg
-  aW4KKiJpc2Zpbml0ZSIqKSA7OwoqKSBkX2lzZmluaXRlPXVuZGVmIDs7CmVzYWMKCiMgMTEuMjMg
-  c2F5cyBpdCBoYXMgbWJybGVuIGFuZCBtYnJ0b3djLCBidXQgY29tcGlsaW5nIHRoZW0gZmFpbHMg
-  YXMgaXQgY2FuJ3QKIyBmaW5kIHRoZSB0eXBlIGRlZmluaXRpb24gZm9yIG1ic3RhdGVfdCB3aGlj
-  aCBvbmUgb2YgdGhlIHBhcmFtZXRlcnMgaXMuICBJdCdzCiMgbm90IGluIHRoZSBoZHIgdGhlIG1h
-  biBwYWdlIHNheXMgaXQgaXMuICBQZXJoYXBzIGEgYmV0dGVyIENvbmZpZ3VyZSBwcm9iZSBpcwoj
-  IG5lZWRlZCwgYnV0IGZvciBub3cgc2ltcGx5IHVuZGVmaW5lIHRoZW0KZF9tYnJsZW49J3VuZGVm
-  JwpkX21icnRvd2M9J3VuZGVmJwo=','linux'=>'IyBoaW50cy9saW51eC5zaAojIE9yaWdpbmFsIHZlcnNpb24gYnkgcnNhbmRlcnMKIyBBZGRpdGlv
+  ZWFrIFVJTlQzMl9NQVggOi0oCgkJICAgIGNjZmxhZ3M9IiRjY2ZsYWdzIC1EVUlOVDMyX01BWF9C
+  Uk9LRU4iCgkJICAgIDs7CgkJWzM0XSopICMgR0NDIChib3RoIDMyYml0IGFuZCA2NGJpdCkgd2ls
+  bCBkZWZpbmUgX19TVERDX0VYVF9fCiAgICAgICAgICAgICAgICAgICAgICAgIyBieSBkZWZhdWx0
+  IHdoZW4gdXNpbmcgR0NDIDMuMCBhbmQgbmV3ZXIgdmVyc2lvbnMgb2YKICAgICAgICAgICAgICAg
+  ICAgICAgICAjIHRoZSBjb21waWxlci4KCQkgICBjcHBmbGFncz0iJGNjX2NwcGZsYWdzIgoJCSAg
+  IDs7CgkJZXNhYwoJICAgIGNhc2UgImBnZXRjb25mIEtFUk5FTF9CSVRTIDI+L2Rldi9udWxsYCIg
+  aW4KCQkqNjQqKQoJCSAgICBlY2hvICJtYWluKCl7fSI+dHJ5LmMKCQkgICAgY2FzZSAiJGdjY3Zl
+  cnNpb24iIGluCgkJCVszNF0qKQoJCQkgICAgY2FzZSAiJGFyY2huYW1lIiBpbgogICAgICAgICAg
+  ICAgICAgICAgICAgICAgICAgICAgUEEtUklTQyopCiAgICAgICAgICAgICAgICAgICAgICAgICAg
+  ICAgICAgICAgY2FzZSAiJGNjZmxhZ3MiIGluCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAg
+  ICAgICAgICAgICotbXBhLXJpc2MqKSA7OwogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg
+  ICAgICAgICAqKSBjY2ZsYWdzPSIkY2NmbGFncyAtbXBhLXJpc2MtMi0wIiA7OwogICAgICAgICAg
+  ICAgICAgICAgICAgICAgICAgICAgICAgICAgICBlc2FjCiAgICAgICAgICAgICAgICAgICAgICAg
+  ICAgICAgICAgICAgOzsKCQkJCWVzYWMKCQkJICAgIDs7CgkJCSopICAjIGdjYyB3aXRoIGdhcyB3
+  aWxsIG5vdCBhY2NlcHQgK0RBMi4wCgkJCSAgICBjYXNlICJgJGNjIC1jIC1XYSwrREEyLjAgdHJ5
+  LmMgMj4mMWAiIGluCgkJCQkqIitEQTIuMCIqKQkJIyBnYXMKCQkJCSAgICBnbnVfYXM9eWVzCgkJ
+  CQkgICAgOzsKCQkJCSopCQkJIyBIUGFzCgkJCQkgICAgY2NmbGFncz0iJGNjZmxhZ3MgLVdhLCtE
+  QTIuMCIKCQkJCSAgICA7OwoJCQkJZXNhYwoJCQkgICAgOzsKCQkJZXNhYwoJCSAgICAjIGdjYyB3
+  aXRoIGdsZCB3aWxsIG5vdCBhY2NlcHQgK3Zub2NvbXBhdHdhcm5pbmdzCgkJICAgIGNhc2UgImAk
+  Y2MgLW8gdHJ5IC1XbCwrdm5vY29tcGF0d2FybmluZ3MgdHJ5LmMgMj4mMWAiIGluCgkJCSoiK3Zu
+  b2NvbXBhdCIqKQkJIyBnbGQKCQkJICAgIGdudV9sZD15ZXMKCQkJICAgIDs7CgkJCSopCQkJIyBI
+  UGxkCgkJCSAgIGNhc2UgIiRnY2N2ZXJzaW9uIiBpbgoJCQkgICAgICAgWzEyXSopCgkJCQkgICAj
+  IFdoeSBub3QgMyBhcyB3ZWxsIGhlcmU/CgkJCQkgICAjIFNpbmNlIG5vdCByZWxldmFudCB0byBJ
+  QTY0LCBub3QgY2hhbmdlZC4KCQkJCSAgIGxkZmxhZ3M9IiRsZGZsYWdzIC1XbCwrdm5vY29tcGF0
+  d2FybmluZ3MiCgkJCQkgICBjY2ZsYWdzPSIkY2NmbGFncyAtV2wsK3Zub2NvbXBhdHdhcm5pbmdz
+  IgoJCQkJICAgOzsKCQkJICAgICAgIGVzYWMKCQkJICAgIDs7CgkJCWVzYWMKCQkgICAgcm0gLWYg
+  dHJ5LmMKCQkgICAgOzsKCQllc2FjCgkgICAgOzsKICAgICopICAgICAgY2Npc2djYz0nJwoJICAg
+  ICMgV2hhdCBjYW5ub3QgYmUgdXNlIGluIGNvbWJpbmF0aW9uIHdpdGggY2NhY2hlIGxpbmtzIDoo
+  CgkgICAgY2NfZm91bmQ9IiIKCSAgICBmb3IgcCBpbiBgZWNobyAkUEFUSCB8IHRyIDogJyAnJ2Ag
+  OyBkbwoJCXg9IiRwL2NjIgoJCWlmIFsgLWYgJHggXSAmJiBbIC14ICR4IF07IHRoZW4KCQkgICAg
+  aWYgWyAtaCAkeCBdOyB0aGVuCgkJCWw9YGxzIC1sICR4IHwgc2VkICdzLC4qLT4gLCwnYAoJCQlj
+  YXNlICRsIGluCgkJCSAgICAvKikgeD0kbAkJOzsKCQkJICAgICopICB4PSIkcC8kbCIJOzsKCQkJ
+  ICAgIGVzYWMKCQkJZmkKCQkgICAgeD1gZWNobyAkeCB8IHNlZCAncywvXC4vLC8sZydgCgkJICAg
+  IGNhc2UgJHggaW4KCQkJKmNjYWNoZSopIDs7CgkJCSopIFsgLXogIiRjY19mb3VuZCIgXSAmJiBj
+  Y19mb3VuZD0keCA7OwoJCQllc2FjCgkJICAgIGZpCgkJZG9uZQoJICAgIFsgLXogIiRjY19mb3Vu
+  ZCIgXSAmJiBjY19mb3VuZD1gd2hpY2ggY2NgCgkgICAgd2hhdCAkY2NfZm91bmQgPiY0CgkgICAg
+  Y2N2ZXJzaW9uPWB3aGF0ICRjY19mb3VuZCB8IGF3ayAnL0NvbXBpbGVyL3twcmludCAkMn0vSXRh
+  bml1bS97cHJpbnQgJDYsJDd9L2ZvciBJbnRlZ3JpdHkve3ByaW50ICQ2LCQ3fSdgCgkgICAgY2Fz
+  ZSAiJGNjZmxhZ3MiIGluCiAgICAgICAgICAgICAgICItQWUgIiopIDs7CgkJKikgIGNjZmxhZ3M9
+  Ii1BZSAkY2NfY3BwZmxhZ3MiCgkJICAgICMgK3Zub2NvbXBhdHdhcm5pbmdzIG5vdCBrbm93biBp
+  biAxMC4xMCBhbmQgb2xkZXIKCQkgICAgaWYgWyAkeHhPc1JldiAtZ2UgMTAyMCBdOyB0aGVuCgkJ
+  CWNjZmxhZ3M9IiRjY2ZsYWdzIC1XbCwrdm5vY29tcGF0d2FybmluZ3MiCgkJCWZpCgkJICAgIDs7
+  CiAgICAgICAgICAgICAgIGVzYWMKCSAgICAjIE5lZWRlZCBiZWNhdXNlIGNwcCBkb2VzIG9ubHkg
+  c3VwcG9ydCAtQWEgKG5vdCAtQWUpCgkgICAgY3BwbGFzdD0nLScKCSAgICBjcHBtaW51cz0nLScK
+  CSAgICBjcHBzdGRpbj0nY2MgLUUgLUFhIC1EX19TVERDX0VYVF9fJwoJICAgIGNwcHJ1bj0kY3Bw
+  c3RkaW4KIwkgICAgY2FzZSAiJGRfY2FzdGkzMiIgaW4KIwkJIiIpIGRfY2FzdGkzMj0ndW5kZWYn
+  IDs7CiMJCWVzYWMKCSAgICA7OwogICAgZXNhYwoKIyBXaGVuIEhQLVVYIHJ1bnMgYSBzY3JpcHQg
+  d2l0aCAiIyEiLCBpdCBzZXRzIGFyZ3ZbMF0gdG8gdGhlIHNjcmlwdCBuYW1lLgp0b2tlX2NmbGFn
+  cz0nY2NmbGFncz0iJGNjZmxhZ3MgLURBUkdfWkVST19JU19TQ1JJUFQiJwoKIyMjIDY0IEJJVE5F
+  U1MKCiMgU29tZSBnY2MgdmVyc2lvbnMgZG8gbmF0aXZlIDY0IGJpdCBsb25nIChlLmcuIDIuOS1o
+  cHBhLTAwMDMxMCBhbmQgZ2NjLTMuMCkKIyBXZSBoYXZlIHRvIGZvcmNlIDY0Yml0bmVzcyB0byBn
+  byBzZWFyY2ggdGhlIHJpZ2h0IGxpYnJhcmllcwogICAgZ2NjXzY0bmF0aXZlPW5vCmNhc2UgIiRj
+  Y2lzZ2NjIiBpbgogICAgJGRlZmluZXx0cnVlfFtZeV0pCgllY2hvICcjaW5jbHVkZSA8c3RkaW8u
+  aD5cbmludCBtYWluKCl7bG9uZyBsO3ByaW50ZigiJWRcXG4iLHNpemVvZihsKSk7fSc+dHJ5LmMK
+  CSRjYyAtbyB0cnkgJGNjZmxhZ3MgJGxkZmxhZ3MgdHJ5LmMKCWlmIFsgImB0cnlgIiA9ICI4IiBd
+  OyB0aGVuCgkgICAgY2FzZSAiJHVzZTY0Yml0YWxsIiBpbgoJCSRkZWZpbmV8dHJ1ZXxbWXldKSA7
+  OwoJCSopICBjYXQgPDxFT00gPiY0CgoqKiogVGhpcyB2ZXJzaW9uIG9mIGdjYyB1c2VzIDY0IGJp
+  dCBsb25ncy4gLUR1c2U2NGJpdGFsbCBpcwoqKiogaW1wbGljaXRseSBzZXQgdG8gZW5hYmxlIGNv
+  bnRpbnVhdGlvbgpFT00KCQllc2FjCgkgICAgdXNlNjRiaXRhbGw9JGRlZmluZQoJICAgIGdjY182
+  NG5hdGl2ZT15ZXMKCSAgICBmaQoJOzsKICAgIGVzYWMKCmNhc2UgIiR1c2U2NGJpdGFsbCIgaW4K
+  ICAgICRkZWZpbmV8dHJ1ZXxbeVldKikgdXNlNjRiaXRpbnQ9IiRkZWZpbmUiIDs7CiAgICBlc2Fj
+  CgpjYXNlICIkdXNlbW9yZWJpdHMiIGluCiAgICAkZGVmaW5lfHRydWV8W3lZXSopIHVzZTY0Yml0
+  aW50PSIkZGVmaW5lIjsgdXNlbG9uZ2RvdWJsZT0iJGRlZmluZSIgOzsKICAgIGVzYWMKCiMgVGhl
+  cmUgaXMgYSB3ZWlyZCBwcmUtQzk5IGxvbmcgZG91YmxlIChhIHN0cnVjdCBvZiBmb3VyIHVpbjMy
+  X3QpCiMgaW4gSFAtVVggMTAuMjAgYnV0IGJleW9uZCBzdHJ0b2xkKCkgdGhlcmUncyBubyBzdXBw
+  b3J0IGZvciB0aGVtCiMgZm9yIGV4YW1wbGUgaW4gPG1hdGguaD4uCmNhc2UgIiR1c2Vsb25nZG91
+  YmxlIiBpbgogICAgJGRlZmluZXx0cnVlfFt5WV0qKQoJaWYgWyAiJHh4T3NSZXZNYWpvciIgLWx0
+  IDExIF07IHRoZW4KCSAgICBjYXQgPDxFT00gPiY0CgoqKiogdXNlbG9uZ2RvdWJsZSAob3IgdXNl
+  bW9yZWJpdHMpIGlzIG5vdCBzdXBwb3J0ZWQgb24gSFAtVVggJHh4T3NSZXZNYWpvci4KKioqIFlv
+  dSBuZWVkIGF0IGxlYXN0IEhQLVVYIDExLjAuCioqKiBDYW5ub3QgY29udGludWUsIGFib3J0aW5n
+  LgpFT00KCSAgICBleGl0IDEKCWZpCgk7OwogICAgZXNhYwoKIyBDb25maWd1cmUgbG9uZyBkb3Vi
+  bGUgc2NhbiB3aWxsIGRldGVjdCB0aGUgSFAtVVggMTAuMjAgImxvbmcgZG91YmxlIgojIChhIHN0
+  cnVjdCBvZiBmb3VyIHVpbjMyX3QpIGFuZCB0aGluayBpdCBpcyBJRUVFIHF1YWQuICBNYWtlIGl0
+  IG5vdCBzby4KaWYgWyAiJHh4T3NSZXZNYWpvciIgLWx0IDExIF07IHRoZW4KICAgIGRfbG9uZ2Ri
+  bD0iJHVuZGVmIgogICAgbG9uZ2RibHNpemU9OCAjIE1ha2UgaXQgZG91YmxlLgpmaQoKY2FzZSAi
+  JGFyY2huYW1lIiBpbgogICAgSUE2NCopCgkjIFdoaWxlIGhlcmUsIG92ZXJyaWRlIHNvPXNsIGF1
+  dG8tZGV0ZWN0aW9uCglzbz0nc28nCgk7OwogICAgZXNhYwoKY2FzZSAiJHVzZTY0Yml0YWxsIiBp
+  bgogICAgJGRlZmluZXx0cnVlfFtZeV0pCgoJaWYgWyAiJHh4T3NSZXZNYWpvciIgLWx0IDExIF07
+  IHRoZW4KCSAgICBjYXQgPDxFT00gPiY0CgoqKiogNjQtYml0IGNvbXBpbGF0aW9uIGlzIG5vdCBz
+  dXBwb3J0ZWQgb24gSFAtVVggJHh4T3NSZXZNYWpvci4KKioqIFlvdSBuZWVkIGF0IGxlYXN0IEhQ
+  LVVYIDExLjAuCioqKiBDYW5ub3QgY29udGludWUsIGFib3J0aW5nLgpFT00KCSAgICBleGl0IDEK
+  CSAgICBmaQoKCWlmIFsgJHh4T3NSZXYgLWVxIDExMDAgXTsgdGhlbgoJICAgICMgSFAtVVggMTEu
+  MDAgdXNlcyBvbmx5IDQ4IGJpdHMgaW50ZXJuYWxseSBpbiA2NGJpdCBtb2RlLCBub3QgNjQKCSAg
+  ICAjIGZvcmNlIG1pbi9tYXggdG8gMioqNDctMQoJICAgIHNHTVRJTUVfbWF4PTE0MDczNzQ4ODM1
+  NTMyNwoJICAgIHNHTVRJTUVfbWluPS02MjE2NzIxOTIwMAoJICAgIHNMT0NBTFRJTUVfbWF4PTE0
+  MDczNzQ4ODM1NTMyNwoJICAgIHNMT0NBTFRJTUVfbWluPS02MjE2NzIxOTIwMAoJICAgIGZpCgoJ
+  IyBTZXQgbGliYyBhbmQgdGhlIGxpYnJhcnkgcGF0aHMKCWNhc2UgIiRhcmNobmFtZSIgaW4KCSAg
+  ICBQQS1SSVNDKikKCQlsb2NsaWJwdGg9IiRsb2NsaWJwdGggL2xpYi9wYTIwXzY0IgoJCWxpYmM9
+  Jy9saWIvcGEyMF82NC9saWJjLnNsJyA7OwoJICAgIElBNjQqKQoJCWxvY2xpYnB0aD0iJGxvY2xp
+  YnB0aCAvdXNyL2xpYi9ocHV4NjQiCgkJbGliYz0nL3Vzci9saWIvaHB1eDY0L2xpYmMuc28nIDs7
+  CgkgICAgZXNhYwoJaWYgWyAhIC1mICIkbGliYyIgXTsgdGhlbgoJICAgIGNhdCA8PEVPTSA+JjQK
+  CioqKiBZb3UgZG8gbm90IHNlZW0gdG8gaGF2ZSB0aGUgNjQtYml0IGxpYmMuCioqKiBJIGNhbm5v
+  dCBmaW5kIHRoZSBmaWxlICRsaWJjLgoqKiogQ2Fubm90IGNvbnRpbnVlLCBhYm9ydGluZy4KRU9N
+  CgkgICAgZXhpdCAxCgkgICAgZmkKCgljYXNlICIkY2Npc2djYyIgaW4KCSAgICAkZGVmaW5lfHRy
+  dWV8W1l5XSkKCQkjIFRoZSBmaXhlZCBzb2NrZXQuaCBoZWFkZXIgZmlsZSBpcyB3cm9uZyBmb3Ig
+  Z2NjLTQueAoJCSMgb24gUEEtUklTQzIuMFcsIHNvIFNvY2tfdHlwZV90IGlzIHNpemVfdCB3aGlj
+  aCBpcwoJCSMgdW5zaWduZWQgbG9uZyB3aGljaCBpcyA2NGJpdCB3aGljaCBpcyB0b28gbG9uZwoJ
+  CWNhc2UgIiRnY2N2ZXJzaW9uIiBpbgoJCSAgICA0KikgY2FzZSAiJGFyY2huYW1lIiBpbgoJCQkg
+  ICAgUEEtUklTQyopIHNvY2tzaXpldHlwZT1pbnQgOzsKCQkJICAgIGVzYWMKCQkJOzsKCQkgICAg
+  ZXNhYwoKCQkjIEZvciB0aGUgbW9tZW50LCBkb24ndCBjYXJlIHRoYXQgaXQgYWluJ3Qgc3VwcG9y
+  dGVkICh5ZXQpCgkJIyBieSBnY2MgKHVwIHRvIGFuZCBpbmNsdWRpbmcgMi45NS4zKSwgY2F1c2Ug
+  aXQnbGwgY3Jhc2gKCQkjIGFueXdheS4gRXhwZWN0IGF1dG8tZGV0ZWN0aW9uIG9mIDY0LWJpdCBl
+  bmFibGVkIGdjYyBvbgoJCSMgSFAtVVggc29vbiwgaW5jbHVkaW5nIGEgdXNlci1mcmllbmRseSBl
+  eGl0CgkJY2FzZSAkZ2NjXzY0bmF0aXZlIGluCgkJICAgIG5vKSBjYXNlICIkZ2NjdmVyc2lvbiIg
+  aW4KCQkJICAgIFsxMjM0XSopCgkJCQljY2ZsYWdzPSIkY2NmbGFncyAtbWxwNjQiCgkJCQljYXNl
+  ICIkYXJjaG5hbWUiIGluCgkJCQkgICAgUEEtUklTQyopCgkJCQkJbGRmbGFncz0iJGxkZmxhZ3Mg
+  LVdsLCtERDY0IgoJCQkJCTs7CgkJCQkgICAgSUE2NCopCgkJCQkJbGRmbGFncz0iJGxkZmxhZ3Mg
+  LW1scDY0IgoJCQkJCTs7CgkJCQkgICAgZXNhYwoJCQkJOzsKCQkJICAgIGVzYWMKCQkJOzsKCQkg
+  ICAgZXNhYwoJCTs7CgkgICAgKikKCQljYXNlICIkdXNlNjRiaXRhbGwiIGluCgkJICAgICRkZWZp
+  bmV8dHJ1ZXxbeVldKikKCQkJY2NmbGFncz0iJGNjZmxhZ3MgK0RENjQiCgkJCWxkZmxhZ3M9IiRs
+  ZGZsYWdzICtERDY0IgoJCQk7OwoJCSAgICBlc2FjCgkJOzsKCSAgICBlc2FjCgoJIyBSZXNldCB0
+  aGUgbGlicmFyeSBjaGVja2VyIHRvIG1ha2Ugc3VyZSBsaWJyYXJpZXMKCSMgYXJlIHRoZSByaWdo
+  dCB0eXBlCgkjIChOT1RFOiBvbiBJQTY0LCB0aGlzIGRvZXNuJ3Qgd29yayB3aXRoIC5hIGZpbGVz
+  LikKCWxpYnNjaGVjaz0nY2FzZSAiYC91c3IvYmluL2ZpbGUgJHh4eGAiIGluCgkJICAgICAgICpF
+  TEYtNjQqfCpMUDY0KnwqUEEtUklTQzIuMCopIDs7CgkJICAgICAgICopIHh4eD0vbm8vNjQtYml0
+  JHh4eCA7OwoJCSAgICAgICBlc2FjJwoKCTs7CgogICAgKikJIyBOb3QgaW4gNjQtYml0IG1vZGUK
+  CgljYXNlICIkYXJjaG5hbWUiIGluCgkgICAgUEEtUklTQyopCgkJbGliYz0nL2xpYi9saWJjLnNs
+  JyA7OwoJICAgIElBNjQqKQoJCWxvY2xpYnB0aD0iJGxvY2xpYnB0aCAvdXNyL2xpYi9ocHV4MzIi
+  CgkJbGliYz0nL3Vzci9saWIvaHB1eDMyL2xpYmMuc28nIDs7CgkgICAgZXNhYwoJOzsKICAgIGVz
+  YWMKCiMgQnkgc2V0dGluZyB0aGUgZGVmZXJyZWQgZmxhZyBiZWxvdywgdGhpcyBtZWFucyB0aGF0
+  IGlmIHlvdSBydW4gcGVybAojIG9uIGEgc3lzdGVtIHRoYXQgZG9lcyBub3QgaGF2ZSB0aGUgcmVx
+  dWlyZWQgc2hhcmVkIGxpYnJhcnkgdGhhdCB5b3UKIyBsaW5rZWQgaXQgd2l0aCwgaXQgd2lsbCBk
+  aWUgd2hlbiB5b3UgdHJ5IHRvIGFjY2VzcyBhIHN5bWJvbCBpbiB0aGUKIyAobWlzc2luZykgc2hh
+  cmVkIGxpYnJhcnkuICBJZiB5b3Ugd291bGQgcmF0aGVyIGtub3cgYXQgcGVybCBzdGFydHVwCiMg
+  dGltZSB0aGF0IHlvdSBhcmUgbWlzc2luZyBhbiBpbXBvcnRhbnQgc2hhcmVkIGxpYnJhcnksIHN3
+  aXRjaCB0aGUKIyBjb21tZW50cyBzbyB0aGF0IGltbWVkaWF0ZSwgcmF0aGVyIHRoYW4gZGVmZXJy
+  ZWQgbG9hZGluZyBpcwojIHBlcmZvcm1lZC4gIEV2ZW4gd2l0aCBpbW1lZGlhdGUgbG9hZGluZywg
+  eW91IGNhbiBwb3N0cG9uZSBlcnJvcnMgZm9yCiMgdW5kZWZpbmVkIChvciBtdWx0aXBseSBkZWZp
+  bmVkKSByb3V0aW5lcyB1bnRpbCBhY3R1YWwgYWNjZXNzIGJ5CiMgYWRkaW5nIHRoZSAibm9uZmF0
+  YWwiIG9wdGlvbi4KIyBjY2RsZmxhZ3M9Ii1XbCwtRSAtV2wsLUIsaW1tZWRpYXRlICRjY2RsZmxh
+  Z3MiCiMgY2NkbGZsYWdzPSItV2wsLUUgLVdsLC1CLGltbWVkaWF0ZSwtQixub25mYXRhbCAkY2Nk
+  bGZsYWdzIgppZiBbICIkZ251X2xkIiA9ICJ5ZXMiIF07IHRoZW4KICAgIGNjZGxmbGFncz0iLVds
+  LC1FICRjY2RsZmxhZ3MiCmVsc2UKICAgIGNjZGxmbGFncz0iLVdsLC1FIC1XbCwtQixkZWZlcnJl
+  ZCAkY2NkbGZsYWdzIgogICAgZmkKCgojIyMgQ09NUElMRVIgU1BFQ0lGSUNTCgojIyBMb2NhbCBy
+  ZXN0cmljdGlvbnMgKHBvaW50IHRvIFJFQURNRS5ocHV4IHRvIGxpZnQgdGhlc2UpCgojIyBPcHRp
+  bWl6YXRpb24gbGltaXRzCmNhdCA+dHJ5LmMgPDxFT0YKI2luY2x1ZGUgPHN0ZGlvLmg+CiNpbmNs
+  dWRlIDxzeXMvcmVzb3VyY2UuaD4KCmludCBtYWluICgpCnsKICAgIHN0cnVjdCBybGltaXQgcmw7
+  CiAgICBpbnQgaSA9IGdldHJsaW1pdCAoUkxJTUlUX0RBVEEsICZybCk7CiAgICBwcmludGYgKCIl
+  ZFxuIiwgKGludCkocmwucmxpbV9jdXIgLyAoMTAyNCAqIDEwMjQpKSk7CiAgICB9IC8qIG1haW4g
+  Ki8KRU9GCiRjYyAtbyB0cnkgJGNjZmxhZ3MgJGxkZmxhZ3MgdHJ5LmMKCW1heGRzaXo9YHRyeWAK
+  cm0gLWYgdHJ5IHRyeS5jIGNvcmUKaWYgWyAkbWF4ZHNpeiAtbGUgNjQgXTsgdGhlbgogICAgIyA2
+  NCBNYiBpcyBwcm9iYWJseSBub3QgZW5vdWdoIHRvIG9wdGltaXplIHRva2UuYwogICAgIyBhbmQg
+  cmVnZXhwLmMgd2l0aCAtTzIKICAgIGNhdCA8PEVPTSA+JjQKWW91ciBrZXJuZWwgbGltaXRzIHRo
+  ZSBkYXRhIHNlY3Rpb24gb2YgeW91ciBwcm9ncmFtcyB0byAkbWF4ZHNpeiBNYiwKd2hpY2ggaXMg
+  KHNhZGx5KSBub3QgZW5vdWdoIHRvIGZ1bGx5IG9wdGltaXplIHNvbWUgcGFydHMgb2YgdGhlCnBl
+  cmwgYmluYXJ5LiBJJ2xsIHRyeSB0byB1c2UgYSBsb3dlciBvcHRpbWl6YXRpb24gbGV2ZWwgZm9y
+  CnRob3NlIHBhcnRzLiBJZiB5b3UgYXJlIGEgc3lzYWRtaW4sIGFuZCB5b3UgKmRvKiB3YW50IGZ1
+  bGwKb3B0aW1pemF0aW9uLCByYWlzZSB0aGUgJ21heGRzaXonIGtlcm5lbCBjb25maWd1cmF0aW9u
+  IHBhcmFtZXRlcgp0byBhdCBsZWFzdCAweDA4MDAwMDAwICgxMjggTWIpIGFuZCByZWJ1aWxkIHlv
+  dXIga2VybmVsLgpFT00KcmVnZXhlY19jZmxhZ3M9JycKZG9vcF9jZmxhZ3M9JycKb3BfY2ZsYWdz
+  PScnCm9wbWluaV9jZmxhZ3M9JycKcGVybG1haW5fY2ZsYWdzPScnCnBwX3BhY2tfY2ZsYWdzPScn
+  CiAgICBmaQoKY2FzZSAiJGNjaXNnY2MiIGluCiAgICAkZGVmaW5lfHRydWV8W1l5XSkKCgljYXNl
+  ICIkb3B0aW1pemUiIGluCgkgICAgIiIpICAgICAgICAgICBvcHRpbWl6ZT0iLWcgLU8iIDs7Cgkg
+  ICAgKk9bMzQ1Njc4OV0qKSBvcHRpbWl6ZT1gZWNobyAiJG9wdGltaXplIiB8IHNlZCAtZSAncy9P
+  WzMtOV0vTzIvJ2AgOzsKCSAgICBlc2FjCgkjbGQ9IiRjYyIKCWxkPS91c3IvYmluL2xkCgljY2Nk
+  bGZsYWdzPSctZlBJQycKCSNsZGRsZmxhZ3M9Jy1zaGFyZWQnCglsZGRsZmxhZ3M9Jy1iJwoJY2Fz
+  ZSAiJG9wdGltaXplIiBpbgoJICAgICotZyotTyp8Ki1PKi1nKikKCQkjIGdjYyB3aXRob3V0IGdh
+  cyB3aWxsIG5vdCBhY2NlcHQgLWcKCQllY2hvICJtYWluKCl7fSI+dHJ5LmMKCQljYXNlICJgJGNj
+  ICRvcHRpbWl6ZSAtYyB0cnkuYyAyPiYxYCIgaW4KCQkgICAgKiItZyBvcHRpb24gZGlzYWJsZWQi
+  KikKCQkJc2V0IGBlY2hvICJYICRvcHRpbWl6ZSAiIHwgc2VkIC1lICdzLyAtZyAvIC8nYAoJCQlz
+  aGlmdAoJCQlvcHRpbWl6ZT0iJCoiCgkJCTs7CgkJICAgIGVzYWMKCQk7OwoJICAgIGVzYWMKCWlm
+  IFsgJG1heGRzaXogLWxlIDY0IF07IHRoZW4KCSAgICBjYXNlICIkb3B0aW1pemUiIGluCgkJKk8y
+  KikKCQkgICAgb3B0PWBlY2hvICIkb3B0aW1pemUiIHwgc2VkIC1lICdzL08yL08xLydgCgkJICAg
+  IHRva2VfY2ZsYWdzPSIkdG9rZV9jZmxhZ3M7b3B0aW1pemU9XCIkb3B0XCIiCgkJICAgIHJlZ2V4
+  ZWNfY2ZsYWdzPSJvcHRpbWl6ZT1cIiRvcHRcIiIKCQkgICAgOzsKCQllc2FjCgkgICAgZmkKCTs7
+  CgogICAgKikKCWNhc2UgIiRvcHRpbWl6ZSIgaW4KCSAgICAiIikgICAgICAgICAgIG9wdGltaXpl
+  PSIrTzIgK09ub2xpbWl0IiA7OwoJICAgICpPWzM0NTY3ODldKikgb3B0aW1pemU9YGVjaG8gIiRv
+  cHRpbWl6ZSIgfCBzZWQgLWUgJ3MvT1szLTldL08yLydgIDs7CgkgICAgZXNhYwoJY2FzZSAiJG9w
+  dGltaXplIiBpbgoJICAgICotTyp8XAoJICAgICpPMiopICAgb3B0PWBlY2hvICIkb3B0aW1pemUi
+  IHwgc2VkIC1lICdzLy1PLytPMi8nIC1lICdzL08yL08xLycgLWUgJ3MvICorT25vbGltaXQvLydg
+  CgkJICAgIDs7CgkgICAgKikgICAgICBvcHQ9IiRvcHRpbWl6ZSIKCQkgICAgOzsKCSAgICBlc2Fj
+  CgljYXNlICIkYXJjaG5hbWUiIGluCgkgICAgUEEtUklTQzIuMCkKCQljYXNlICIkY2N2ZXJzaW9u
+  IiBpbgoJCSAgICBCLjExLjExLiopCgkJCSMgb3BtaW5pLmMgYW5kIG9wLmMgd2l0aCArTzIgbWFr
+  ZXMgdGhlIGNvbXBpbGVyIGRpZQoJCQkjIG9mIGludGVybmFsIGVycm9yLCBmb3IgcGVybG1haW4u
+  YyBvbmx5ICtPMCAobm8gb3B0KQogICAgICAgICAgICAgICAgICAgICAgICAjIHdvcmtzLiBEaXNh
+  YmxlICtPeCBmb3IgcHBfcGFjaywgYXMgdGhlIG9wdGltaXplcgogICAgICAgICAgICAgICAgICAg
+  ICAgICAjIGNhdXNlcyB0aGlzIHVuaXQgdG8gZmFpbCAobm90IGEgbGltaXQgaXNzdWUpCgkJCWNh
+  c2UgIiRvcHRpbWl6ZSIgaW4KCQkJKk9bMTJdKikKCQkJICAgIG9wdD1gZWNobyAiJG9wdGltaXpl
+  IiB8IHNlZCAtZSAncy9PMi9PMS8nIC1lICdzLyAqK09ub2xpbWl0Ly8nYAoJCQkgICAgb3BtaW5p
+  X2NmbGFncz0ib3B0aW1pemU9XCIkb3B0XCIiCgkJCSAgICBvcF9jZmxhZ3M9Im9wdGltaXplPVwi
+  JG9wdFwiIgoJCQkgICAgcGVybG1haW5fY2ZsYWdzPSJvcHRpbWl6ZT1cIlwiIgoJCQkgICAgcHBf
+  cGFja19jZmxhZ3M9Im9wdGltaXplPVwiXCIiCgkJCSAgICA7OwoJCQllc2FjCgkJICAgIGVzYWMK
+  CQk7OwoJICAgIElBNjQqKQoJCWNhc2UgIiRjY3ZlcnNpb24iIGluCgkJICAgIEIzOTEwQipBLjA2
+  LjBbMTIzNDVdKQoJCQkjID4gY2MgLS12ZXJzaW9uCgkJCSMgY2M6IEhQIGFDKysvQU5TSSBDIEIz
+  OTEwQiBBLjA2LjA1IFtKdWwgMjUgMjAwNV0KCQkJIyBIYXMgb3B0aW1pemluZyBwcm9ibGVtcyB3
+  aXRoIC1PMiBhbmQgdXAgZm9yIGJvdGgKCQkJIyBtYWludCAoNS44LjgrKSBhbmQgYmxlYWQgKDUu
+  OS4zKykKCQkJIyAtTzEvK08xIHBhc3NlZCBhbGwgdGVzdHMgKG0pJzA1IFsgMTAgSmFuIDIwMDUg
+  XQoJCQlvcHRpbWl6ZT0iJG9wdCIJCQk7OwoJCQlCMzkxMEIqQS4wNi4xNSkKCQkJIyA+IGNjIC0t
+  dmVyc2lvbgoJCQkjIGNjOiBIUCBDL2FDKysgQjM5MTBCIEEuMDYuMTUgW01heSAxNiAyMDA3XQoJ
+  CQkjIEhhcyBvcHRpbWl6aW5nIHByb2JsZW1zIHdpdGggK08yIGZvciBibGVhZCAoNS4xNy40KSwK
+  CQkJIyBzZWUgaHR0cHM6Ly9ydC5wZXJsLm9yZzo0NDMvcnQzL1RpY2tldC9EaXNwbGF5Lmh0bWw/
+  aWQ9MTAzNjY4LgoJCQkjCgkJCSMgK08yICtPbm9saW1pdCArT25vcHJvY2VsaW0gICtPc3RvcmVf
+  b3JkZXJpbmcgXAoJCQkjICtPbm9saWJjYWxscz1zdHJjbXAKCQkJIyBwYXNzZXMgYWxsIHRlc3Rz
+  ICh3aXRoL3dpdGhvdXQgLURERUJVR0dJTkcpIFtOb3YgMTcgMjAxMV0KCQkJY2FzZSAiJG9wdGlt
+  aXplIiBpbgoJCQkgICAgKk8yKikgb3B0aW1pemU9IiRvcHRpbWl6ZSArT25vcHJvY2VsaW0gK09z
+  dG9yZV9vcmRlcmluZyArT25vbGliY2FsbHM9c3RyY21wIiA7OwoJCQkgICAgZXNhYwoJCQk7OwoJ
+  CSAgICAqKSAgZG9vcF9jZmxhZ3M9Im9wdGltaXplPVwiJG9wdFwiIgoJCQlvcF9jZmxhZ3M9Im9w
+  dGltaXplPVwiJG9wdFwiIgoJCQkjb3B0PWBlY2hvICIkb3B0aW1pemUiIHwgc2VkIC1lICdzL08x
+  L08wLydgCgkJCWdsb2JhbHNfY2ZsYWdzPSJvcHRpbWl6ZT1cIiRvcHRcIiIJOzsKCQkgICAgZXNh
+  YwoJCTs7CgkgICAgZXNhYwoJaWYgWyAkbWF4ZHNpeiAtbGUgNjQgXTsgdGhlbgoJICAgIHRva2Vf
+  Y2ZsYWdzPSIkdG9rZV9jZmxhZ3M7b3B0aW1pemU9XCIkb3B0XCIiCgkgICAgcmVnZXhlY19jZmxh
+  Z3M9Im9wdGltaXplPVwiJG9wdFwiIgoJICAgIGZpCglsZD0vdXNyL2Jpbi9sZAoJY2NjZGxmbGFn
+  cz0nK1onCglsZGRsZmxhZ3M9Jy1iICt2bm9jb21wYXR3YXJuaW5ncycKCTs7CiAgICBlc2FjCgoj
+  IyBMQVJHRUZJTEVTCmlmIFsgJHh4T3NSZXYgLWx0IDEwMjAgXTsgdGhlbgogICAgdXNlbGFyZ2Vm
+  aWxlcz0iJHVuZGVmIgogICAgZmkKCiNjYXNlICIkdXNlbGFyZ2VmaWxlcy0kY2Npc2djYyIgaW4K
+  IyAgICAiJGRlZmluZS0kZGVmaW5lInwnLWRlZmluZScpCiMJY2F0IDw8RU9NID4mNAojCiMqKiog
+  SSdtIGlnbm9yaW5nIGxhcmdlIGZpbGVzIGZvciB0aGlzIGJ1aWxkIGJlY2F1c2UKIyoqKiBJIGRv
+  bid0IGtub3cgaG93IHRvIGRvIHVzZSBsYXJnZSBmaWxlcyBpbiBIUC1VWCB1c2luZyBnY2MuCiMK
+  I0VPTQojCXVzZWxhcmdlZmlsZXM9IiR1bmRlZiIKIwk7OwojICAgIGVzYWMKCiMgT25jZSB3ZSBo
+  YXZlIHRoZSBjb21waWxlciBmbGFncyBkZWZpbmVkLCBDb25maWd1cmUgd2lsbAojIGV4ZWN1dGUg
+  dGhlIGZvbGxvd2luZyBjYWxsLWJhY2sgc2NyaXB0LiBTZWUgaGludHMvUkVBRE1FLmhpbnRzCiMg
+  Zm9yIGRldGFpbHMuCmNhdCA+IFVVL2NjLmNidSA8PCdFT0NCVScKIyBUaGlzIHNjcmlwdCBVVS9j
+  Yy5jYnUgd2lsbCBnZXQgJ2NhbGxlZC1iYWNrJyBieSBDb25maWd1cmUgYWZ0ZXIgaXQKIyBoYXMg
+  cHJvbXB0ZWQgdGhlIHVzZXIgZm9yIHRoZSBDIGNvbXBpbGVyIHRvIHVzZS4KCiMgQ29tcGlsZSBh
+  bmQgcnVuIHRoZSBhIHRlc3QgY2FzZSB0byBzZWUgaWYgYSBjZXJ0YWluIGdjYyBidWcgaXMKIyBw
+  cmVzZW50LiBJZiBzbywgbG93ZXIgdGhlIG9wdGltaXphdGlvbiBsZXZlbCB3aGVuIGNvbXBpbGlu
+  ZwojIHBwX3BhY2suYy4gIFRoaXMgd29ya3MgYXJvdW5kIGEgYnVnIGluIHVucGFjay4KCmlmIHRl
+  c3QgLXogIiRjY2lzZ2NjIiAtYSAteiAiJGdjY3ZlcnNpb24iOyB0aGVuCiAgICA6IG5vIHRlc3Rz
+  IG5lZWRlZCBmb3IgSFBjCmVsc2UKICAgIGVjaG8gIiAiCiAgICBlY2hvICJUZXN0aW5nIGZvciBh
+  IGNlcnRhaW4gZ2NjIGJ1ZyBpcyBmaXhlZCBpbiB5b3VyIGNvbXBpbGVyLi4uIgoKICAgICMgVHJ5
+  IGNvbXBpbGluZyB0aGUgdGVzdCBjYXNlLgogICAgaWYgJGNjIC1vIHQwMDEgLU8gJGNjZmxhZ3Mg
+  JGxkZmxhZ3MgLWxtIC4uL2hpbnRzL3QwMDEuYzsgdGhlbgogICAgICAgZ2NjYnVnPWAkcnVuIC4v
+  dDAwMWAKICAgICAgIGNhc2UgIiRnY2NidWciIGluCiAgICAgICAgICAgKmZhaWxzKikKICAgICAg
+  ICAgICAgICAgY2F0ID4mNCA8PEVPRgpUaGlzIEMgY29tcGlsZXIgKCRnY2N2ZXJzaW9uKSBpcyBr
+  bm93biB0byBoYXZlIG9wdGltaXplcgpwcm9ibGVtcyB3aGVuIGNvbXBpbGluZyBwcF9wYWNrLmMu
+  CgpEaXNhYmxpbmcgb3B0aW1pemF0aW9uIGZvciBwcF9wYWNrLmMuCkVPRgogICAgICAgICAgICAg
+  ICBjYXNlICIkcHBfcGFja19jZmxhZ3MiIGluCiAgICAgICAgICAgICAgICAgICAnJykgcHBfcGFj
+  a19jZmxhZ3M9J29wdGltaXplPScKICAgICAgICAgICAgICAgICAgICAgICBlY2hvICJwcF9wYWNr
+  X2NmbGFncz0nb3B0aW1pemU9XCJcIiciID4+IGNvbmZpZy5zaCA7OwogICAgICAgICAgICAgICAg
+  ICAgKikgIGVjaG8gIllvdSBzcGVjaWZpZWQgcHBfcGFja19jZmxhZ3MgeW91cnNlbGYsIHNvIHdl
+  J2xsIGdvIHdpdGggeW91ciB2YWx1ZS4iID4mNCA7OwogICAgICAgICAgICAgICAgICAgZXNhYwog
+  ICAgICAgICAgICAgICA7OwogICAgICAgICAgICopICBlY2hvICJZb3VyIGNvbXBpbGVyIGlzIG9r
+  LiIgPiY0CiAgICAgICAgICAgICAgIDs7CiAgICAgICAgICAgZXNhYwogICAgZWxzZQogICAgICAg
+  ZWNobyAiICIKICAgICAgIGVjaG8gIioqKiBXSE9BIFRIRVJFISEhICoqKiIgPiY0CiAgICAgICBl
+  Y2hvICIgICAgWW91ciBDIGNvbXBpbGVyIFwiJGNjXCIgZG9lc24ndCBzZWVtIHRvIGJlIHdvcmtp
+  bmchIiA+JjQKICAgICAgIGNhc2UgIiRrbm93aXRhbGwiIGluCiAgICAgICAgICAgJycpIGVjaG8g
+  IiAgICBZb3UnZCBiZXR0ZXIgc3RhcnQgaHVudGluZyBmb3Igb25lIGFuZCBsZXQgbWUga25vdyBh
+  Ym91dCBpdC4iID4mNAogICAgICAgICAgICAgICBleGl0IDEKICAgICAgICAgICAgICAgOzsKICAg
+  ICAgICAgICBlc2FjCiAgICAgICBmaQoKICAgIHJtIC1mIHQwMDEkX28gdDAwMSRfZXhlCiAgICBm
+  aQpFT0NCVQoKY2F0ID5jb25maWcuYXJjaCA8PCdFT0NCVScKIyBUaGlzIHNjcmlwdCBVVS9jb25m
+  aWcuYXJjaCB3aWxsIGdldCAnY2FsbGVkLWJhY2snIGJ5IENvbmZpZ3VyZSBhZnRlcgojIGFsbCBv
+  dGhlciBjb25maWd1cmF0aW9ucyBhcmUgZG9uZSBqdXN0IGJlZm9yZSBjb25maWcuaCBpcyBnZW5l
+  cmF0ZWQKY2FzZSAiJGFyY2huYW1lOiRvcHRpbWl6ZSIgaW4KICBQQSo6Ki1nKlstK11PKnxQQSo6
+  KlstK11PKi1nKikKICAgIGNhc2UgIiRjY2ZsYWdzIiBpbgogICAgICAqREQ2NCopIDs7CiAgICAg
+  ICopIGNhc2UgIiRjY3ZlcnNpb24iIGluCgkgICMgT25seSBvbiBQQS1SSVNDLiBCMzkxMEIgKGFD
+  QykgaXMgbm90IGZhdWx0eQoJICAjIEIuMTEuKiBhbmQgQS4xMC4qIGFyZQoJICBbQUJdLjEqKQoJ
+  ICAgICAgIyBjYzogZXJyb3IgMTQxNDogQ2FuJ3QgaGFuZGxlIHByZXByb2Nlc3NlZCBmaWxlIGZv
+  by5pIGlmIC1nIGFuZCAtTyBzcGVjaWZpZWQuCgkgICAgICBlY2hvICJIUC1VWCBDLUFOU0ktQyBv
+  biBQQS1SSVNDIGRvZXMgbm90IGFjY2VwdCBib3RoIC1nIGFuZCAtTyBvbiBwcmVwcm9jZXNzZWQg
+  ZmlsZXMiID4mNAoJICAgICAgZWNobyAid2hlbiBjb21waWxpbmcgaW4gMzJiaXQgbW9kZS4gVGhl
+  IG9wdGltaXplciB3aWxsIGJlIGRpc2FibGVkLiIgPiY0CgkgICAgICBvcHRpbWl6ZT1gZWNobyAi
+  JG9wdGltaXplIiB8IHNlZCAtZSAncy9bLStdT1swLTldKi8vJyAtZSAncy8rT25vbGltaXQvLycg
+  LWUgJ3MvXiAqLy8nYAoJICAgICAgOzsKCSAgZXNhYwogICAgICBlc2FjCiAgZXNhYwpFT0NCVQoK
+  Y2F0ID5VVS91c2VsYXJnZWZpbGVzLmNidSA8PCdFT0NCVScKIyBUaGlzIHNjcmlwdCBVVS91c2Vs
+  YXJnZWZpbGVzLmNidSB3aWxsIGdldCAnY2FsbGVkLWJhY2snIGJ5IENvbmZpZ3VyZQojIGFmdGVy
+  IGl0IGhhcyBwcm9tcHRlZCB0aGUgdXNlciBmb3Igd2hldGhlciB0byB1c2UgbGFyZ2UgZmlsZXMu
+  CgpjYXNlICIkYXJjaG5hbWU6JHVzZTY0Yml0YWxsOiR1c2U2NGJpdGludCIgaW4KICAgICotTFA2
+  NCo6dW5kZWY6ZGVmaW5lKQoJYXJjaG5hbWU9YGVjaG8gIiRhcmNobmFtZSIgfCBzZWQgJ3MvLUxQ
+  NjQvLTY0aW50LydgCgllY2hvICJBcmNobmFtZSBjaGFuZ2VkIHRvICRhcmNobmFtZSIKCTs7CiAg
+  ICBlc2FjCgpjYXNlICIkdXNlbGFyZ2VmaWxlcyIgaW4KICAgICIifCRkZWZpbmV8dHJ1ZXxbeVld
+  KikKCSMgdGhlcmUgYXJlIGxhcmdlZmlsZSBmbGFncyBhdmFpbGFibGUgdmlhIGdldGNvbmYoMSkK
+  CSMgYnV0IHdlIGNoZWF0IGZvciBub3cuICAoS2VlcCB0aGF0IGluIHRoZSBsZWZ0IG1hcmdpbi4p
+  CmNjZmxhZ3NfdXNlbGFyZ2VmaWxlcz0iLURfTEFSR0VGSUxFX1NPVVJDRSAtRF9GSUxFX09GRlNF
+  VF9CSVRTPTY0IgoKCWNhc2UgIiAkY2NmbGFncyAiIGluCgkqIiAkY2NmbGFnc191c2VsYXJnZWZp
+  bGVzICIqKSA7OwoJKikgY2NmbGFncz0iJGNjZmxhZ3MgJGNjZmxhZ3NfdXNlbGFyZ2VmaWxlcyIg
+  OzsKCWVzYWMKCglpZiB0ZXN0IC16ICIkY2Npc2djYyIgLWEgLXogIiRnY2N2ZXJzaW9uIjsgdGhl
+  bgoJICAgICMgVGhlIHN0cmljdCBBTlNJIG1vZGUgKC1BYSkgZG9lc24ndCBsaWtlIGxhcmdlIGZp
+  bGVzLgoJICAgIGNjZmxhZ3M9YGVjaG8gIiAkY2NmbGFncyAifHNlZCAnc0AgLUFhIEAgQGcnYAoJ
+  ICAgIGNhc2UgIiRjY2ZsYWdzIiBpbgoJCSotQWUqKSA7OwoJCSopICAgICBjY2ZsYWdzPSIkY2Nm
+  bGFncyAtQWUiIDs7CgkJZXNhYwoJICAgIGZpCgk7OwogICAgZXNhYwpFT0NCVQoKIyBUSFJFQURJ
+  TkcKCiMgVGhpcyBzY3JpcHQgVVUvdXNldGhyZWFkcy5jYnUgd2lsbCBnZXQgJ2NhbGxlZC1iYWNr
+  JyBieSBDb25maWd1cmUKIyBhZnRlciBpdCBoYXMgcHJvbXB0ZWQgdGhlIHVzZXIgZm9yIHdoZXRo
+  ZXIgdG8gdXNlIHRocmVhZHMuCmNhdCA+VVUvdXNldGhyZWFkcy5jYnUgPDwnRU9DQlUnCmNhc2Ug
+  IiR1c2V0aHJlYWRzIiBpbgogICAgJGRlZmluZXx0cnVlfFt5WV0qKQoJaWYgWyAiJHh4T3NSZXZN
+  YWpvciIgLWx0IDEwIF07IHRoZW4KCSAgICBjYXQgPDxFT00gPiY0CgpIUC1VWCAkeHhPc1Jldk1h
+  am9yIGNhbm5vdCBzdXBwb3J0IFBPU0lYIHRocmVhZHMuCkNvbnNpZGVyIHVwZ3JhZGluZyB0byBh
+  dCBsZWFzdCBIUC1VWCAxMS4KQ2Fubm90IGNvbnRpbnVlLCBhYm9ydGluZy4KRU9NCgkgICAgZXhp
+  dCAxCgkgICAgZmkKCglpZiBbICIkeHhPc1Jldk1ham9yIiAtZXEgMTAgXTsgdGhlbgoJICAgICMg
+  VW5kZXIgMTAuWCwgYSB0aHJlYWRlZCBwZXJsIGNhbiBiZSBidWlsdAoJICAgIGlmIFsgLWYgL3Vz
+  ci9pbmNsdWRlL3B0aHJlYWQuaCBdOyB0aGVuCgkJaWYgWyAtZiAvdXNyL2xpYi9saWJjbWEuc2wg
+  XTsgdGhlbgoJCSAgICAjIERDRSAoZnJvbSBDb3JlIE9TIENEKSBpcyBpbnN0YWxsZWQKCgkJICAg
+  IyBDaGVjayBpZiBpdCBpcyBwcmlzdGluZSwgb3IgcGF0Y2hlZAoJCSAgIGNtYXZzbj1gd2hhdCAv
+  dXNyL2xpYi9saWJjbWEuc2wgMj4mMSB8IGdyZXAgMTk5NmAKCQkgICBpZiBbICEgLXogIiRjbWF2
+  c24iIF07IHRoZW4KCQkgICAgICAgY2F0IDw8RU9NID4mNAoHCioqKioqKioqKioqKioqKioqKioq
+  KioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKgoK
+  UGVybCB3aWxsIHN1cHBvcnQgdGhyZWFkaW5nIHRocm91Z2ggL3Vzci9saWIvbGliY21hLnNsIGZy
+  b20KdGhlIEhQIERDRSBwYWNrYWdlLCBidXQgdGhlIHZlcnNpb24gZm91bmQgaXMgdG9vIG9sZCB0
+  byBiZQpyZWxpYWJsZS4KCklmIHlvdSBhcmUgbm90IGRlcGVuZGluZyBvbiB0aGlzIHNwZWNpZmlj
+  IHZlcnNpb24gb2YgdGhlIGxpYnJhcnksCmNvbnNpZGVyIHRvIHVwZ3JhZGUgdXNpbmcgcGF0Y2gg
+  UEhTU18yMzY3MiAocmVhZCBSRUFETUUuaHB1eCkKCioqKioqKioqKioqKioqKioqKioqKioqKioq
+  KioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKgoKKHNsZWVw
+  aW5nIGZvciAxMCBzZWNvbmRzLi4uKQpFT00KCQkgICAgICAgc2xlZXAgMTAKCQkgICAgICAgZmkK
+  CgkJICAgICMgSXQgbmVlZHMgIyBsaWJjbWEgYW5kIE9MRF9QVEhSRUFEU19BUEkuIEFsc28KCQkg
+  ICAgIyA8cHRocmVhZC5oPiBuZWVkcyB0byBiZSAjaW5jbHVkZWQgYmVmb3JlIGFueQoJCSAgICAj
+  IG90aGVyIGluY2x1ZGVzIChpbiBwZXJsLmgpCgoJCSAgICAjIEhQLVVYIDEwLlggdXNlcyB0aGUg
+  b2xkIHB0aHJlYWRzIEFQSQoJCSAgICBkX29sZHB0aHJlYWRzPSIkZGVmaW5lIgoKCQkgICAgIyBp
+  bmNsdWRlIGxpYmNtYSBiZWZvcmUgYWxsIHRoZSBvdGhlcnMKCQkgICAgbGlic3dhbnRlZD0iY21h
+  ICRsaWJzd2FudGVkIgoKCQkgICAgIyB0ZWxsIHBlcmwuaCB0byBpbmNsdWRlIDxwdGhyZWFkLmg+
+  IGJlZm9yZSBvdGhlcgoJCSAgICAjIGluY2x1ZGUgZmlsZXMKCQkgICAgY2NmbGFncz0iJGNjZmxh
+  Z3MgLURQVEhSRUFEX0hfRklSU1QiCiMgRmlyc3QgY29sdW1uIG9uIHB1cnBvc2U6CiMgdGhpcyBp
+  cyBub3QgYSBzdGFuZGFyZCBDb25maWd1cmUgdmFyaWFibGUKIyBidXQgd2UgbmVlZCB0byBnZXQg
+  dGhpcyBub3RpY2VkLgpwdGhyZWFkX2hfZmlyc3Q9IiRkZWZpbmUiCgoJCSAgICAjIEhQLVVYIDEw
+  Llggc2VlbXMgdG8gaGF2ZSBubyBlYXN5CgkJICAgICMgd2F5IG9mIGRldGVjdGluZyB0aGVzZSAq
+  dGltZV9yIHByb3Rvcy4KCQkgICAgZF9nbXRpbWVfcl9wcm90bz0nZGVmaW5lJwoJCSAgICBnbXRp
+  bWVfcl9wcm90bz0nUkVFTlRSQU5UX1BST1RPX0lfVFMnCgkJICAgIGRfbG9jYWx0aW1lX3JfcHJv
+  dG89J2RlZmluZScKCQkgICAgbG9jYWx0aW1lX3JfcHJvdG89J1JFRU5UUkFOVF9QUk9UT19JX1RT
+  JwoKCQkgICAgIyBBdm9pZCB0aGUgcG9pc29ub3VzIGNvbmZsaWN0aW5nIChhbmQgaXJyZWxldmFu
+  dCkKCQkgICAgIyBwcm90b3R5cGVzIG9mIHNldGtleSAoKS4KCQkgICAgaV9jcnlwdD0iJHVuZGVm
+  IgoKCQkgICAgIyBDTUEgcmVkZWZpbmVzIHNlbGVjdCB0byBjbWFfc2VsZWN0LCBhbmQgY21hX3Nl
+  bGVjdAoJCSAgICAjIGV4cGVjdHMgaW50ICogaW5zdGVhZCBvZiBmZF9zZXQgKiAoanVzdCBsaWtl
+  IDkuWCkKCQkgICAgc2VsZWN0dHlwZT0naW50IConCgoJCWVsaWYgWyAtZiAvdXNyL2xpYi9saWJw
+  dGhyZWFkLnNsIF07IHRoZW4KCQkgICAgIyBQVEggcGFja2FnZSBpcyBpbnN0YWxsZWQKCQkgICAg
+  bGlic3dhbnRlZD0icHRocmVhZCAkbGlic3dhbnRlZCIKCQllbHNlCgkJICAgIGxpYnN3YW50ZWQ9
+  Im5vX3RocmVhZHNfYXZhaWxhYmxlIgoJCSAgICBmaQoJICAgIGVsc2UKCQlsaWJzd2FudGVkPSJu
+  b190aHJlYWRzX2F2YWlsYWJsZSIKCQlmaQoKCSAgICBpZiBbICRsaWJzd2FudGVkID0gIm5vX3Ro
+  cmVhZHNfYXZhaWxhYmxlIiBdOyB0aGVuCgkJY2F0IDw8RU9NID4mNAoKSW4gSFAtVVggMTAuWCBm
+  b3IgUE9TSVggdGhyZWFkcyB5b3UgbmVlZCBib3RoIG9mIHRoZSBmaWxlcwovdXNyL2luY2x1ZGUv
+  cHRocmVhZC5oIGFuZCBlaXRoZXIgL3Vzci9saWIvbGliY21hLnNsIG9yIC91c3IvbGliL2xpYnB0
+  aHJlYWQuc2wuCkVpdGhlciB5b3UgbXVzdCB1cGdyYWRlIHRvIEhQLVVYIDExIG9yIGluc3RhbGwg
+  YSBwb3NpeCB0aHJlYWQgbGlicmFyeToKCiAgICBEQ0UtQ29yZVRvb2xzIGZyb20gSFAtVVggMTAu
+  MjAgSGFyZHdhcmUgRXh0ZW5zaW9ucyAzLjAgQ0QgKEIzOTIwLTEzOTQxKQoKb3IKCiAgICBQVEgg
+  cGFja2FnZSBmcm9tIGUuZy4gaHR0cDovL2hwdXguY29ubmVjdC5vcmcudWsvaHBwZC9ocHV4L0du
+  dS9wdGgtMi4wLjcvCgpDYW5ub3QgY29udGludWUsIGFib3J0aW5nLgpFT00KCQlleGl0IDEKCQlm
+  aQoJZWxzZQoJICAgICMgMTIgbWF5IHdhbnQgdXBwaW5nIHRoZSBfUE9TSVhfQ19TT1VSQ0UgZGF0
+  ZXN0YW1wLi4uCgkgICAgY2NmbGFncz0iIC1EX1BPU0lYX0NfU09VUkNFPTE5OTUwNkwgLURfUkVF
+  TlRSQU5UICRjY2ZsYWdzIgoJICAgIHNldCBgZWNobyBYICIkbGlic3dhbnRlZCAifCBzZWQgLWUg
+  J3MvIGMgLyBwdGhyZWFkIGMgLydgCgkgICAgc2hpZnQKCSAgICBsaWJzd2FudGVkPSIkKiIKCgkg
+  ICAgIyBIUC1VWCAxMS5YIHNlZW1zIHRvIGhhdmUgbm8gZWFzeQoJICAgICMgd2F5IG9mIGRldGVj
+  dGluZyB0aGVzZSAqdGltZV9yIHByb3Rvcy4KCSAgICBkX2dtdGltZV9yX3Byb3RvPSdkZWZpbmUn
+  CgkgICAgZ210aW1lX3JfcHJvdG89J1JFRU5UUkFOVF9QUk9UT19TX1RTJwoJICAgIGRfbG9jYWx0
+  aW1lX3JfcHJvdG89J2RlZmluZScKCSAgICBsb2NhbHRpbWVfcl9wcm90bz0nUkVFTlRSQU5UX1BS
+  T1RPX1NfVFMnCgkgICAgZmkKCTs7CiAgICBlc2FjCkVPQ0JVCgojIFRoZXJlIHVzZWQgdG8gYmU6
+  CiMgIFRoZSBteXN0ZXJpb3VzIGlvX3hzIG1lbW9yeSBjb3JydXB0aW9uIGluIDExLjAwIDMyYml0
+  IHNlZW1zIHRvIGdldAojICBmaXhlZCBieSBub3QgdXNpbmcgUGVybCdzIG1hbGxvYy4gIEZsaXAg
+  c2lkZSBpcyBwZXJmb3JtYW5jZSBsb3NzLgojICBTbyB3ZSB3YW50IG15bWFsbG9jIGZvciBhbGwg
+  c2l0dWF0aW9ucyBwb3NzaWJsZQojIFRoYXQgc2V0IHVzZW15bWFsbG9jIHRvICduJyBmb3IgdGhy
+  ZWFkZWQgYnVpbGRzIGFuZCBub24tZ2NjIDMyYml0CiMgIG5vbi1kZWJ1Z2dpbmcgYnVpbGRzIGFu
+  ZCAneScgZm9yIGFsbCBvdGhlcnMKCnVzZW15bWFsbG9jPSduJwpjYXNlICIkdXNlcGVybGlvIiBp
+  bgogICAgJHVuZGVmfGZhbHNlfFtuTl0qKSB1c2VteW1hbGxvYz0neScgOzsKICAgIGVzYWMKCiMg
+  bWFsbG9jIHdyYXAgd29ya3MKY2FzZSAiJHVzZW1hbGxvY3dyYXAiIGluCiAgICAnJykgdXNlbWFs
+  bG9jd3JhcD0nZGVmaW5lJyA7OwogICAgZXNhYwoKIyBjdGltZV9yICgpIGFuZCBhc2N0aW1lX3Ig
+  KCkgc2VlbSB0byBoYXZlIGlzc3VlcyBmb3IgdmVyc2lvbnMgYmVmb3JlCiMgSFAtVVggMTEKaWYg
+  WyAkeHhPc1Jldk1ham9yIC1sdCAxMSBdOyB0aGVuCiAgICBkX2N0aW1lX3I9IiR1bmRlZiIKICAg
+  IGRfYXNjdGltZV9yPSIkdW5kZWYiCiAgICBmaQoKIyBmcGNsYXNzaWZ5ICgpIGlzIGEgbWFjcm8s
+  IHRoZSBsaWJyYXJ5IGNhbGwgaXMgRnBjbGFzc2lmeQojIFNpbWlsYXJseSB3aXRoIHRoZSBvdGhl
+  cnMgYmVsb3cuCmRfZnBjbGFzc2lmeT0nZGVmaW5lJwpkX2lzbmFuPSdkZWZpbmUnCmRfaXNpbmY9
+  J2RlZmluZScKZF9pc2Zpbml0ZT0nZGVmaW5lJwpkX3Vub3JkZXJlZD0nZGVmaW5lJwojIE5leHQg
+  b25lKHMpIG5lZWQgdGhlIGxlYWRpbmcgdGFiLiAgVGhlc2UgYXJlIHNwZWNpYWwgJ2hpbnQnIHN5
+  bWJvbHMgdGhhdAojIGFyZSBub3QgdG8gYmUgcHJvcGFnYXRlZCB0byBjb25maWcuc2gsIGFsbCBy
+  ZWxhdGVkIHRvIHB0aHJlYWRzIGRyYWZ0IDQKIyBpbnRlcmZhY2VzLgpjYXNlICIkZF9vbGRwdGhy
+  ZWFkcyIgaW4KICAgICcnfCR1bmRlZikKCWRfY3J5cHRfcl9wcm90bz0ndW5kZWYnCglkX2dldGdy
+  ZW50X3JfcHJvdG89J3VuZGVmJwoJZF9nZXRwd2VudF9yX3Byb3RvPSd1bmRlZicKCWRfc3RyZXJy
+  b3Jfcl9wcm90bz0ndW5kZWYnCgk7OwogICAgZXNhYwoKIyBILk1lcmlqbiBzYXlzIGl0J3Mgbm90
+  IDE5OTggYW55bW9yZTogT0RCTSBpcyBub3QgbmVlZGVkLAojIGFuZCBpdCBzZWVtcyB0byBiZSBi
+  dWdneSBpbiBIUC1VWCBhbnl3YXkuCmlfZGJtPXVuZGVmCgojIEluIEhQLVVYZXMgcHJpb3IgdG8g
+  MTEuMjMgc3RydG9sZCgpIHJldHVybmVkIGEgSFAtVVgKIyBzcGVjaWZpYyB1bmlvbiBjYWxsZWQg
+  bG9uZ19kb3VibGUsIG5vdCBhIEM5OSBsb25nIGRvdWJsZS4KY2FzZSAiYGdyZXAgJ2RvdWJsZSBz
+  dHJ0b2xkLmNvbnN0JyAvdXNyL2luY2x1ZGUvc3RkbGliLmhgIiBpbgoqImxvbmcgZG91YmxlIHN0
+  cnRvbGQiKikgOzsgIyBzdHJ0b2xkIHNob3VsZCBiZSBzYWZlLgoqKSBlY2hvICJMb29rcyBsaWtl
+  IHlvdXIgc3RydG9sZCgpIGlzIG5vbi1zdGFuZGFyZC4uLiIgPiY0CiAgIGRfc3RydG9sZD11bmRl
+  ZiA7Owplc2FjCgojIEluIHByZS0xMSBIUC1VWGVzIHRoZXJlIHJlYWxseSBpc24ndCBpc2Zpbml0
+  ZSgpLCBkZXNwaXRlIHdoYXQKIyBDb25maWd1cmUgbWlnaHQgdGhpbmsuIChUaGVyZSBpcyBmaW5p
+  dGUoKSwgdGhvdWdoLikKY2FzZSAiYGdyZXAgJ2lzZmluaXRlJyAvdXNyL2luY2x1ZGUvbWF0aC5o
+  YCIgaW4KKiJpc2Zpbml0ZSIqKSA7OwoqKSBkX2lzZmluaXRlPXVuZGVmIDs7CmVzYWMKCiMgMTEu
+  MjMgc2F5cyBpdCBoYXMgbWJybGVuIGFuZCBtYnJ0b3djLCBidXQgY29tcGlsaW5nIHRoZW0gZmFp
+  bHMgYXMgaXQgY2FuJ3QKIyBmaW5kIHRoZSB0eXBlIGRlZmluaXRpb24gZm9yIG1ic3RhdGVfdCB3
+  aGljaCBvbmUgb2YgdGhlIHBhcmFtZXRlcnMgaXMuICBJdCdzCiMgbm90IGluIHRoZSBoZHIgdGhl
+  IG1hbiBwYWdlIHNheXMgaXQgaXMuICBQZXJoYXBzIGEgYmV0dGVyIENvbmZpZ3VyZSBwcm9iZSBp
+  cwojIG5lZWRlZCwgYnV0IGZvciBub3cgc2ltcGx5IHVuZGVmaW5lIHRoZW0KZF9tYnJsZW49J3Vu
+  ZGVmJwpkX21icnRvd2M9J3VuZGVmJwo=','linux'=>'IyBoaW50cy9saW51eC5zaAojIE9yaWdpbmFsIHZlcnNpb24gYnkgcnNhbmRlcnMKIyBBZGRpdGlv
   bmFsIHN1cHBvcnQgYnkgS2VubmV0aCBBbGJhbm93c2tpIDxramFoZHNAa2phaGRzLmNvbT4KIwoj
   IEVMRiBzdXBwb3J0IGJ5IEguSi4gTHUgPGhqbEBueW5leHN0LmNvbT4KIyBBZGRpdGlvbmFsIGlu
   Zm8gZnJvbSBOaWdlbCBIZWFkIDxuaGVhZEBFU09DLmJpdG5ldD4KIyBhbmQgS2VubmV0aCBBbGJh
@@ -8167,153 +8270,160 @@ $fatpacked{"Devel/PatchPerl/Hints.pm"} = '#line '.(1+__LINE__).' "'.__FILE__."\"
   Z3MgJGxkZmxhZ3MgLXByaW50LXNlYXJjaC1kaXJzIHwgZ3JlcCBsaWJyYXJpZXMgfAoJY3V0IC1m
   Mi0gLWQ9IHwgdHIgJzonICR0cm5sIHwgZ3JlcCAtdiAnZ2NjJyB8IHNlZCAtZSAnczovJDo6J2AK
   ICAgIHNldCBYICRwbGlicHRoICMgQ29sbGFwc2UgYWxsIGVudHJpZXMgb24gb25lIGxpbmUKICAg
-  IHNoaWZ0CiAgICBwbGlicHRoPSIkKiIKICAgIDs7CmVzYWMKCiMgbGlicXVhZG1hdGggaXMgc29t
-  ZXRpbWVzIGluc3RhbGxlZCBhcyBnY2MgaW50ZXJuYWwgbGlicmFyeSwKIyBzbyBjb250cmFyeSB0
-  byBvdXIgdXN1YWwgcG9saWN5IG9mICpub3QqIGxvb2tpbmcgYXQgZ2NjIGludGVybmFsCiMgZGly
-  ZWN0b3JpZXMgd2Ugbm93ICpkbyogbG9vayBhdCB0aGVtLCBpbiBjYXNlIHRoZXkgY29udGFpbgoj
-  IHRoZSBxdWFkbWF0aCBsaWJyYXJ5LgojIFhYWCBUaGlzIG1heSBhcHBseSB0byBvdGhlciBnY2Mg
-  aW50ZXJuYWwgbGlicmFyaWVzLCBpZiBzdWNoIGV4aXN0LgojIFhYWCBUaGlzIGNvdWxkIGJlIGF0
-  IENvbmZpZ3VyZSBsZXZlbCwgYnV0IHRoZW4gdGhlICRnY2MgaXMgbWVzc3kuCmNhc2UgIiR1c2Vx
-  dWFkbWF0aCIgaW4KIiRkZWZpbmUiKQogIGZvciBkIGluIGBMQU5HPUMgTENfQUxMPUMgJGdjYyAk
-  Y2NmbGFncyAkbGRmbGFncyAtcHJpbnQtc2VhcmNoLWRpcnMgfCBncmVwIGxpYnJhcmllcyB8IGN1
-  dCAtZjItIC1kPSB8IHRyICc6JyAkdHJubCB8IGdyZXAgJ2djYycgfCBzZWQgLWUgJ3M6LyQ6Oidg
-  CiAgZG8KICAgIGNhc2UgYGxzICRkLypsaWJxdWFkbWF0aCokc28qIDI+L2Rldi9udWxsYCBpbgog
-  ICAgJGQvKmxpYnF1YWRtYXRoKiRzbyopIHhsaWJwdGg9IiR4bGlicHRoICRkIiA7OwogICAgZXNh
-  YwogIGRvbmUKICA7Owplc2FjCgpjYXNlICIkbGliYyIgaW4KJycpCiMgSWYgeW91IGhhdmUgZ2xp
-  YmMsIHRoZW4gcmVwb3J0IHRoZSB2ZXJzaW9uIGZvciAuL215Y29uZmlnIGJ1ZyByZXBvcnRpbmcu
-  CiMgKENvbmZpZ3VyZSBkb2Vzbid0IG5lZWQgdG8ga25vdyB0aGUgc3BlY2lmaWMgdmVyc2lvbiBz
-  aW5jZSBpdCBqdXN0IHVzZXMKIyBnY2MgdG8gbG9hZCB0aGUgbGlicmFyeSBmb3IgYWxsIHRlc3Rz
-  LikKIyBXZSBkb24ndCB1c2UgX19HTElCQ19fIGFuZCAgX19HTElCQ19NSU5PUl9fIGJlY2F1c2Ug
-  dGhleQojIGFyZSBpbnN1ZmZpY2llbnRseSBwcmVjaXNlIHRvIGRpc3Rpbmd1aXNoIHRoaW5ncyBs
-  aWtlCiMgbGliYy0yLjAuNiBhbmQgbGliYy0yLjAuNy4KICAgIGZvciBwIGluICRwbGlicHRoCiAg
-  ICBkbwogICAgICAgIGZvciB0cnlsaWIgaW4gbGliYy5zby42IGxpYmMuc28KICAgICAgICBkbwog
-  ICAgICAgICAgICBpZiAkdGVzdCAtZSAkcC8kdHJ5bGliOyB0aGVuCiAgICAgICAgICAgICAgICBs
-  aWJjPWBscyAtbCAkcC8kdHJ5bGliIHwgYXdrICd7cHJpbnQgJE5GfSdgCiAgICAgICAgICAgICAg
-  ICBpZiAkdGVzdCAiWCRsaWJjIiAhPSBYOyB0aGVuCiAgICAgICAgICAgICAgICAgICAgYnJlYWsK
-  ICAgICAgICAgICAgICAgIGZpCiAgICAgICAgICAgIGZpCiAgICAgICAgZG9uZQogICAgICAgIGlm
-  ICR0ZXN0ICJYJGxpYmMiICE9IFg7IHRoZW4KICAgICAgICAgICAgYnJlYWsKICAgICAgICBmaQog
-  ICAgZG9uZQogICAgOzsKZXNhYwoKaWYgJHtzaDotL2Jpbi9zaH0gLWMgZXhpdDsgdGhlbgogIGVj
-  aG8gJycKICBlY2hvICdZb3UgYXBwZWFyIHRvIGhhdmUgYSB3b3JraW5nIGJhc2guICBHb29kLicK
-  ZWxzZQogIGNhdCA8PCAnRU9NJyA+JjQKCioqKioqKioqKioqKioqKioqKioqKioqIFdhcm5pbmch
-  ICoqKioqKioqKioqKioqKioqKioqKgpJdCB3b3VsZCBhcHBlYXIgeW91IGhhdmUgYSBkZWZlY3Rp
-  dmUgYmFzaCBzaGVsbCBpbnN0YWxsZWQuIFRoaXMgaXMgbGlrZWx5IHRvCmdpdmUgeW91IGEgZmFp
-  bHVyZSBvZiBvcC9leGVjIHRlc3QgIzUgZHVyaW5nIHRoZSB0ZXN0IHBoYXNlIG9mIHRoZSBidWls
-  ZCwKVXBncmFkaW5nIHRvIGEgcmVjZW50IHZlcnNpb24gKDEuMTQuNCBvciBsYXRlcikgc2hvdWxk
-  IGZpeCB0aGUgcHJvYmxlbS4KKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioq
-  KioqKioqKioqKioqKioqCkVPTQoKZmkKCiMgT24gU1BBUkNsaW51eCwKIyBUaGUgZm9sbG93aW5n
-  IGNzaCBjb25zaXN0ZW50bHkgY29yZWR1bXBlZCBpbiB0aGUgdGVzdCBkaXJlY3RvcnkKIyAiL2hv
-  bWUvbWlrZWRsci9wZXJsNS4wMDNfOTQvdCIsIHRob3VnaCBub3QgbW9zdCBvdGhlciBkaXJlY3Rv
-  cmllcy4KCiNOYW1lICAgICAgICA6IGNzaCAgICAgICAgICAgICAgICAgICAgRGlzdHJpYnV0aW9u
-  OiBSZWQgSGF0IExpbnV4IChSZW1icmFuZHQpCiNWZXJzaW9uICAgICA6IDUuMi42ICAgICAgICAg
-  ICAgICAgICAgICAgICAgVmVuZG9yOiBSZWQgSGF0IFNvZnR3YXJlCiNSZWxlYXNlICAgICA6IDMg
-  ICAgICAgICAgICAgICAgICAgICAgICBCdWlsZCBEYXRlOiBGcmkgTWF5IDI0IDE5OjQyOjE0IDE5
-  OTYKI0luc3RhbGwgZGF0ZTogVGh1IEp1bCAxMSAxNjoyMDoxNCAxOTk2IEJ1aWxkIEhvc3Q6IGl0
-  Y2h5LnJlZGhhdC5jb20KI0dyb3VwICAgICAgIDogU2hlbGxzICAgICAgICAgICAgICAgICAgIFNv
-  dXJjZSBSUE06IGNzaC01LjIuNi0zLnNyYy5ycG0KI1NpemUgICAgICAgIDogMTg0NDE3CiNEZXNj
-  cmlwdGlvbiA6IEJTRCBjLXNoZWxsCgojIEZvciB0aGlzIHJlYXNvbiBJIHN1Z2dlc3QgdXNpbmcg
-  dGhlIG11Y2ggYnVnLWZpeGVkIHRjc2ggZm9yIGdsb2JiaW5nCiMgd2hlcmUgYXZhaWxhYmxlLgoK
-  IyBOb3ZlbWJlciAyMDAxOiAgVGhhdCB3YXJuaW5nJ3MgcHJldHR5IG9sZCBub3cgYW5kIHByb2Jh
-  Ymx5IG5vdCBzbwojIHJlbGV2YW50LCBlc3BlY2lhbGx5IHNpbmNlIHBlcmwgbm93IHVzZXMgRmls
-  ZTo6R2xvYiBmb3IgZ2xvYmJpbmcuCiMgV2UnbGwgc3RpbGwgbG9vayBmb3IgdGNzaCwgYnV0IHRv
-  bmUgZG93biB0aGUgd2FybmluZ3MuCiMgQW5keSBEb3VnaGVydHksIE5vdi4gNiwgMjAwMQppZiAk
-  Y3NoIC1jICdlY2hvICR2ZXJzaW9uJyA+L2Rldi9udWxsIDI+JjE7IHRoZW4KICAgIGVjaG8gJ1lv
-  dXIgY3NoIGlzIHJlYWxseSB0Y3NoLiAgR29vZC4nCmVsc2UKICAgIGlmIHh4eD1gLi9VVS9sb2Mg
-  dGNzaCBibHVyZmwgJHB0aGA7ICR0ZXN0IC1mICIkeHh4IjsgdGhlbgoJZWNobyAiRm91bmQgdGNz
-  aC4gIEknbGwgdXNlIGl0IGZvciBnbG9iYmluZy4iCgkjIFdlIGNhbid0IGNoYW5nZSBDb25maWd1
-  cmUncyBzZXR0aW5nIG9mICRjc2gsIGR1ZSB0byB0aGUgd2F5CgkjIENvbmZpZ3VyZSBoYW5kbGVz
-  ICRkX3BvcnRhYmxlIGFuZCBjb21tYW5kcyBmb3VuZCBpbiAkbG9jbGlzdC4KCSMgV2UgY2FuIHNl
-  dCB0aGUgdmFsdWUgZm9yIENTSCBpbiBjb25maWcuaCBieSBzZXR0aW5nIGZ1bGxfY3NoLgoJZnVs
-  bF9jc2g9JHh4eAogICAgZWxpZiBbIC1mICIkY3NoIiBdOyB0aGVuCgllY2hvICJDb3VsZG4ndCBm
-  aW5kIHRjc2guICBDc2gtYmFzZWQgZ2xvYmJpbmcgbWlnaHQgYmUgYnJva2VuLiIKICAgIGZpCmZp
-  CgojIFNoaW1wZWkgWWFtYXNoaXRhIDxzaGltcGVpQHNvY3JhdGVzLnBhdG5ldC5jYWx0ZWNoLmVk
-  dT4KIyBNZXNzYWdlLUlkOiA8MzNFRjE2MzQuQjM2QjY1MDBAcG9ib3guY29tPgojCiMgVGhlIERS
-  MiBvZiBNa0xpbnV4IChvc25hbWU9bGludXgsYXJjaG5hbWU9cHBjLWxpbnV4KSBtYXkgbmVlZAoj
-  IHNwZWNpYWwgZmxhZ3MgcGFzc2VkIGluIG9yZGVyIGZvciBkeW5hbWljIGxvYWRpbmcgdG8gd29y
-  ay4KIyBpbnN0ZWFkIG9mIHRoZSByZWNvbW1lbmRlZDoKIwojIGNjZGxmbGFncz0nLXJkeW5hbWlj
-  JwojCiMgaXQgc2hvdWxkIGJlOgojIGNjZGxmbGFncz0nLVdsLC1FJwojCiMgU28gaWYgeW91ciBE
-  UjIgKERSMyBjYW1lIG91dCBzdW1tZXIgMTk5OCwgY29uc2lkZXIgdXBncmFkaW5nKQojIGhhcyBw
-  cm9ibGVtcyB3aXRoIGR5bmFtaWMgbG9hZGluZywgdW5jb21tZW50IHRoZQojIGZvbGxvd2luZyB0
-  aHJlZSBsaW5lcywgbWFrZSBkaXN0Y2xlYW4sIGFuZCByZS1Db25maWd1cmU6CiNjYXNlICJgdW5h
-  bWUgLXIgfCBzZWQgJ3MvXlswLTkuLV0qLy8nYGBhcmNoYCIgaW4KIydvc2ZtYWNoM3BwYycpIGNj
-  ZGxmbGFncz0nLVdsLC1FJyA7OwojZXNhYwoKY2FzZSAiJHVuYW1lX21pbnVzX20iIGluCnNwYXJj
-  KikKCWNhc2UgIiRjY2NkbGZsYWdzIiBpbgoJKi1mcGljKikgY2NjZGxmbGFncz0iYGVjaG8gJGNj
-  Y2RsZmxhZ3N8c2VkICdzLy1mcGljLy1mUElDLydgIiA7OwoJKi1mUElDKikgOzsKCSopCSBjY2Nk
-  bGZsYWdzPSIkY2NjZGxmbGFncyAtZlBJQyIgOzsKCWVzYWMKCTs7CmVzYWMKCiMgU3VTRTguMiBo
-  YXMgL3Vzci9saWIvbGlibmRibSogd2hpY2ggYXJlIGxkIHNjcmlwdHMgcmF0aGVyIHRoYW4KIyB0
-  cnVlIGxpYnJhcmllcy4gVGhlIHNjcmlwdHMgY2F1c2UgYmluZGluZyBhZ2FpbnN0IHN0YXRpYwoj
-  IHZlcnNpb24gb2YgLWxnZGJtIHdoaWNoIGlzIGEgYmFkIGlkZWEuIFNvIGlmIHdlIGhhdmUgJ25t
-  JwojIG1ha2Ugc3VyZSBpdCBjYW4gcmVhZCB0aGUgZmlsZQojIE5JLVMgMjAwMy8wOC8wNwpjYXNl
-  ICIkbm0iIGluCiAgICAnJykgOzsKICAgICopCiAgICBmb3IgcCBpbiAkcGxpYnB0aAogICAgZG8K
-  ICAgICAgICBpZiAkdGVzdCAtciAkcC9saWJuZGJtLnNvOyB0aGVuCiAgICAgICAgICAgIGlmICRu
-  bSAkcC9saWJuZGJtLnNvID4vZGV2L251bGwgMj4mMSA7IHRoZW4KICAgICAgICAgICAgICAgIGVj
-  aG8gJ1lvdXIgc2hhcmVkIC1sbmRibSBzZWVtcyB0byBiZSBhIHJlYWwgbGlicmFyeS4nCiAgICAg
-  ICAgICAgICAgICBfbGlibmRibV9yZWFsPTEKICAgICAgICAgICAgICAgIGJyZWFrCiAgICAgICAg
-  ICAgIGZpCiAgICAgICAgZmkKICAgIGRvbmUKICAgIGlmICR0ZXN0ICJYJF9saWJuZGJtX3JlYWwi
-  ID0gWDsgdGhlbgogICAgICAgIGVjaG8gJ1lvdXIgc2hhcmVkIC1sbmRibSBpcyBub3QgYSByZWFs
-  IGxpYnJhcnkuJwogICAgICAgIHNldCBgZWNobyBYICIkbGlic3dhbnRlZCAifCBzZWQgLWUgJ3Mv
-  IG5kYm0gLyAvJ2AKICAgICAgICBzaGlmdAogICAgICAgIGxpYnN3YW50ZWQ9IiQqIgogICAgZmkK
-  ICAgIDs7CmVzYWMKCiMgTGludXggb24gU3lub2xvZ3kuCmlmIFsgLWYgL2V0Yy9zeW5vaW5mby5j
-  b25mIC1hIC1kIC91c3Ivc3lubyBdOyB0aGVuCiAgICAjIFRlc3RlZCBvbiBTeW5vbG9neSBEUzIx
-  MyBhbmQgRFM0MTMKICAgICMgIE9TIHZlcnNpb24gaW5mbyBpbiAvZXRjLmRlZmF1bHRzL1ZFUlNJ
-  T04KICAgICMgIGh0dHA6Ly9mb3J1bS5zeW5vbG9neS5jb20vd2lraS9pbmRleC5waHAvV2hhdF9r
-  aW5kX29mX0NQVV9kb2VzX215X05BU19oYXZlCiAgICAjIFN5bm9sb2d5IERTMjEzIHJ1bm5pbmcg
-  RFNNIDQuMy0zODEwLTAgKDIwMTMtMTEtMDYpCiAgICAjICBDUFUgbW9kZWwgTWFydmVsbCBLaXJr
-  d29vZCBtdjYyODIgQVJNdjV0ZQogICAgIyAgTGludXggMi42LjMyLjEyICMzODEwIFdlZCBOb3Yg
-  NiAwNToxMzo0MSBDU1QgMjAxMyBhcm12NXRlbCBHTlUvTGludXgKICAgICMgU3lub2xvZ3kgRFM0
-  MTMgcnVubmluZyBEU00gNC4zLTM4MTAtMCAoMjAxMy0xMS0wNikKICAgICMgIENQVSBtb2RlbCBG
-  cmVlc2NhbGUgUW9ySVEgUDEwMjIgcHBjIChlNTAwdjIpCiAgICAjICBsaW51eCAyLjYuMzIuMTIg
-  IzM4MTAgcHBjIEdOVS9MaW51eAogICAgIyBBbGwgZGV2ZWxvcG1lbnQgc3R1ZmYgaW5zdGFsbGVk
-  IHdpdGggaXBrZyBpcyBpbiAvb3B0CiAgICBpZiBbICIkTEFORyIgPSAiIiAtbyAiJExBTkciID0g
-  IkMiIF07IHRoZW4KCWVjaG8gJ1lvdXIgTEFORyBpcyBzYWZlJwogICAgZWxzZQoJZWNobyAnUGxl
-  YXNlIHNldCAkTEFORyB0byAiQyIuIEFsbCBvdGhlciAkTEFORyBzZXR0aW5ncyB3aWxsIGNhdXNl
-  IGhhdm9jJyA+JjQKCUxBTkc9QwogICAgZmkKICAgIGVjaG8gJ1NldHRpbmcgdXAgdG8gdXNlIC9v
-  cHQvKicgPiY0CiAgICBsb2NpbmNwdGg9Ii9vcHQvaW5jbHVkZSAkbG9jaW5jcHRoIgogICAgbGli
-  cHRoPSIvb3B0L2xpYiAkbGlicHRoIgogICAgbGlic3B0aD0iL29wdC9saWIgJGxpYnNwdGgiCiAg
-  ICBsb2NsaWJwdGg9Ii9vcHQvbGliICRsb2NsaWJwdGgiCiAgICAjIFBPU0lYIHdpbGwgbm90IGxp
-  bmsgd2l0aG91dCB0aGUgcHRocmVhZCBsaWIKICAgIGxpYnN3YW50ZWQ9IiRsaWJzd2FudGVkIHB0
-  aHJlYWQiCiAgICBlY2hvICIkbGlic3dhbnRlZCIgPiY0CmZpCgojIFRoaXMgc2NyaXB0IFVVL3Vz
-  ZXRocmVhZHMuY2J1IHdpbGwgZ2V0ICdjYWxsZWQtYmFjaycgYnkgQ29uZmlndXJlCiMgYWZ0ZXIg
-  aXQgaGFzIHByb21wdGVkIHRoZSB1c2VyIGZvciB3aGV0aGVyIHRvIHVzZSB0aHJlYWRzLgpjYXQg
-  PiBVVS91c2V0aHJlYWRzLmNidSA8PCdFT0NCVScKY2FzZSAiJHVzZXRocmVhZHMiIGluCiRkZWZp
-  bmV8dHJ1ZXxbeVldKikKICAgICAgICBjY2ZsYWdzPSItRF9SRUVOVFJBTlQgLURfR05VX1NPVVJD
-  RSAkY2NmbGFncyIKICAgICAgICBpZiBlY2hvICRsaWJzd2FudGVkIHwgZ3JlcCAtdiBwdGhyZWFk
-  ID4vZGV2L251bGwKICAgICAgICB0aGVuCiAgICAgICAgICAgIHNldCBgZWNobyBYICIkbGlic3dh
-  bnRlZCAifCBzZWQgLWUgJ3MvIGMgLyBwdGhyZWFkIGMgLydgCiAgICAgICAgICAgIHNoaWZ0CiAg
-  ICAgICAgICAgIGxpYnN3YW50ZWQ9IiQqIgogICAgICAgIGZpCgoJIyBTb21laG93IGF0IGxlYXN0
-  IGluIERlYmlhbiAyLjIgdGhlc2UgbWFuYWdlIHRvIGVzY2FwZQoJIyB0aGUgI2RlZmluZSBmb3Jl
-  c3Qgb2YgPGZlYXR1cmVzLmg+IGFuZCA8dGltZS5oPiBzbyB0aGF0CgkjIHRoZSBoYXNwcm90byBt
-  YWNybyBvZiBDb25maWd1cmUgZG9lc24ndCBzZWUgdGhlc2UgcHJvdG9zLAoJIyBldmVuIHdpdGgg
-  dGhlIC1EX0dOVV9TT1VSQ0UuCgoJZF9hc2N0aW1lX3JfcHJvdG89IiRkZWZpbmUiCglkX2NyeXB0
-  X3JfcHJvdG89IiRkZWZpbmUiCglkX2N0aW1lX3JfcHJvdG89IiRkZWZpbmUiCglkX2dtdGltZV9y
-  X3Byb3RvPSIkZGVmaW5lIgoJZF9sb2NhbHRpbWVfcl9wcm90bz0iJGRlZmluZSIKCWRfcmFuZG9t
-  X3JfcHJvdG89IiRkZWZpbmUiCgoJOzsKZXNhYwpFT0NCVQoKY2F0ID4gVVUvdXNlbGFyZ2VmaWxl
-  cy5jYnUgPDwnRU9DQlUnCiMgVGhpcyBzY3JpcHQgVVUvdXNlbGFyZ2VmaWxlcy5jYnUgd2lsbCBn
-  ZXQgJ2NhbGxlZC1iYWNrJyBieSBDb25maWd1cmUKIyBhZnRlciBpdCBoYXMgcHJvbXB0ZWQgdGhl
-  IHVzZXIgZm9yIHdoZXRoZXIgdG8gdXNlIGxhcmdlIGZpbGVzLgpjYXNlICIkdXNlbGFyZ2VmaWxl
-  cyIgaW4KJyd8JGRlZmluZXx0cnVlfFt5WV0qKQojIEtlZXAgdGhpcyBpbiB0aGUgbGVmdCBtYXJn
-  aW4uCmNjZmxhZ3NfdXNlbGFyZ2VmaWxlcz0iLURfTEFSR0VGSUxFX1NPVVJDRSAtRF9GSUxFX09G
-  RlNFVF9CSVRTPTY0IgoKCWNjZmxhZ3M9IiRjY2ZsYWdzICRjY2ZsYWdzX3VzZWxhcmdlZmlsZXMi
-  Cgk7Owplc2FjCkVPQ0JVCgojIFB1cmlmeSBmYWlscyB0byBsaW5rIFBlcmwgaWYgYSAiLWxjIiBp
-  cyBwYXNzZWQgaW50byBpdHMgbGlua2VyCiMgZHVlIHRvIGR1cGxpY2F0ZSBzeW1ib2xzLgpjYXNl
-  ICIkUFVSSUZZIiBpbgokZGVmaW5lfHRydWV8W3lZXSopCiAgICBzZXQgYGVjaG8gWCAiJGxpYnN3
-  YW50ZWQgInwgc2VkIC1lICdzLyBjIC8gLydgCiAgICBzaGlmdAogICAgbGlic3dhbnRlZD0iJCoi
-  CiAgICA7Owplc2FjCgojIElmIHVzaW5nIGcrKywgdGhlIENvbmZpZ3VyZSBzY2FuIGZvciBkbG9w
-  ZW4oKSBhbmQgKGVzcGVjaWFsbHkpCiMgZGxlcnJvcigpIG1pZ2h0IGZhaWwsIGVhc2llciBqdXN0
-  IHRvIGZvcmNpYmx5IGhpbnQgdGhlbSBpbi4KY2FzZSAiJGNjIiBpbgoqZysrKikKICBkX2Rsb3Bl
-  bj0nZGVmaW5lJwogIGRfZGxlcnJvcj0nZGVmaW5lJwogIDs7CmVzYWMKCiMgVW5kZXIgc29tZSBj
-  aXJjdW1zdGFuY2VzIGxpYmRiIGNhbiBnZXQgYnVpbHQgaW4gc3VjaCBhIHdheSBhcyB0bwojIG5l
-  ZWQgcHRocmVhZCBleHBsaWNpdGx5IGxpbmtlZC4KCmxpYmRiX25lZWRzX3B0aHJlYWQ9Ik4iCgpp
-  ZiBlY2hvICIgJGxpYnN3YW50ZWQgIiB8IGdyZXAgLXYgIiBwdGhyZWFkICIgPi9kZXYvbnVsbAp0
-  aGVuCiAgIGlmIGVjaG8gIiAkbGlic3dhbnRlZCAiIHwgZ3JlcCAiIGRiICIgPi9kZXYvbnVsbAog
-  ICB0aGVuCiAgICAgZm9yIERCRElSIGluICRnbGlicHRoCiAgICAgZG8KICAgICAgIERCTElCPSIk
-  REJESVIvbGliZGIuc28iCiAgICAgICBpZiBbIC1mICREQkxJQiBdCiAgICAgICB0aGVuCiAgICAg
-  ICAgIGlmICR7bm06LW5tfSAtdSAkREJMSUIgMj4vZGV2L251bGwgfCBncmVwIHB0aHJlYWQgPi9k
-  ZXYvbnVsbAogICAgICAgICB0aGVuCiAgICAgICAgICAgaWYgbGRkICREQkxJQiB8IGdyZXAgcHRo
-  cmVhZCA+L2Rldi9udWxsCiAgICAgICAgICAgdGhlbgogICAgICAgICAgICAgbGliZGJfbmVlZHNf
-  cHRocmVhZD0iTiIKICAgICAgICAgICBlbHNlCiAgICAgICAgICAgICBsaWJkYl9uZWVkc19wdGhy
-  ZWFkPSJZIgogICAgICAgICAgIGZpCiAgICAgICAgIGZpCiAgICAgICBmaQogICAgIGRvbmUKICAg
-  ZmkKZmkKCmNhc2UgIiRsaWJkYl9uZWVkc19wdGhyZWFkIiBpbgogICJZIikKICAgIGxpYnN3YW50
-  ZWQ9IiRsaWJzd2FudGVkIHB0aHJlYWQiCiAgICA7Owplc2FjCg==','midnightbsd'=>'dXNldmZvcms9J3RydWUnCmNhc2UgIiR1c2VteW1hbGxvYyIgaW4KICAgICIiKSB1c2VteW1hbGxv
+  IHNoaWZ0CiAgICBwbGlicHRoPSIkKiIKICAgIDs7CmVzYWMKCiMgRm9yIHRoZSBtdXNsIGxpYmMs
+  IHBlcmwgc2hvdWxkICNkZWZpbmUgX0dOVV9TT1VSQ0UuICBPdGhlcndpc2UsIHNvbWUKIyBhdmFp
+  bGFibGUgZnVuY3Rpb25zLCBsaWtlIG1lbWVtLCB3b24ndCBiZSB1c2VkLiAgU2VlIHRoZSBkaXNj
+  dXNzaW9uIGluCiMgW3BlcmwgIzEzMzc2MF0uICBtdXNsIGRvZXNuJ3Qgb2ZmZXIgYW4gZWFzeSB3
+  YXkgdG8gaWRlbnRpZnkgaXQsIGJ1dCwKIyBhdCBsZWFzdCBvbiBhbHBpbmUgbGludXgsIHRoZSBs
+  ZGQgLS12ZXJzaW9uIG91dHB1dCBjb250YWlucyB0aGUKIyBzdHJpbmcgJ211c2wuJwpjYXNlIGBs
+  ZGQgLS12ZXJzaW9uIDI+JjFgIGluCiAgICBtdXNsKikgIGNjZmxhZ3M9IiRjY2ZsYWdzIC1EX0dO
+  VV9TT1VSQ0UiIDs7CiAgICAgICAgKikgOzsKZXNhYwoKIyBsaWJxdWFkbWF0aCBpcyBzb21ldGlt
+  ZXMgaW5zdGFsbGVkIGFzIGdjYyBpbnRlcm5hbCBsaWJyYXJ5LAojIHNvIGNvbnRyYXJ5IHRvIG91
+  ciB1c3VhbCBwb2xpY3kgb2YgKm5vdCogbG9va2luZyBhdCBnY2MgaW50ZXJuYWwKIyBkaXJlY3Rv
+  cmllcyB3ZSBub3cgKmRvKiBsb29rIGF0IHRoZW0sIGluIGNhc2UgdGhleSBjb250YWluCiMgdGhl
+  IHF1YWRtYXRoIGxpYnJhcnkuCiMgWFhYIFRoaXMgbWF5IGFwcGx5IHRvIG90aGVyIGdjYyBpbnRl
+  cm5hbCBsaWJyYXJpZXMsIGlmIHN1Y2ggZXhpc3QuCiMgWFhYIFRoaXMgY291bGQgYmUgYXQgQ29u
+  ZmlndXJlIGxldmVsLCBidXQgdGhlbiB0aGUgJGdjYyBpcyBtZXNzeS4KY2FzZSAiJHVzZXF1YWRt
+  YXRoIiBpbgoiJGRlZmluZSIpCiAgZm9yIGQgaW4gYExBTkc9QyBMQ19BTEw9QyAkZ2NjICRjY2Zs
+  YWdzICRsZGZsYWdzIC1wcmludC1zZWFyY2gtZGlycyB8IGdyZXAgbGlicmFyaWVzIHwgY3V0IC1m
+  Mi0gLWQ9IHwgdHIgJzonICR0cm5sIHwgZ3JlcCAnZ2NjJyB8IHNlZCAtZSAnczovJDo6J2AKICBk
+  bwogICAgY2FzZSBgbHMgJGQvKmxpYnF1YWRtYXRoKiRzbyogMj4vZGV2L251bGxgIGluCiAgICAk
+  ZC8qbGlicXVhZG1hdGgqJHNvKikgeGxpYnB0aD0iJHhsaWJwdGggJGQiIDs7CiAgICBlc2FjCiAg
+  ZG9uZQogIDs7CmVzYWMKCmNhc2UgIiRsaWJjIiBpbgonJykKIyBJZiB5b3UgaGF2ZSBnbGliYywg
+  dGhlbiByZXBvcnQgdGhlIHZlcnNpb24gZm9yIC4vbXljb25maWcgYnVnIHJlcG9ydGluZy4KIyAo
+  Q29uZmlndXJlIGRvZXNuJ3QgbmVlZCB0byBrbm93IHRoZSBzcGVjaWZpYyB2ZXJzaW9uIHNpbmNl
+  IGl0IGp1c3QgdXNlcwojIGdjYyB0byBsb2FkIHRoZSBsaWJyYXJ5IGZvciBhbGwgdGVzdHMuKQoj
+  IFdlIGRvbid0IHVzZSBfX0dMSUJDX18gYW5kICBfX0dMSUJDX01JTk9SX18gYmVjYXVzZSB0aGV5
+  CiMgYXJlIGluc3VmZmljaWVudGx5IHByZWNpc2UgdG8gZGlzdGluZ3Vpc2ggdGhpbmdzIGxpa2UK
+  IyBsaWJjLTIuMC42IGFuZCBsaWJjLTIuMC43LgogICAgZm9yIHAgaW4gJHBsaWJwdGgKICAgIGRv
+  CiAgICAgICAgZm9yIHRyeWxpYiBpbiBsaWJjLnNvLjYgbGliYy5zbwogICAgICAgIGRvCiAgICAg
+  ICAgICAgIGlmICR0ZXN0IC1lICRwLyR0cnlsaWI7IHRoZW4KICAgICAgICAgICAgICAgIGxpYmM9
+  YGxzIC1sICRwLyR0cnlsaWIgfCBhd2sgJ3twcmludCAkTkZ9J2AKICAgICAgICAgICAgICAgIGlm
+  ICR0ZXN0ICJYJGxpYmMiICE9IFg7IHRoZW4KICAgICAgICAgICAgICAgICAgICBicmVhawogICAg
+  ICAgICAgICAgICAgZmkKICAgICAgICAgICAgZmkKICAgICAgICBkb25lCiAgICAgICAgaWYgJHRl
+  c3QgIlgkbGliYyIgIT0gWDsgdGhlbgogICAgICAgICAgICBicmVhawogICAgICAgIGZpCiAgICBk
+  b25lCiAgICA7Owplc2FjCgppZiAke3NoOi0vYmluL3NofSAtYyBleGl0OyB0aGVuCiAgZWNobyAn
+  JwogIGVjaG8gJ1lvdSBhcHBlYXIgdG8gaGF2ZSBhIHdvcmtpbmcgYmFzaC4gIEdvb2QuJwplbHNl
+  CiAgY2F0IDw8ICdFT00nID4mNAoKKioqKioqKioqKioqKioqKioqKioqKiogV2FybmluZyEgKioq
+  KioqKioqKioqKioqKioqKioqCkl0IHdvdWxkIGFwcGVhciB5b3UgaGF2ZSBhIGRlZmVjdGl2ZSBi
+  YXNoIHNoZWxsIGluc3RhbGxlZC4gVGhpcyBpcyBsaWtlbHkgdG8KZ2l2ZSB5b3UgYSBmYWlsdXJl
+  IG9mIG9wL2V4ZWMgdGVzdCAjNSBkdXJpbmcgdGhlIHRlc3QgcGhhc2Ugb2YgdGhlIGJ1aWxkLApV
+  cGdyYWRpbmcgdG8gYSByZWNlbnQgdmVyc2lvbiAoMS4xNC40IG9yIGxhdGVyKSBzaG91bGQgZml4
+  IHRoZSBwcm9ibGVtLgoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioq
+  KioqKioqKioqKioKRU9NCgpmaQoKIyBPbiBTUEFSQ2xpbnV4LAojIFRoZSBmb2xsb3dpbmcgY3No
+  IGNvbnNpc3RlbnRseSBjb3JlZHVtcGVkIGluIHRoZSB0ZXN0IGRpcmVjdG9yeQojICIvaG9tZS9t
+  aWtlZGxyL3Blcmw1LjAwM185NC90IiwgdGhvdWdoIG5vdCBtb3N0IG90aGVyIGRpcmVjdG9yaWVz
+  LgoKI05hbWUgICAgICAgIDogY3NoICAgICAgICAgICAgICAgICAgICBEaXN0cmlidXRpb246IFJl
+  ZCBIYXQgTGludXggKFJlbWJyYW5kdCkKI1ZlcnNpb24gICAgIDogNS4yLjYgICAgICAgICAgICAg
+  ICAgICAgICAgICBWZW5kb3I6IFJlZCBIYXQgU29mdHdhcmUKI1JlbGVhc2UgICAgIDogMyAgICAg
+  ICAgICAgICAgICAgICAgICAgIEJ1aWxkIERhdGU6IEZyaSBNYXkgMjQgMTk6NDI6MTQgMTk5Ngoj
+  SW5zdGFsbCBkYXRlOiBUaHUgSnVsIDExIDE2OjIwOjE0IDE5OTYgQnVpbGQgSG9zdDogaXRjaHku
+  cmVkaGF0LmNvbQojR3JvdXAgICAgICAgOiBTaGVsbHMgICAgICAgICAgICAgICAgICAgU291cmNl
+  IFJQTTogY3NoLTUuMi42LTMuc3JjLnJwbQojU2l6ZSAgICAgICAgOiAxODQ0MTcKI0Rlc2NyaXB0
+  aW9uIDogQlNEIGMtc2hlbGwKCiMgRm9yIHRoaXMgcmVhc29uIEkgc3VnZ2VzdCB1c2luZyB0aGUg
+  bXVjaCBidWctZml4ZWQgdGNzaCBmb3IgZ2xvYmJpbmcKIyB3aGVyZSBhdmFpbGFibGUuCgojIE5v
+  dmVtYmVyIDIwMDE6ICBUaGF0IHdhcm5pbmcncyBwcmV0dHkgb2xkIG5vdyBhbmQgcHJvYmFibHkg
+  bm90IHNvCiMgcmVsZXZhbnQsIGVzcGVjaWFsbHkgc2luY2UgcGVybCBub3cgdXNlcyBGaWxlOjpH
+  bG9iIGZvciBnbG9iYmluZy4KIyBXZSdsbCBzdGlsbCBsb29rIGZvciB0Y3NoLCBidXQgdG9uZSBk
+  b3duIHRoZSB3YXJuaW5ncy4KIyBBbmR5IERvdWdoZXJ0eSwgTm92LiA2LCAyMDAxCmlmICRjc2gg
+  LWMgJ2VjaG8gJHZlcnNpb24nID4vZGV2L251bGwgMj4mMTsgdGhlbgogICAgZWNobyAnWW91ciBj
+  c2ggaXMgcmVhbGx5IHRjc2guICBHb29kLicKZWxzZQogICAgaWYgeHh4PWAuL1VVL2xvYyB0Y3No
+  IGJsdXJmbCAkcHRoYDsgJHRlc3QgLWYgIiR4eHgiOyB0aGVuCgllY2hvICJGb3VuZCB0Y3NoLiAg
+  SSdsbCB1c2UgaXQgZm9yIGdsb2JiaW5nLiIKCSMgV2UgY2FuJ3QgY2hhbmdlIENvbmZpZ3VyZSdz
+  IHNldHRpbmcgb2YgJGNzaCwgZHVlIHRvIHRoZSB3YXkKCSMgQ29uZmlndXJlIGhhbmRsZXMgJGRf
+  cG9ydGFibGUgYW5kIGNvbW1hbmRzIGZvdW5kIGluICRsb2NsaXN0LgoJIyBXZSBjYW4gc2V0IHRo
+  ZSB2YWx1ZSBmb3IgQ1NIIGluIGNvbmZpZy5oIGJ5IHNldHRpbmcgZnVsbF9jc2guCglmdWxsX2Nz
+  aD0keHh4CiAgICBlbGlmIFsgLWYgIiRjc2giIF07IHRoZW4KCWVjaG8gIkNvdWxkbid0IGZpbmQg
+  dGNzaC4gIENzaC1iYXNlZCBnbG9iYmluZyBtaWdodCBiZSBicm9rZW4uIgogICAgZmkKZmkKCiMg
+  U2hpbXBlaSBZYW1hc2hpdGEgPHNoaW1wZWlAc29jcmF0ZXMucGF0bmV0LmNhbHRlY2guZWR1Pgoj
+  IE1lc3NhZ2UtSWQ6IDwzM0VGMTYzNC5CMzZCNjUwMEBwb2JveC5jb20+CiMKIyBUaGUgRFIyIG9m
+  IE1rTGludXggKG9zbmFtZT1saW51eCxhcmNobmFtZT1wcGMtbGludXgpIG1heSBuZWVkCiMgc3Bl
+  Y2lhbCBmbGFncyBwYXNzZWQgaW4gb3JkZXIgZm9yIGR5bmFtaWMgbG9hZGluZyB0byB3b3JrLgoj
+  IGluc3RlYWQgb2YgdGhlIHJlY29tbWVuZGVkOgojCiMgY2NkbGZsYWdzPSctcmR5bmFtaWMnCiMK
+  IyBpdCBzaG91bGQgYmU6CiMgY2NkbGZsYWdzPSctV2wsLUUnCiMKIyBTbyBpZiB5b3VyIERSMiAo
+  RFIzIGNhbWUgb3V0IHN1bW1lciAxOTk4LCBjb25zaWRlciB1cGdyYWRpbmcpCiMgaGFzIHByb2Js
+  ZW1zIHdpdGggZHluYW1pYyBsb2FkaW5nLCB1bmNvbW1lbnQgdGhlCiMgZm9sbG93aW5nIHRocmVl
+  IGxpbmVzLCBtYWtlIGRpc3RjbGVhbiwgYW5kIHJlLUNvbmZpZ3VyZToKI2Nhc2UgImB1bmFtZSAt
+  ciB8IHNlZCAncy9eWzAtOS4tXSovLydgYGFyY2hgIiBpbgojJ29zZm1hY2gzcHBjJykgY2NkbGZs
+  YWdzPSctV2wsLUUnIDs7CiNlc2FjCgpjYXNlICIkdW5hbWVfbWludXNfbSIgaW4Kc3BhcmMqKQoJ
+  Y2FzZSAiJGNjY2RsZmxhZ3MiIGluCgkqLWZwaWMqKSBjY2NkbGZsYWdzPSJgZWNobyAkY2NjZGxm
+  bGFnc3xzZWQgJ3MvLWZwaWMvLWZQSUMvJ2AiIDs7CgkqLWZQSUMqKSA7OwoJKikJIGNjY2RsZmxh
+  Z3M9IiRjY2NkbGZsYWdzIC1mUElDIiA7OwoJZXNhYwoJOzsKZXNhYwoKIyBTdVNFOC4yIGhhcyAv
+  dXNyL2xpYi9saWJuZGJtKiB3aGljaCBhcmUgbGQgc2NyaXB0cyByYXRoZXIgdGhhbgojIHRydWUg
+  bGlicmFyaWVzLiBUaGUgc2NyaXB0cyBjYXVzZSBiaW5kaW5nIGFnYWluc3Qgc3RhdGljCiMgdmVy
+  c2lvbiBvZiAtbGdkYm0gd2hpY2ggaXMgYSBiYWQgaWRlYS4gU28gaWYgd2UgaGF2ZSAnbm0nCiMg
+  bWFrZSBzdXJlIGl0IGNhbiByZWFkIHRoZSBmaWxlCiMgTkktUyAyMDAzLzA4LzA3CmNhc2UgIiRu
+  bSIgaW4KICAgICcnKSA7OwogICAgKikKICAgIGZvciBwIGluICRwbGlicHRoCiAgICBkbwogICAg
+  ICAgIGlmICR0ZXN0IC1yICRwL2xpYm5kYm0uc287IHRoZW4KICAgICAgICAgICAgaWYgJG5tICRw
+  L2xpYm5kYm0uc28gPi9kZXYvbnVsbCAyPiYxIDsgdGhlbgogICAgICAgICAgICAgICAgZWNobyAn
+  WW91ciBzaGFyZWQgLWxuZGJtIHNlZW1zIHRvIGJlIGEgcmVhbCBsaWJyYXJ5LicKICAgICAgICAg
+  ICAgICAgIF9saWJuZGJtX3JlYWw9MQogICAgICAgICAgICAgICAgYnJlYWsKICAgICAgICAgICAg
+  ZmkKICAgICAgICBmaQogICAgZG9uZQogICAgaWYgJHRlc3QgIlgkX2xpYm5kYm1fcmVhbCIgPSBY
+  OyB0aGVuCiAgICAgICAgZWNobyAnWW91ciBzaGFyZWQgLWxuZGJtIGlzIG5vdCBhIHJlYWwgbGli
+  cmFyeS4nCiAgICAgICAgc2V0IGBlY2hvIFggIiRsaWJzd2FudGVkICJ8IHNlZCAtZSAncy8gbmRi
+  bSAvIC8nYAogICAgICAgIHNoaWZ0CiAgICAgICAgbGlic3dhbnRlZD0iJCoiCiAgICBmaQogICAg
+  OzsKZXNhYwoKIyBMaW51eCBvbiBTeW5vbG9neS4KaWYgWyAtZiAvZXRjL3N5bm9pbmZvLmNvbmYg
+  LWEgLWQgL3Vzci9zeW5vIF07IHRoZW4KICAgICMgVGVzdGVkIG9uIFN5bm9sb2d5IERTMjEzIGFu
+  ZCBEUzQxMwogICAgIyAgT1MgdmVyc2lvbiBpbmZvIGluIC9ldGMuZGVmYXVsdHMvVkVSU0lPTgog
+  ICAgIyAgaHR0cDovL2ZvcnVtLnN5bm9sb2d5LmNvbS93aWtpL2luZGV4LnBocC9XaGF0X2tpbmRf
+  b2ZfQ1BVX2RvZXNfbXlfTkFTX2hhdmUKICAgICMgU3lub2xvZ3kgRFMyMTMgcnVubmluZyBEU00g
+  NC4zLTM4MTAtMCAoMjAxMy0xMS0wNikKICAgICMgIENQVSBtb2RlbCBNYXJ2ZWxsIEtpcmt3b29k
+  IG12NjI4MiBBUk12NXRlCiAgICAjICBMaW51eCAyLjYuMzIuMTIgIzM4MTAgV2VkIE5vdiA2IDA1
+  OjEzOjQxIENTVCAyMDEzIGFybXY1dGVsIEdOVS9MaW51eAogICAgIyBTeW5vbG9neSBEUzQxMyBy
+  dW5uaW5nIERTTSA0LjMtMzgxMC0wICgyMDEzLTExLTA2KQogICAgIyAgQ1BVIG1vZGVsIEZyZWVz
+  Y2FsZSBRb3JJUSBQMTAyMiBwcGMgKGU1MDB2MikKICAgICMgIGxpbnV4IDIuNi4zMi4xMiAjMzgx
+  MCBwcGMgR05VL0xpbnV4CiAgICAjIEFsbCBkZXZlbG9wbWVudCBzdHVmZiBpbnN0YWxsZWQgd2l0
+  aCBpcGtnIGlzIGluIC9vcHQKICAgIGlmIFsgIiRMQU5HIiA9ICIiIC1vICIkTEFORyIgPSAiQyIg
+  XTsgdGhlbgoJZWNobyAnWW91ciBMQU5HIGlzIHNhZmUnCiAgICBlbHNlCgllY2hvICdQbGVhc2Ug
+  c2V0ICRMQU5HIHRvICJDIi4gQWxsIG90aGVyICRMQU5HIHNldHRpbmdzIHdpbGwgY2F1c2UgaGF2
+  b2MnID4mNAoJTEFORz1DCiAgICBmaQogICAgZWNobyAnU2V0dGluZyB1cCB0byB1c2UgL29wdC8q
+  JyA+JjQKICAgIGxvY2luY3B0aD0iL29wdC9pbmNsdWRlICRsb2NpbmNwdGgiCiAgICBsaWJwdGg9
+  Ii9vcHQvbGliICRsaWJwdGgiCiAgICBsaWJzcHRoPSIvb3B0L2xpYiAkbGlic3B0aCIKICAgIGxv
+  Y2xpYnB0aD0iL29wdC9saWIgJGxvY2xpYnB0aCIKICAgICMgUE9TSVggd2lsbCBub3QgbGluayB3
+  aXRob3V0IHRoZSBwdGhyZWFkIGxpYgogICAgbGlic3dhbnRlZD0iJGxpYnN3YW50ZWQgcHRocmVh
+  ZCIKICAgIGVjaG8gIiRsaWJzd2FudGVkIiA+JjQKZmkKCiMgVGhpcyBzY3JpcHQgVVUvdXNldGhy
+  ZWFkcy5jYnUgd2lsbCBnZXQgJ2NhbGxlZC1iYWNrJyBieSBDb25maWd1cmUKIyBhZnRlciBpdCBo
+  YXMgcHJvbXB0ZWQgdGhlIHVzZXIgZm9yIHdoZXRoZXIgdG8gdXNlIHRocmVhZHMuCmNhdCA+IFVV
+  L3VzZXRocmVhZHMuY2J1IDw8J0VPQ0JVJwpjYXNlICIkdXNldGhyZWFkcyIgaW4KJGRlZmluZXx0
+  cnVlfFt5WV0qKQogICAgICAgIGNjZmxhZ3M9Ii1EX1JFRU5UUkFOVCAtRF9HTlVfU09VUkNFICRj
+  Y2ZsYWdzIgogICAgICAgIGlmIGVjaG8gJGxpYnN3YW50ZWQgfCBncmVwIC12IHB0aHJlYWQgPi9k
+  ZXYvbnVsbAogICAgICAgIHRoZW4KICAgICAgICAgICAgc2V0IGBlY2hvIFggIiRsaWJzd2FudGVk
+  ICJ8IHNlZCAtZSAncy8gYyAvIHB0aHJlYWQgYyAvJ2AKICAgICAgICAgICAgc2hpZnQKICAgICAg
+  ICAgICAgbGlic3dhbnRlZD0iJCoiCiAgICAgICAgZmkKCgkjIFNvbWVob3cgYXQgbGVhc3QgaW4g
+  RGViaWFuIDIuMiB0aGVzZSBtYW5hZ2UgdG8gZXNjYXBlCgkjIHRoZSAjZGVmaW5lIGZvcmVzdCBv
+  ZiA8ZmVhdHVyZXMuaD4gYW5kIDx0aW1lLmg+IHNvIHRoYXQKCSMgdGhlIGhhc3Byb3RvIG1hY3Jv
+  IG9mIENvbmZpZ3VyZSBkb2Vzbid0IHNlZSB0aGVzZSBwcm90b3MsCgkjIGV2ZW4gd2l0aCB0aGUg
+  LURfR05VX1NPVVJDRS4KCglkX2FzY3RpbWVfcl9wcm90bz0iJGRlZmluZSIKCWRfY3J5cHRfcl9w
+  cm90bz0iJGRlZmluZSIKCWRfY3RpbWVfcl9wcm90bz0iJGRlZmluZSIKCWRfZ210aW1lX3JfcHJv
+  dG89IiRkZWZpbmUiCglkX2xvY2FsdGltZV9yX3Byb3RvPSIkZGVmaW5lIgoJZF9yYW5kb21fcl9w
+  cm90bz0iJGRlZmluZSIKCgk7Owplc2FjCkVPQ0JVCgpjYXQgPiBVVS91c2VsYXJnZWZpbGVzLmNi
+  dSA8PCdFT0NCVScKIyBUaGlzIHNjcmlwdCBVVS91c2VsYXJnZWZpbGVzLmNidSB3aWxsIGdldCAn
+  Y2FsbGVkLWJhY2snIGJ5IENvbmZpZ3VyZQojIGFmdGVyIGl0IGhhcyBwcm9tcHRlZCB0aGUgdXNl
+  ciBmb3Igd2hldGhlciB0byB1c2UgbGFyZ2UgZmlsZXMuCmNhc2UgIiR1c2VsYXJnZWZpbGVzIiBp
+  bgonJ3wkZGVmaW5lfHRydWV8W3lZXSopCiMgS2VlcCB0aGlzIGluIHRoZSBsZWZ0IG1hcmdpbi4K
+  Y2NmbGFnc191c2VsYXJnZWZpbGVzPSItRF9MQVJHRUZJTEVfU09VUkNFIC1EX0ZJTEVfT0ZGU0VU
+  X0JJVFM9NjQiCgoJY2NmbGFncz0iJGNjZmxhZ3MgJGNjZmxhZ3NfdXNlbGFyZ2VmaWxlcyIKCTs7
+  CmVzYWMKRU9DQlUKCiMgUHVyaWZ5IGZhaWxzIHRvIGxpbmsgUGVybCBpZiBhICItbGMiIGlzIHBh
+  c3NlZCBpbnRvIGl0cyBsaW5rZXIKIyBkdWUgdG8gZHVwbGljYXRlIHN5bWJvbHMuCmNhc2UgIiRQ
+  VVJJRlkiIGluCiRkZWZpbmV8dHJ1ZXxbeVldKikKICAgIHNldCBgZWNobyBYICIkbGlic3dhbnRl
+  ZCAifCBzZWQgLWUgJ3MvIGMgLyAvJ2AKICAgIHNoaWZ0CiAgICBsaWJzd2FudGVkPSIkKiIKICAg
+  IDs7CmVzYWMKCiMgSWYgdXNpbmcgZysrLCB0aGUgQ29uZmlndXJlIHNjYW4gZm9yIGRsb3Blbigp
+  IGFuZCAoZXNwZWNpYWxseSkKIyBkbGVycm9yKCkgbWlnaHQgZmFpbCwgZWFzaWVyIGp1c3QgdG8g
+  Zm9yY2libHkgaGludCB0aGVtIGluLgpjYXNlICIkY2MiIGluCipnKysqKQogIGRfZGxvcGVuPSdk
+  ZWZpbmUnCiAgZF9kbGVycm9yPSdkZWZpbmUnCiAgOzsKZXNhYwoKIyBVbmRlciBzb21lIGNpcmN1
+  bXN0YW5jZXMgbGliZGIgY2FuIGdldCBidWlsdCBpbiBzdWNoIGEgd2F5IGFzIHRvCiMgbmVlZCBw
+  dGhyZWFkIGV4cGxpY2l0bHkgbGlua2VkLgoKbGliZGJfbmVlZHNfcHRocmVhZD0iTiIKCmlmIGVj
+  aG8gIiAkbGlic3dhbnRlZCAiIHwgZ3JlcCAtdiAiIHB0aHJlYWQgIiA+L2Rldi9udWxsCnRoZW4K
+  ICAgaWYgZWNobyAiICRsaWJzd2FudGVkICIgfCBncmVwICIgZGIgIiA+L2Rldi9udWxsCiAgIHRo
+  ZW4KICAgICBmb3IgREJESVIgaW4gJGdsaWJwdGgKICAgICBkbwogICAgICAgREJMSUI9IiREQkRJ
+  Ui9saWJkYi5zbyIKICAgICAgIGlmIFsgLWYgJERCTElCIF0KICAgICAgIHRoZW4KICAgICAgICAg
+  aWYgJHtubTotbm19IC11ICREQkxJQiAyPi9kZXYvbnVsbCB8IGdyZXAgcHRocmVhZCA+L2Rldi9u
+  dWxsCiAgICAgICAgIHRoZW4KICAgICAgICAgICBpZiBsZGQgJERCTElCIHwgZ3JlcCBwdGhyZWFk
+  ID4vZGV2L251bGwKICAgICAgICAgICB0aGVuCiAgICAgICAgICAgICBsaWJkYl9uZWVkc19wdGhy
+  ZWFkPSJOIgogICAgICAgICAgIGVsc2UKICAgICAgICAgICAgIGxpYmRiX25lZWRzX3B0aHJlYWQ9
+  IlkiCiAgICAgICAgICAgZmkKICAgICAgICAgZmkKICAgICAgIGZpCiAgICAgZG9uZQogICBmaQpm
+  aQoKY2FzZSAiJGxpYmRiX25lZWRzX3B0aHJlYWQiIGluCiAgIlkiKQogICAgbGlic3dhbnRlZD0i
+  JGxpYnN3YW50ZWQgcHRocmVhZCIKICAgIDs7CmVzYWMK','midnightbsd'=>'dXNldmZvcms9J3RydWUnCmNhc2UgIiR1c2VteW1hbGxvYyIgaW4KICAgICIiKSB1c2VteW1hbGxv
   Yz0nbicKICAgICAgICA7Owplc2FjCmxpYnN3YW50ZWQ9YGVjaG8gJGxpYnN3YW50ZWQgfCBzZWQg
   J3MvIG1hbGxvYyAvIC8nYAoKb2JqZm9ybWF0PWAvdXNyL2Jpbi9vYmpmb3JtYXRgCmlmIFsgeCRv
   Ympmb3JtYXQgPSB4YW91dCBdOyB0aGVuCiAgICBpZiBbIC1lIC91c3IvbGliL2FvdXQgXTsgdGhl
@@ -8521,7 +8631,10 @@ $fatpacked{"Devel/PatchPerl/Hints.pm"} = '#line '.(1+__LINE__).' "'.__FILE__."\"
   bCB3aXRoIHNoYXJlZCBsaWJwZXJsCglpZiBbICIkdXNlZGwiID0gIiRkZWZpbmUiIC1hIC1yIHNo
   bGliX3ZlcnNpb24gXTsgdGhlbgoJCXVzZXNocnBsaWI9dHJ1ZQoJCWxpYnBlcmw9YC4gLi9zaGxp
   Yl92ZXJzaW9uOyBlY2hvIGxpYnBlcmwuc28uJHttYWpvcn0uJHttaW5vcn1gCglmaQoJOzsKZXNh
-  YwoKIyBlbmQK','solaris'=>'IyBoaW50cy9zb2xhcmlzXzIuc2gKIyBDb250cmlidXRpb25zIGJ5IChpbiBhbHBoYWJldGljYWwg
+  YwoKIyBvcGVuYnNkIGhhcyBhIHByb2JsZW0gcmVnYXJkaW5nIG5ld2xvY2FsZSgpCiMgaHR0cHM6
+  Ly9tYXJjLmluZm8vP2w9b3BlbmJzZC1idWdzJm09MTU1MzY0NTY4NjA4NzU5Jnc9MgojIHdoaWNo
+  IGlzIGJlaW5nIGZpeGVkLiAgSW4gdGhlIG1lYW50aW1lLCBmb3JiaWQgUE9TSVggMjAwOCBsb2Nh
+  bGVzCmRfbmV3bG9jYWxlPSIkdW5kZWYiCgojIGVuZAo=','solaris'=>'IyBoaW50cy9zb2xhcmlzXzIuc2gKIyBDb250cmlidXRpb25zIGJ5IChpbiBhbHBoYWJldGljYWwg
   b3JkZXIpIEFsYW4gQnVybGlzb24sIEFuZHkgRG91Z2hlcnR5LAojIERlYW4gUm9laHJpY2gsIEph
   cmtrbyBIaWV0YW5pZW1pLCBMdXBlIENocmlzdG9waCwgUmljaGFyZCBTb2RlcmJlcmcgYW5kCiMg
   bWFueSBvdGhlcnMuCiMKIyBTZWUgUkVBRE1FLnNvbGFyaXMgZm9yIGFkZGl0aW9uYWwgaW5mb3Jt
@@ -8931,11 +9044,11 @@ $fatpacked{"Devel/PatchPerl/Hints.pm"} = '#line '.(1+__LINE__).' "'.__FILE__."\"
 DEVEL_PATCHPERL_HINTS
 
 $fatpacked{"Devel/PatchPerl/Plugin.pm"} = '#line '.(1+__LINE__).' "'.__FILE__."\"\n".<<'DEVEL_PATCHPERL_PLUGIN';
-  package Devel::PatchPerl::Plugin;$Devel::PatchPerl::Plugin::VERSION='1.52';use strict;use warnings;qq[Plug it in];
+  package Devel::PatchPerl::Plugin;$Devel::PatchPerl::Plugin::VERSION='1.58';use strict;use warnings;qq[Plug it in];
 DEVEL_PATCHPERL_PLUGIN
 
 $fatpacked{"File/Which.pm"} = '#line '.(1+__LINE__).' "'.__FILE__."\"\n".<<'FILE_WHICH';
-  package File::Which;use strict;use warnings;use Exporter ();use File::Spec ();our$VERSION='1.22';our@ISA='Exporter';our@EXPORT='which';our@EXPORT_OK='where';use constant IS_VMS=>($^O eq 'VMS');use constant IS_MAC=>($^O eq 'MacOS');use constant IS_DOS=>($^O eq 'MSWin32' or $^O eq 'dos' or $^O eq 'os2');use constant IS_CYG=>($^O eq 'cygwin' || $^O eq 'msys');my@PATHEXT=('');if (IS_DOS){if ($ENV{PATHEXT}){push@PATHEXT,split ';',$ENV{PATHEXT}}else {push@PATHEXT,qw{.com .exe .bat}}}elsif (IS_VMS){push@PATHEXT,qw{.exe .com}}elsif (IS_CYG){push@PATHEXT,qw{.exe .com}}sub which {my ($exec)=@_;return undef unless defined$exec;return undef if$exec eq '';my$all=wantarray;my@results=();if (IS_VMS){my$symbol=`SHOW SYMBOL $exec`;chomp($symbol);unless ($?){return$symbol unless$all;push@results,$symbol}}if (IS_MAC){my@aliases=split /\,/,$ENV{Aliases};for my$alias (@aliases){if (lc($alias)eq lc($exec)){chomp(my$file=`Alias $alias`);last unless$file;return$file unless$all;push@results,$file;last}}}return$exec if!IS_VMS and!IS_MAC and!IS_DOS and $exec =~ /\// and -f $exec and -x $exec;my@path=File::Spec->path;if (IS_DOS or IS_VMS or IS_MAC){unshift@path,File::Spec->curdir}for my$base (map {File::Spec->catfile($_,$exec)}@path){for my$ext (@PATHEXT){my$file=$base.$ext;next if -d $file;if (-x _ or (IS_MAC || ((IS_DOS or IS_CYG)and grep {$file =~ /$_\z/i}@PATHEXT[1..$#PATHEXT])and -e _)){return$file unless$all;push@results,$file}}}if ($all){return@results}else {return undef}}sub where {my@res=which($_[0]);return@res}1;
+  package File::Which;use strict;use warnings;use Exporter ();use File::Spec ();our$VERSION='1.23';our@ISA='Exporter';our@EXPORT='which';our@EXPORT_OK='where';use constant IS_VMS=>($^O eq 'VMS');use constant IS_MAC=>($^O eq 'MacOS');use constant IS_WIN=>($^O eq 'MSWin32' or $^O eq 'dos' or $^O eq 'os2');use constant IS_DOS=>IS_WIN();use constant IS_CYG=>($^O eq 'cygwin' || $^O eq 'msys');our$IMPLICIT_CURRENT_DIR=IS_WIN || IS_VMS || IS_MAC;my@PATHEXT=('');if (IS_WIN){if ($ENV{PATHEXT}){push@PATHEXT,split ';',$ENV{PATHEXT}}else {push@PATHEXT,qw{.com .exe .bat}}}elsif (IS_VMS){push@PATHEXT,qw{.exe .com}}elsif (IS_CYG){push@PATHEXT,qw{.exe .com}}sub which {my ($exec)=@_;return undef unless defined$exec;return undef if$exec eq '';my$all=wantarray;my@results=();if (IS_VMS){my$symbol=`SHOW SYMBOL $exec`;chomp($symbol);unless ($?){return$symbol unless$all;push@results,$symbol}}if (IS_MAC){my@aliases=split /\,/,$ENV{Aliases};for my$alias (@aliases){if (lc($alias)eq lc($exec)){chomp(my$file=`Alias $alias`);last unless$file;return$file unless$all;push@results,$file;last}}}return$exec if!IS_VMS and!IS_MAC and!IS_WIN and $exec =~ /\// and -f $exec and -x $exec;my@path;if($^O eq 'MSWin32'){@path=split(';',$ENV{PATH});s/"//g for@path;@path=grep length,@path}else {@path=File::Spec->path}if ($IMPLICIT_CURRENT_DIR){unshift@path,File::Spec->curdir}for my$base (map {File::Spec->catfile($_,$exec)}@path){for my$ext (@PATHEXT){my$file=$base.$ext;next if -d $file;if (-x _ or (IS_MAC || ((IS_WIN or IS_CYG)and grep {$file =~ /$_\z/i}@PATHEXT[1..$#PATHEXT])and -e _)){return$file unless$all;push@results,$file}}}if ($all){return@results}else {return undef}}sub where {my@res=which($_[0]);return@res}1;
 FILE_WHICH
 
 $fatpacked{"File/pushd.pm"} = '#line '.(1+__LINE__).' "'.__FILE__."\"\n".<<'FILE_PUSHD';
@@ -9015,7 +9128,7 @@ $fatpacked{"IPC/Run3/ProfReporter.pm"} = '#line '.(1+__LINE__).' "'.__FILE__."\"
 IPC_RUN3_PROFREPORTER
 
 $fatpacked{"JSON/PP.pm"} = '#line '.(1+__LINE__).' "'.__FILE__."\"\n".<<'JSON_PP';
-  package JSON::PP;use 5.005;use strict;use Exporter ();BEGIN {@JSON::PP::ISA=('Exporter')}use overload ();use JSON::PP::Boolean;use Carp ();$JSON::PP::VERSION='2.97001';@JSON::PP::EXPORT=qw(encode_json decode_json from_json to_json);use constant P_ASCII=>0;use constant P_LATIN1=>1;use constant P_UTF8=>2;use constant P_INDENT=>3;use constant P_CANONICAL=>4;use constant P_SPACE_BEFORE=>5;use constant P_SPACE_AFTER=>6;use constant P_ALLOW_NONREF=>7;use constant P_SHRINK=>8;use constant P_ALLOW_BLESSED=>9;use constant P_CONVERT_BLESSED=>10;use constant P_RELAXED=>11;use constant P_LOOSE=>12;use constant P_ALLOW_BIGNUM=>13;use constant P_ALLOW_BAREKEY=>14;use constant P_ALLOW_SINGLEQUOTE=>15;use constant P_ESCAPE_SLASH=>16;use constant P_AS_NONBLESSED=>17;use constant P_ALLOW_UNKNOWN=>18;use constant OLD_PERL=>$] < 5.008 ? 1 : 0;use constant USE_B=>0;BEGIN {if (USE_B){require B}}BEGIN {my@xs_compati_bit_properties=qw(latin1 ascii utf8 indent canonical space_before space_after allow_nonref shrink allow_blessed convert_blessed relaxed allow_unknown);my@pp_bit_properties=qw(allow_singlequote allow_bignum loose allow_barekey escape_slash as_nonblessed);if (OLD_PERL){my$helper=$] >= 5.006 ? 'JSON::PP::Compat5006' : 'JSON::PP::Compat5005';eval qq| require $helper |;if ($@){Carp::croak $@}}for my$name (@xs_compati_bit_properties,@pp_bit_properties){my$property_id='P_' .uc($name);eval qq/
+  package JSON::PP;use 5.005;use strict;use Exporter ();BEGIN {@JSON::PP::ISA=('Exporter')}use overload ();use JSON::PP::Boolean;use Carp ();$JSON::PP::VERSION='4.02';@JSON::PP::EXPORT=qw(encode_json decode_json from_json to_json);use constant P_ASCII=>0;use constant P_LATIN1=>1;use constant P_UTF8=>2;use constant P_INDENT=>3;use constant P_CANONICAL=>4;use constant P_SPACE_BEFORE=>5;use constant P_SPACE_AFTER=>6;use constant P_ALLOW_NONREF=>7;use constant P_SHRINK=>8;use constant P_ALLOW_BLESSED=>9;use constant P_CONVERT_BLESSED=>10;use constant P_RELAXED=>11;use constant P_LOOSE=>12;use constant P_ALLOW_BIGNUM=>13;use constant P_ALLOW_BAREKEY=>14;use constant P_ALLOW_SINGLEQUOTE=>15;use constant P_ESCAPE_SLASH=>16;use constant P_AS_NONBLESSED=>17;use constant P_ALLOW_UNKNOWN=>18;use constant P_ALLOW_TAGS=>19;use constant OLD_PERL=>$] < 5.008 ? 1 : 0;use constant USE_B=>$ENV{PERL_JSON_PP_USE_B}|| 0;BEGIN {if (USE_B){require B}}BEGIN {my@xs_compati_bit_properties=qw(latin1 ascii utf8 indent canonical space_before space_after allow_nonref shrink allow_blessed convert_blessed relaxed allow_unknown allow_tags);my@pp_bit_properties=qw(allow_singlequote allow_bignum loose allow_barekey escape_slash as_nonblessed);if (OLD_PERL){my$helper=$] >= 5.006 ? 'JSON::PP::Compat5006' : 'JSON::PP::Compat5005';eval qq| require $helper |;if ($@){Carp::croak $@}}for my$name (@xs_compati_bit_properties,@pp_bit_properties){my$property_id='P_' .uc($name);eval qq/
               sub $name {
                   my \$enable = defined \$_[1] ? \$_[1] : 1;
   
@@ -9032,7 +9145,7 @@ $fatpacked{"JSON/PP.pm"} = '#line '.(1+__LINE__).' "'.__FILE__."\"\n".<<'JSON_PP
               sub get_$name {
                   \$_[0]->{PROPS}->[$property_id] ? 1 : '';
               }
-          /}}my$JSON;sub encode_json ($) {($JSON ||= __PACKAGE__->new->utf8)->encode(@_)}sub decode_json {($JSON ||= __PACKAGE__->new->utf8)->decode(@_)}sub to_json($) {Carp::croak ("JSON::PP::to_json has been renamed to encode_json.")}sub from_json($) {Carp::croak ("JSON::PP::from_json has been renamed to decode_json.")}sub new {my$class=shift;my$self={max_depth=>512,max_size=>0,indent_length=>3,};bless$self,$class}sub encode {return $_[0]->PP_encode_json($_[1])}sub decode {return $_[0]->PP_decode_json($_[1],0x00000000)}sub decode_prefix {return $_[0]->PP_decode_json($_[1],0x00000001)}sub pretty {my ($self,$v)=@_;my$enable=defined$v ? $v : 1;if ($enable){$self->indent(1)->space_before(1)->space_after(1)}else {$self->indent(0)->space_before(0)->space_after(0)}$self}sub max_depth {my$max=defined $_[1]? $_[1]: 0x80000000;$_[0]->{max_depth}=$max;$_[0]}sub get_max_depth {$_[0]->{max_depth}}sub max_size {my$max=defined $_[1]? $_[1]: 0;$_[0]->{max_size}=$max;$_[0]}sub get_max_size {$_[0]->{max_size}}sub filter_json_object {if (defined $_[1]and ref $_[1]eq 'CODE'){$_[0]->{cb_object}=$_[1]}else {delete $_[0]->{cb_object}}$_[0]->{F_HOOK}=($_[0]->{cb_object}or $_[0]->{cb_sk_object})? 1 : 0;$_[0]}sub filter_json_single_key_object {if (@_==1 or @_ > 3){Carp::croak("Usage: JSON::PP::filter_json_single_key_object(self, key, callback = undef)")}if (defined $_[2]and ref $_[2]eq 'CODE'){$_[0]->{cb_sk_object}->{$_[1]}=$_[2]}else {delete $_[0]->{cb_sk_object}->{$_[1]};delete $_[0]->{cb_sk_object}unless %{$_[0]->{cb_sk_object}|| {}}}$_[0]->{F_HOOK}=($_[0]->{cb_object}or $_[0]->{cb_sk_object})? 1 : 0;$_[0]}sub indent_length {if (!defined $_[1]or $_[1]> 15 or $_[1]< 0){Carp::carp "The acceptable range of indent_length() is 0 to 15."}else {$_[0]->{indent_length}=$_[1]}$_[0]}sub get_indent_length {$_[0]->{indent_length}}sub sort_by {$_[0]->{sort_by}=defined $_[1]? $_[1]: 1;$_[0]}sub allow_bigint {Carp::carp("allow_bigint() is obsoleted. use allow_bignum() instead.");$_[0]->allow_bignum}{my$max_depth;my$indent;my$ascii;my$latin1;my$utf8;my$space_before;my$space_after;my$canonical;my$allow_blessed;my$convert_blessed;my$indent_length;my$escape_slash;my$bignum;my$as_nonblessed;my$depth;my$indent_count;my$keysort;sub PP_encode_json {my$self=shift;my$obj=shift;$indent_count=0;$depth=0;my$props=$self->{PROPS};($ascii,$latin1,$utf8,$indent,$canonical,$space_before,$space_after,$allow_blessed,$convert_blessed,$escape_slash,$bignum,$as_nonblessed)=@{$props}[P_ASCII .. P_SPACE_AFTER,P_ALLOW_BLESSED,P_CONVERT_BLESSED,P_ESCAPE_SLASH,P_ALLOW_BIGNUM,P_AS_NONBLESSED];($max_depth,$indent_length)=@{$self}{qw/max_depth indent_length/};$keysort=$canonical ? sub {$a cmp $b}: undef;if ($self->{sort_by}){$keysort=ref($self->{sort_by})eq 'CODE' ? $self->{sort_by}: $self->{sort_by}=~ /\D+/ ? $self->{sort_by}: sub {$a cmp $b}}encode_error("hash- or arrayref expected (not a simple scalar, use allow_nonref to allow this)")if(!ref$obj and!$props->[P_ALLOW_NONREF ]);my$str=$self->object_to_json($obj);$str .= "\n" if ($indent);unless ($ascii or $latin1 or $utf8){utf8::upgrade($str)}if ($props->[P_SHRINK ]){utf8::downgrade($str,1)}return$str}sub object_to_json {my ($self,$obj)=@_;my$type=ref($obj);if($type eq 'HASH'){return$self->hash_to_json($obj)}elsif($type eq 'ARRAY'){return$self->array_to_json($obj)}elsif ($type){if (blessed($obj)){return$self->value_to_json($obj)if ($obj->isa('JSON::PP::Boolean'));if ($convert_blessed and $obj->can('TO_JSON')){my$result=$obj->TO_JSON();if (defined$result and ref($result)){if (refaddr($obj)eq refaddr($result)){encode_error(sprintf("%s::TO_JSON method returned same object as was passed instead of a new one",ref$obj))}}return$self->object_to_json($result)}return "$obj" if ($bignum and _is_bignum($obj));if ($allow_blessed){return$self->blessed_to_json($obj)if ($as_nonblessed);return 'null'}encode_error(sprintf("encountered object '%s', but neither allow_blessed " ."nor convert_blessed settings are enabled",$obj))}else {return$self->value_to_json($obj)}}else{return$self->value_to_json($obj)}}sub hash_to_json {my ($self,$obj)=@_;my@res;encode_error("json text or perl structure exceeds maximum nesting level (max_depth set too low?)")if (++$depth > $max_depth);my ($pre,$post)=$indent ? $self->_up_indent(): ('','');my$del=($space_before ? ' ' : '').':' .($space_after ? ' ' : '');for my$k (_sort($obj)){if (OLD_PERL){utf8::decode($k)}push@res,$self->string_to_json($k).$del .(ref$obj->{$k}? $self->object_to_json($obj->{$k}): $self->value_to_json($obj->{$k}))}--$depth;$self->_down_indent()if ($indent);return '{}' unless@res;return '{' .$pre .join(",$pre",@res).$post .'}'}sub array_to_json {my ($self,$obj)=@_;my@res;encode_error("json text or perl structure exceeds maximum nesting level (max_depth set too low?)")if (++$depth > $max_depth);my ($pre,$post)=$indent ? $self->_up_indent(): ('','');for my$v (@$obj){push@res,ref($v)? $self->object_to_json($v): $self->value_to_json($v)}--$depth;$self->_down_indent()if ($indent);return '[]' unless@res;return '[' .$pre .join(",$pre",@res).$post .']'}sub _looks_like_number {my$value=shift;if (USE_B){my$b_obj=B::svref_2object(\$value);my$flags=$b_obj->FLAGS;return 1 if$flags & (B::SVp_IOK()| B::SVp_NOK())and!($flags & B::SVp_POK());return}else {no warnings 'numeric';return if utf8::is_utf8($value);return unless length((my$dummy="")& $value);return unless 0 + $value eq $value;return 1 if$value * 0==0;return -1}}sub value_to_json {my ($self,$value)=@_;return 'null' if(!defined$value);my$type=ref($value);if (!$type){if (_looks_like_number($value)){return$value}return$self->string_to_json($value)}elsif(blessed($value)and $value->isa('JSON::PP::Boolean')){return $$value==1 ? 'true' : 'false'}else {if ((overload::StrVal($value)=~ /=(\w+)/)[0]){return$self->value_to_json("$value")}if ($type eq 'SCALAR' and defined $$value){return $$value eq '1' ? 'true' : $$value eq '0' ? 'false' : $self->{PROPS}->[P_ALLOW_UNKNOWN ]? 'null' : encode_error("cannot encode reference to scalar")}if ($self->{PROPS}->[P_ALLOW_UNKNOWN ]){return 'null'}else {if ($type eq 'SCALAR' or $type eq 'REF'){encode_error("cannot encode reference to scalar")}else {encode_error("encountered $value, but JSON can only represent references to arrays or hashes")}}}}my%esc=("\n"=>'\n',"\r"=>'\r',"\t"=>'\t',"\f"=>'\f',"\b"=>'\b',"\""=>'\"',"\\"=>'\\\\',"\'"=>'\\\'',);sub string_to_json {my ($self,$arg)=@_;$arg =~ s/([\x22\x5c\n\r\t\f\b])/$esc{$1}/g;$arg =~ s/\//\\\//g if ($escape_slash);$arg =~ s/([\x00-\x08\x0b\x0e-\x1f])/'\\u00' . unpack('H2', $1)/eg;if ($ascii){$arg=JSON_PP_encode_ascii($arg)}if ($latin1){$arg=JSON_PP_encode_latin1($arg)}if ($utf8){utf8::encode($arg)}return '"' .$arg .'"'}sub blessed_to_json {my$reftype=reftype($_[1])|| '';if ($reftype eq 'HASH'){return $_[0]->hash_to_json($_[1])}elsif ($reftype eq 'ARRAY'){return $_[0]->array_to_json($_[1])}else {return 'null'}}sub encode_error {my$error=shift;Carp::croak "$error"}sub _sort {defined$keysort ? (sort$keysort (keys %{$_[0]})): keys %{$_[0]}}sub _up_indent {my$self=shift;my$space=' ' x $indent_length;my ($pre,$post)=('','');$post="\n" .$space x $indent_count;$indent_count++;$pre="\n" .$space x $indent_count;return ($pre,$post)}sub _down_indent {$indent_count--}sub PP_encode_box {{depth=>$depth,indent_count=>$indent_count,}}}sub _encode_ascii {join('',map {$_ <= 127 ? chr($_): $_ <= 65535 ? sprintf('\u%04x',$_): sprintf('\u%x\u%x',_encode_surrogates($_))}unpack('U*',$_[0]))}sub _encode_latin1 {join('',map {$_ <= 255 ? chr($_): $_ <= 65535 ? sprintf('\u%04x',$_): sprintf('\u%x\u%x',_encode_surrogates($_))}unpack('U*',$_[0]))}sub _encode_surrogates {my$uni=$_[0]- 0x10000;return ($uni / 0x400 + 0xD800,$uni % 0x400 + 0xDC00)}sub _is_bignum {$_[0]->isa('Math::BigInt')or $_[0]->isa('Math::BigFloat')}my$max_intsize;BEGIN {my$checkint=1111;for my$d (5..64){$checkint .= 1;my$int=eval qq| $checkint |;if ($int =~ /[eE]/){$max_intsize=$d - 1;last}}}{my%escapes=(b=>"\x8",t=>"\x9",n=>"\xA",f=>"\xC",r=>"\xD",'\\'=>'\\','"'=>'"','/'=>'/',);my$text;my$at;my$ch;my$len;my$depth;my$encoding;my$is_valid_utf8;my$utf8_len;my$utf8;my$max_depth;my$max_size;my$relaxed;my$cb_object;my$cb_sk_object;my$F_HOOK;my$allow_bignum;my$singlequote;my$loose;my$allow_barekey;sub _detect_utf_encoding {my$text=shift;my@octets=unpack('C4',$text);return 'unknown' unless defined$octets[3];return ($octets[0]and $octets[1])? 'UTF-8' : (!$octets[0]and $octets[1])? 'UTF-16BE' : (!$octets[0]and!$octets[1])? 'UTF-32BE' : ($octets[2])? 'UTF-16LE' : (!$octets[2])? 'UTF-32LE' : 'unknown'}sub PP_decode_json {my ($self,$want_offset);($self,$text,$want_offset)=@_;($at,$ch,$depth)=(0,'',0);if (!defined$text or ref$text){decode_error("malformed JSON string, neither array, object, number, string or atom")}my$props=$self->{PROPS};($utf8,$relaxed,$loose,$allow_bignum,$allow_barekey,$singlequote)=@{$props}[P_UTF8,P_RELAXED,P_LOOSE .. P_ALLOW_SINGLEQUOTE];if ($utf8){$encoding=_detect_utf_encoding($text);if ($encoding ne 'UTF-8' and $encoding ne 'unknown'){require Encode;Encode::from_to($text,$encoding,'utf-8')}else {utf8::downgrade($text,1)or Carp::croak("Wide character in subroutine entry")}}else {utf8::upgrade($text);utf8::encode($text)}$len=length$text;($max_depth,$max_size,$cb_object,$cb_sk_object,$F_HOOK)=@{$self}{qw/max_depth max_size cb_object cb_sk_object F_HOOK/};if ($max_size > 1){use bytes;my$bytes=length$text;decode_error(sprintf("attempted decode of JSON text of %s bytes size, but max_size is set to %s" ,$bytes,$max_size),1)if ($bytes > $max_size)}white();decode_error("malformed JSON string, neither array, object, number, string or atom")unless defined$ch;my$result=value();if (!$props->[P_ALLOW_NONREF ]and!ref$result){decode_error('JSON text must be an object or array (but found number, string, true, false or null,' .' use allow_nonref to allow this)',1)}Carp::croak('something wrong.')if$len < $at;my$consumed=defined$ch ? $at - 1 : $at;white();return ($result,$consumed)if$want_offset;decode_error("garbage after JSON object")if defined$ch;$result}sub next_chr {return$ch=undef if($at >= $len);$ch=substr($text,$at++,1)}sub value {white();return if(!defined$ch);return object()if($ch eq '{');return array()if($ch eq '[');return string()if($ch eq '"' or ($singlequote and $ch eq "'"));return number()if($ch =~ /[0-9]/ or $ch eq '-');return word()}sub string {my$utf16;my$is_utf8;($is_valid_utf8,$utf8_len)=('',0);my$s='';if($ch eq '"' or ($singlequote and $ch eq "'")){my$boundChar=$ch;OUTER: while(defined(next_chr())){if($ch eq $boundChar){next_chr();if ($utf16){decode_error("missing low surrogate character in surrogate pair")}utf8::decode($s)if($is_utf8);return$s}elsif($ch eq '\\'){next_chr();if(exists$escapes{$ch}){$s .= $escapes{$ch}}elsif($ch eq 'u'){my$u='';for(1..4){$ch=next_chr();last OUTER if($ch !~ /[0-9a-fA-F]/);$u .= $ch}if ($u =~ /^[dD][89abAB][0-9a-fA-F]{2}/){$utf16=$u}elsif ($u =~ /^[dD][c-fC-F][0-9a-fA-F]{2}/){unless (defined$utf16){decode_error("missing high surrogate character in surrogate pair")}$is_utf8=1;$s .= JSON_PP_decode_surrogates($utf16,$u)|| next;$utf16=undef}else {if (defined$utf16){decode_error("surrogate pair expected")}if ((my$hex=hex($u))> 127){$is_utf8=1;$s .= JSON_PP_decode_unicode($u)|| next}else {$s .= chr$hex}}}else{unless ($loose){$at -= 2;decode_error('illegal backslash escape sequence in string')}$s .= $ch}}else{if (ord$ch > 127){unless($ch=is_valid_utf8($ch)){$at -= 1;decode_error("malformed UTF-8 character in JSON string")}else {$at += $utf8_len - 1}$is_utf8=1}if (!$loose){if ($ch =~ /[\x00-\x1f\x22\x5c]/){$at--;decode_error('invalid character encountered while parsing JSON string')}}$s .= $ch}}}decode_error("unexpected end of string while parsing JSON string")}sub white {while(defined$ch){if($ch eq '' or $ch =~ /\A[ \t\r\n]\z/){next_chr()}elsif($relaxed and $ch eq '/'){next_chr();if(defined$ch and $ch eq '/'){1 while(defined(next_chr())and $ch ne "\n" and $ch ne "\r")}elsif(defined$ch and $ch eq '*'){next_chr();while(1){if(defined$ch){if($ch eq '*'){if(defined(next_chr())and $ch eq '/'){next_chr();last}}else{next_chr()}}else{decode_error("Unterminated comment")}}next}else{$at--;decode_error("malformed JSON string, neither array, object, number, string or atom")}}else{if ($relaxed and $ch eq '#'){pos($text)=$at;$text =~ /\G([^\n]*(?:\r\n|\r|\n|$))/g;$at=pos($text);next_chr;next}last}}}sub array {my$a=$_[0]|| [];decode_error('json text or perl structure exceeds maximum nesting level (max_depth set too low?)')if (++$depth > $max_depth);next_chr();white();if(defined$ch and $ch eq ']'){--$depth;next_chr();return$a}else {while(defined($ch)){push @$a,value();white();if (!defined$ch){last}if($ch eq ']'){--$depth;next_chr();return$a}if($ch ne ','){last}next_chr();white();if ($relaxed and $ch eq ']'){--$depth;next_chr();return$a}}}$at-- if defined$ch and $ch ne '';decode_error(", or ] expected while parsing array")}sub object {my$o=$_[0]|| {};my$k;decode_error('json text or perl structure exceeds maximum nesting level (max_depth set too low?)')if (++$depth > $max_depth);next_chr();white();if(defined$ch and $ch eq '}'){--$depth;next_chr();if ($F_HOOK){return _json_object_hook($o)}return$o}else {while (defined$ch){$k=($allow_barekey and $ch ne '"' and $ch ne "'")? bareKey(): string();white();if(!defined$ch or $ch ne ':'){$at--;decode_error("':' expected")}next_chr();$o->{$k}=value();white();last if (!defined$ch);if($ch eq '}'){--$depth;next_chr();if ($F_HOOK){return _json_object_hook($o)}return$o}if($ch ne ','){last}next_chr();white();if ($relaxed and $ch eq '}'){--$depth;next_chr();if ($F_HOOK){return _json_object_hook($o)}return$o}}}$at-- if defined$ch and $ch ne '';decode_error(", or } expected while parsing object/hash")}sub bareKey {my$key;while($ch =~ /[^\x00-\x23\x25-\x2F\x3A-\x40\x5B-\x5E\x60\x7B-\x7F]/){$key .= $ch;next_chr()}return$key}sub word {my$word=substr($text,$at-1,4);if($word eq 'true'){$at += 3;next_chr;return$JSON::PP::true}elsif($word eq 'null'){$at += 3;next_chr;return undef}elsif($word eq 'fals'){$at += 3;if(substr($text,$at,1)eq 'e'){$at++;next_chr;return$JSON::PP::false}}$at--;decode_error("'null' expected")if ($word =~ /^n/);decode_error("'true' expected")if ($word =~ /^t/);decode_error("'false' expected")if ($word =~ /^f/);decode_error("malformed JSON string, neither array, object, number, string or atom")}sub number {my$n='';my$v;my$is_dec;my$is_exp;if($ch eq '-'){$n='-';next_chr;if (!defined$ch or $ch !~ /\d/){decode_error("malformed number (no digits after initial minus)")}}if($ch eq '0'){my$peek=substr($text,$at,1);if($peek =~ /^[0-9a-dfA-DF]/){decode_error("malformed number (leading zero must not be followed by another digit)")}$n .= $ch;next_chr}while(defined$ch and $ch =~ /\d/){$n .= $ch;next_chr}if(defined$ch and $ch eq '.'){$n .= '.';$is_dec=1;next_chr;if (!defined$ch or $ch !~ /\d/){decode_error("malformed number (no digits after decimal point)")}else {$n .= $ch}while(defined(next_chr)and $ch =~ /\d/){$n .= $ch}}if(defined$ch and ($ch eq 'e' or $ch eq 'E')){$n .= $ch;$is_exp=1;next_chr;if(defined($ch)and ($ch eq '+' or $ch eq '-')){$n .= $ch;next_chr;if (!defined$ch or $ch =~ /\D/){decode_error("malformed number (no digits after exp sign)")}$n .= $ch}elsif(defined($ch)and $ch =~ /\d/){$n .= $ch}else {decode_error("malformed number (no digits after exp sign)")}while(defined(next_chr)and $ch =~ /\d/){$n .= $ch}}$v .= $n;if ($is_dec or $is_exp){if ($allow_bignum){require Math::BigFloat;return Math::BigFloat->new($v)}}else {if (length$v > $max_intsize){if ($allow_bignum){require Math::BigInt;return Math::BigInt->new($v)}else {return "$v"}}}return$is_dec ? $v/1.0 : 0+$v}sub is_valid_utf8 {$utf8_len=$_[0]=~ /[\x00-\x7F]/ ? 1 : $_[0]=~ /[\xC2-\xDF]/ ? 2 : $_[0]=~ /[\xE0-\xEF]/ ? 3 : $_[0]=~ /[\xF0-\xF4]/ ? 4 : 0 ;return unless$utf8_len;my$is_valid_utf8=substr($text,$at - 1,$utf8_len);return ($is_valid_utf8 =~ /^(?:
+          /}}my$JSON;sub encode_json ($) {($JSON ||= __PACKAGE__->new->utf8)->encode(@_)}sub decode_json {($JSON ||= __PACKAGE__->new->utf8)->decode(@_)}sub to_json($) {Carp::croak ("JSON::PP::to_json has been renamed to encode_json.")}sub from_json($) {Carp::croak ("JSON::PP::from_json has been renamed to decode_json.")}sub new {my$class=shift;my$self={max_depth=>512,max_size=>0,indent_length=>3,};$self->{PROPS}[P_ALLOW_NONREF]=1;bless$self,$class}sub encode {return $_[0]->PP_encode_json($_[1])}sub decode {return $_[0]->PP_decode_json($_[1],0x00000000)}sub decode_prefix {return $_[0]->PP_decode_json($_[1],0x00000001)}sub pretty {my ($self,$v)=@_;my$enable=defined$v ? $v : 1;if ($enable){$self->indent(1)->space_before(1)->space_after(1)}else {$self->indent(0)->space_before(0)->space_after(0)}$self}sub max_depth {my$max=defined $_[1]? $_[1]: 0x80000000;$_[0]->{max_depth}=$max;$_[0]}sub get_max_depth {$_[0]->{max_depth}}sub max_size {my$max=defined $_[1]? $_[1]: 0;$_[0]->{max_size}=$max;$_[0]}sub get_max_size {$_[0]->{max_size}}sub boolean_values {my$self=shift;if (@_){my ($false,$true)=@_;$self->{false}=$false;$self->{true}=$true;return ($false,$true)}else {delete$self->{false};delete$self->{true};return}}sub get_boolean_values {my$self=shift;if (exists$self->{true}and exists$self->{false}){return @$self{qw/false true/}}return}sub filter_json_object {if (defined $_[1]and ref $_[1]eq 'CODE'){$_[0]->{cb_object}=$_[1]}else {delete $_[0]->{cb_object}}$_[0]->{F_HOOK}=($_[0]->{cb_object}or $_[0]->{cb_sk_object})? 1 : 0;$_[0]}sub filter_json_single_key_object {if (@_==1 or @_ > 3){Carp::croak("Usage: JSON::PP::filter_json_single_key_object(self, key, callback = undef)")}if (defined $_[2]and ref $_[2]eq 'CODE'){$_[0]->{cb_sk_object}->{$_[1]}=$_[2]}else {delete $_[0]->{cb_sk_object}->{$_[1]};delete $_[0]->{cb_sk_object}unless %{$_[0]->{cb_sk_object}|| {}}}$_[0]->{F_HOOK}=($_[0]->{cb_object}or $_[0]->{cb_sk_object})? 1 : 0;$_[0]}sub indent_length {if (!defined $_[1]or $_[1]> 15 or $_[1]< 0){Carp::carp "The acceptable range of indent_length() is 0 to 15."}else {$_[0]->{indent_length}=$_[1]}$_[0]}sub get_indent_length {$_[0]->{indent_length}}sub sort_by {$_[0]->{sort_by}=defined $_[1]? $_[1]: 1;$_[0]}sub allow_bigint {Carp::carp("allow_bigint() is obsoleted. use allow_bignum() instead.");$_[0]->allow_bignum}{my$max_depth;my$indent;my$ascii;my$latin1;my$utf8;my$space_before;my$space_after;my$canonical;my$allow_blessed;my$convert_blessed;my$indent_length;my$escape_slash;my$bignum;my$as_nonblessed;my$allow_tags;my$depth;my$indent_count;my$keysort;sub PP_encode_json {my$self=shift;my$obj=shift;$indent_count=0;$depth=0;my$props=$self->{PROPS};($ascii,$latin1,$utf8,$indent,$canonical,$space_before,$space_after,$allow_blessed,$convert_blessed,$escape_slash,$bignum,$as_nonblessed,$allow_tags)=@{$props}[P_ASCII .. P_SPACE_AFTER,P_ALLOW_BLESSED,P_CONVERT_BLESSED,P_ESCAPE_SLASH,P_ALLOW_BIGNUM,P_AS_NONBLESSED,P_ALLOW_TAGS];($max_depth,$indent_length)=@{$self}{qw/max_depth indent_length/};$keysort=$canonical ? sub {$a cmp $b}: undef;if ($self->{sort_by}){$keysort=ref($self->{sort_by})eq 'CODE' ? $self->{sort_by}: $self->{sort_by}=~ /\D+/ ? $self->{sort_by}: sub {$a cmp $b}}encode_error("hash- or arrayref expected (not a simple scalar, use allow_nonref to allow this)")if(!ref$obj and!$props->[P_ALLOW_NONREF ]);my$str=$self->object_to_json($obj);$str .= "\n" if ($indent);unless ($ascii or $latin1 or $utf8){utf8::upgrade($str)}if ($props->[P_SHRINK ]){utf8::downgrade($str,1)}return$str}sub object_to_json {my ($self,$obj)=@_;my$type=ref($obj);if($type eq 'HASH'){return$self->hash_to_json($obj)}elsif($type eq 'ARRAY'){return$self->array_to_json($obj)}elsif ($type){if (blessed($obj)){return$self->value_to_json($obj)if ($obj->isa('JSON::PP::Boolean'));if ($allow_tags and $obj->can('FREEZE')){my$obj_class=ref$obj || $obj;$obj=bless$obj,$obj_class;my@results=$obj->FREEZE('JSON');if (@results and ref$results[0]){if (refaddr($obj)eq refaddr($results[0])){encode_error(sprintf("%s::FREEZE method returned same object as was passed instead of a new one",ref$obj))}}return '("'.$obj_class.'")['.join(',',@results).']'}if ($convert_blessed and $obj->can('TO_JSON')){my$result=$obj->TO_JSON();if (defined$result and ref($result)){if (refaddr($obj)eq refaddr($result)){encode_error(sprintf("%s::TO_JSON method returned same object as was passed instead of a new one",ref$obj))}}return$self->object_to_json($result)}return "$obj" if ($bignum and _is_bignum($obj));if ($allow_blessed){return$self->blessed_to_json($obj)if ($as_nonblessed);return 'null'}encode_error(sprintf("encountered object '%s', but neither allow_blessed, convert_blessed nor allow_tags settings are enabled (or TO_JSON/FREEZE method missing)",$obj))}else {return$self->value_to_json($obj)}}else{return$self->value_to_json($obj)}}sub hash_to_json {my ($self,$obj)=@_;my@res;encode_error("json text or perl structure exceeds maximum nesting level (max_depth set too low?)")if (++$depth > $max_depth);my ($pre,$post)=$indent ? $self->_up_indent(): ('','');my$del=($space_before ? ' ' : '').':' .($space_after ? ' ' : '');for my$k (_sort($obj)){if (OLD_PERL){utf8::decode($k)}push@res,$self->string_to_json($k).$del .(ref$obj->{$k}? $self->object_to_json($obj->{$k}): $self->value_to_json($obj->{$k}))}--$depth;$self->_down_indent()if ($indent);return '{}' unless@res;return '{' .$pre .join(",$pre",@res).$post .'}'}sub array_to_json {my ($self,$obj)=@_;my@res;encode_error("json text or perl structure exceeds maximum nesting level (max_depth set too low?)")if (++$depth > $max_depth);my ($pre,$post)=$indent ? $self->_up_indent(): ('','');for my$v (@$obj){push@res,ref($v)? $self->object_to_json($v): $self->value_to_json($v)}--$depth;$self->_down_indent()if ($indent);return '[]' unless@res;return '[' .$pre .join(",$pre",@res).$post .']'}sub _looks_like_number {my$value=shift;if (USE_B){my$b_obj=B::svref_2object(\$value);my$flags=$b_obj->FLAGS;return 1 if$flags & (B::SVp_IOK()| B::SVp_NOK())and!($flags & B::SVp_POK());return}else {no warnings 'numeric';return if utf8::is_utf8($value);return unless length((my$dummy="")& $value);return unless 0 + $value eq $value;return 1 if$value * 0==0;return -1}}sub value_to_json {my ($self,$value)=@_;return 'null' if(!defined$value);my$type=ref($value);if (!$type){if (_looks_like_number($value)){return$value}return$self->string_to_json($value)}elsif(blessed($value)and $value->isa('JSON::PP::Boolean')){return $$value==1 ? 'true' : 'false'}else {if ((overload::StrVal($value)=~ /=(\w+)/)[0]){return$self->value_to_json("$value")}if ($type eq 'SCALAR' and defined $$value){return $$value eq '1' ? 'true' : $$value eq '0' ? 'false' : $self->{PROPS}->[P_ALLOW_UNKNOWN ]? 'null' : encode_error("cannot encode reference to scalar")}if ($self->{PROPS}->[P_ALLOW_UNKNOWN ]){return 'null'}else {if ($type eq 'SCALAR' or $type eq 'REF'){encode_error("cannot encode reference to scalar")}else {encode_error("encountered $value, but JSON can only represent references to arrays or hashes")}}}}my%esc=("\n"=>'\n',"\r"=>'\r',"\t"=>'\t',"\f"=>'\f',"\b"=>'\b',"\""=>'\"',"\\"=>'\\\\',"\'"=>'\\\'',);sub string_to_json {my ($self,$arg)=@_;$arg =~ s/([\x22\x5c\n\r\t\f\b])/$esc{$1}/g;$arg =~ s/\//\\\//g if ($escape_slash);$arg =~ s/([\x00-\x08\x0b\x0e-\x1f])/'\\u00' . unpack('H2', $1)/eg;if ($ascii){$arg=JSON_PP_encode_ascii($arg)}if ($latin1){$arg=JSON_PP_encode_latin1($arg)}if ($utf8){utf8::encode($arg)}return '"' .$arg .'"'}sub blessed_to_json {my$reftype=reftype($_[1])|| '';if ($reftype eq 'HASH'){return $_[0]->hash_to_json($_[1])}elsif ($reftype eq 'ARRAY'){return $_[0]->array_to_json($_[1])}else {return 'null'}}sub encode_error {my$error=shift;Carp::croak "$error"}sub _sort {defined$keysort ? (sort$keysort (keys %{$_[0]})): keys %{$_[0]}}sub _up_indent {my$self=shift;my$space=' ' x $indent_length;my ($pre,$post)=('','');$post="\n" .$space x $indent_count;$indent_count++;$pre="\n" .$space x $indent_count;return ($pre,$post)}sub _down_indent {$indent_count--}sub PP_encode_box {{depth=>$depth,indent_count=>$indent_count,}}}sub _encode_ascii {join('',map {$_ <= 127 ? chr($_): $_ <= 65535 ? sprintf('\u%04x',$_): sprintf('\u%x\u%x',_encode_surrogates($_))}unpack('U*',$_[0]))}sub _encode_latin1 {join('',map {$_ <= 255 ? chr($_): $_ <= 65535 ? sprintf('\u%04x',$_): sprintf('\u%x\u%x',_encode_surrogates($_))}unpack('U*',$_[0]))}sub _encode_surrogates {my$uni=$_[0]- 0x10000;return ($uni / 0x400 + 0xD800,$uni % 0x400 + 0xDC00)}sub _is_bignum {$_[0]->isa('Math::BigInt')or $_[0]->isa('Math::BigFloat')}my$max_intsize;BEGIN {my$checkint=1111;for my$d (5..64){$checkint .= 1;my$int=eval qq| $checkint |;if ($int =~ /[eE]/){$max_intsize=$d - 1;last}}}{my%escapes=(b=>"\x8",t=>"\x9",n=>"\xA",f=>"\xC",r=>"\xD",'\\'=>'\\','"'=>'"','/'=>'/',);my$text;my$at;my$ch;my$len;my$depth;my$encoding;my$is_valid_utf8;my$utf8_len;my$utf8;my$max_depth;my$max_size;my$relaxed;my$cb_object;my$cb_sk_object;my$F_HOOK;my$allow_bignum;my$singlequote;my$loose;my$allow_barekey;my$allow_tags;my$alt_true;my$alt_false;sub _detect_utf_encoding {my$text=shift;my@octets=unpack('C4',$text);return 'unknown' unless defined$octets[3];return ($octets[0]and $octets[1])? 'UTF-8' : (!$octets[0]and $octets[1])? 'UTF-16BE' : (!$octets[0]and!$octets[1])? 'UTF-32BE' : ($octets[2])? 'UTF-16LE' : (!$octets[2])? 'UTF-32LE' : 'unknown'}sub PP_decode_json {my ($self,$want_offset);($self,$text,$want_offset)=@_;($at,$ch,$depth)=(0,'',0);if (!defined$text or ref$text){decode_error("malformed JSON string, neither array, object, number, string or atom")}my$props=$self->{PROPS};($utf8,$relaxed,$loose,$allow_bignum,$allow_barekey,$singlequote,$allow_tags)=@{$props}[P_UTF8,P_RELAXED,P_LOOSE .. P_ALLOW_SINGLEQUOTE,P_ALLOW_TAGS];($alt_true,$alt_false)=@$self{qw/true false/};if ($utf8){$encoding=_detect_utf_encoding($text);if ($encoding ne 'UTF-8' and $encoding ne 'unknown'){require Encode;Encode::from_to($text,$encoding,'utf-8')}else {utf8::downgrade($text,1)or Carp::croak("Wide character in subroutine entry")}}else {utf8::upgrade($text);utf8::encode($text)}$len=length$text;($max_depth,$max_size,$cb_object,$cb_sk_object,$F_HOOK)=@{$self}{qw/max_depth max_size cb_object cb_sk_object F_HOOK/};if ($max_size > 1){use bytes;my$bytes=length$text;decode_error(sprintf("attempted decode of JSON text of %s bytes size, but max_size is set to %s" ,$bytes,$max_size),1)if ($bytes > $max_size)}white();decode_error("malformed JSON string, neither array, object, number, string or atom")unless defined$ch;my$result=value();if (!$props->[P_ALLOW_NONREF ]and!ref$result){decode_error('JSON text must be an object or array (but found number, string, true, false or null,' .' use allow_nonref to allow this)',1)}Carp::croak('something wrong.')if$len < $at;my$consumed=defined$ch ? $at - 1 : $at;white();return ($result,$consumed)if$want_offset;decode_error("garbage after JSON object")if defined$ch;$result}sub next_chr {return$ch=undef if($at >= $len);$ch=substr($text,$at++,1)}sub value {white();return if(!defined$ch);return object()if($ch eq '{');return array()if($ch eq '[');return tag()if($ch eq '(');return string()if($ch eq '"' or ($singlequote and $ch eq "'"));return number()if($ch =~ /[0-9]/ or $ch eq '-');return word()}sub string {my$utf16;my$is_utf8;($is_valid_utf8,$utf8_len)=('',0);my$s='';if($ch eq '"' or ($singlequote and $ch eq "'")){my$boundChar=$ch;OUTER: while(defined(next_chr())){if($ch eq $boundChar){next_chr();if ($utf16){decode_error("missing low surrogate character in surrogate pair")}utf8::decode($s)if($is_utf8);return$s}elsif($ch eq '\\'){next_chr();if(exists$escapes{$ch}){$s .= $escapes{$ch}}elsif($ch eq 'u'){my$u='';for(1..4){$ch=next_chr();last OUTER if($ch !~ /[0-9a-fA-F]/);$u .= $ch}if ($u =~ /^[dD][89abAB][0-9a-fA-F]{2}/){$utf16=$u}elsif ($u =~ /^[dD][c-fC-F][0-9a-fA-F]{2}/){unless (defined$utf16){decode_error("missing high surrogate character in surrogate pair")}$is_utf8=1;$s .= JSON_PP_decode_surrogates($utf16,$u)|| next;$utf16=undef}else {if (defined$utf16){decode_error("surrogate pair expected")}if ((my$hex=hex($u))> 127){$is_utf8=1;$s .= JSON_PP_decode_unicode($u)|| next}else {$s .= chr$hex}}}else{unless ($loose){$at -= 2;decode_error('illegal backslash escape sequence in string')}$s .= $ch}}else{if (ord$ch > 127){unless($ch=is_valid_utf8($ch)){$at -= 1;decode_error("malformed UTF-8 character in JSON string")}else {$at += $utf8_len - 1}$is_utf8=1}if (!$loose){if ($ch =~ /[\x00-\x1f\x22\x5c]/){if (!$relaxed or $ch ne "\t"){$at--;decode_error('invalid character encountered while parsing JSON string')}}}$s .= $ch}}}decode_error("unexpected end of string while parsing JSON string")}sub white {while(defined$ch){if($ch eq '' or $ch =~ /\A[ \t\r\n]\z/){next_chr()}elsif($relaxed and $ch eq '/'){next_chr();if(defined$ch and $ch eq '/'){1 while(defined(next_chr())and $ch ne "\n" and $ch ne "\r")}elsif(defined$ch and $ch eq '*'){next_chr();while(1){if(defined$ch){if($ch eq '*'){if(defined(next_chr())and $ch eq '/'){next_chr();last}}else{next_chr()}}else{decode_error("Unterminated comment")}}next}else{$at--;decode_error("malformed JSON string, neither array, object, number, string or atom")}}else{if ($relaxed and $ch eq '#'){pos($text)=$at;$text =~ /\G([^\n]*(?:\r\n|\r|\n|$))/g;$at=pos($text);next_chr;next}last}}}sub array {my$a=$_[0]|| [];decode_error('json text or perl structure exceeds maximum nesting level (max_depth set too low?)')if (++$depth > $max_depth);next_chr();white();if(defined$ch and $ch eq ']'){--$depth;next_chr();return$a}else {while(defined($ch)){push @$a,value();white();if (!defined$ch){last}if($ch eq ']'){--$depth;next_chr();return$a}if($ch ne ','){last}next_chr();white();if ($relaxed and $ch eq ']'){--$depth;next_chr();return$a}}}$at-- if defined$ch and $ch ne '';decode_error(", or ] expected while parsing array")}sub tag {decode_error('malformed JSON string, neither array, object, number, string or atom')unless$allow_tags;next_chr();white();my$tag=value();return unless defined$tag;decode_error('malformed JSON string, (tag) must be a string')if ref$tag;white();if (!defined$ch or $ch ne ')'){decode_error(') expected after tag')}next_chr();white();my$val=value();return unless defined$val;decode_error('malformed JSON string, tag value must be an array')unless ref$val eq 'ARRAY';if (!eval {$tag->can('THAW')}){decode_error('cannot decode perl-object (package does not exist)')if $@;decode_error('cannot decode perl-object (package does not have a THAW method)')}$tag->THAW('JSON',@$val)}sub object {my$o=$_[0]|| {};my$k;decode_error('json text or perl structure exceeds maximum nesting level (max_depth set too low?)')if (++$depth > $max_depth);next_chr();white();if(defined$ch and $ch eq '}'){--$depth;next_chr();if ($F_HOOK){return _json_object_hook($o)}return$o}else {while (defined$ch){$k=($allow_barekey and $ch ne '"' and $ch ne "'")? bareKey(): string();white();if(!defined$ch or $ch ne ':'){$at--;decode_error("':' expected")}next_chr();$o->{$k}=value();white();last if (!defined$ch);if($ch eq '}'){--$depth;next_chr();if ($F_HOOK){return _json_object_hook($o)}return$o}if($ch ne ','){last}next_chr();white();if ($relaxed and $ch eq '}'){--$depth;next_chr();if ($F_HOOK){return _json_object_hook($o)}return$o}}}$at-- if defined$ch and $ch ne '';decode_error(", or } expected while parsing object/hash")}sub bareKey {my$key;while($ch =~ /[^\x00-\x23\x25-\x2F\x3A-\x40\x5B-\x5E\x60\x7B-\x7F]/){$key .= $ch;next_chr()}return$key}sub word {my$word=substr($text,$at-1,4);if($word eq 'true'){$at += 3;next_chr;return defined$alt_true ? $alt_true : $JSON::PP::true}elsif($word eq 'null'){$at += 3;next_chr;return undef}elsif($word eq 'fals'){$at += 3;if(substr($text,$at,1)eq 'e'){$at++;next_chr;return defined$alt_false ? $alt_false : $JSON::PP::false}}$at--;decode_error("'null' expected")if ($word =~ /^n/);decode_error("'true' expected")if ($word =~ /^t/);decode_error("'false' expected")if ($word =~ /^f/);decode_error("malformed JSON string, neither array, object, number, string or atom")}sub number {my$n='';my$v;my$is_dec;my$is_exp;if($ch eq '-'){$n='-';next_chr;if (!defined$ch or $ch !~ /\d/){decode_error("malformed number (no digits after initial minus)")}}if($ch eq '0'){my$peek=substr($text,$at,1);if($peek =~ /^[0-9a-dfA-DF]/){decode_error("malformed number (leading zero must not be followed by another digit)")}$n .= $ch;next_chr}while(defined$ch and $ch =~ /\d/){$n .= $ch;next_chr}if(defined$ch and $ch eq '.'){$n .= '.';$is_dec=1;next_chr;if (!defined$ch or $ch !~ /\d/){decode_error("malformed number (no digits after decimal point)")}else {$n .= $ch}while(defined(next_chr)and $ch =~ /\d/){$n .= $ch}}if(defined$ch and ($ch eq 'e' or $ch eq 'E')){$n .= $ch;$is_exp=1;next_chr;if(defined($ch)and ($ch eq '+' or $ch eq '-')){$n .= $ch;next_chr;if (!defined$ch or $ch =~ /\D/){decode_error("malformed number (no digits after exp sign)")}$n .= $ch}elsif(defined($ch)and $ch =~ /\d/){$n .= $ch}else {decode_error("malformed number (no digits after exp sign)")}while(defined(next_chr)and $ch =~ /\d/){$n .= $ch}}$v .= $n;if ($is_dec or $is_exp){if ($allow_bignum){require Math::BigFloat;return Math::BigFloat->new($v)}}else {if (length$v > $max_intsize){if ($allow_bignum){require Math::BigInt;return Math::BigInt->new($v)}else {return "$v"}}}return$is_dec ? $v/1.0 : 0+$v}sub is_valid_utf8 {$utf8_len=$_[0]=~ /[\x00-\x7F]/ ? 1 : $_[0]=~ /[\xC2-\xDF]/ ? 2 : $_[0]=~ /[\xE0-\xEF]/ ? 3 : $_[0]=~ /[\xF0-\xF4]/ ? 4 : 0 ;return unless$utf8_len;my$is_valid_utf8=substr($text,$at - 1,$utf8_len);return ($is_valid_utf8 =~ /^(?:
                [\x00-\x7F]
               |[\xC2-\xDF][\x80-\xBF]
               |[\xE0][\xA0-\xBF][\x80-\xBF]
@@ -9042,7 +9155,7 @@ $fatpacked{"JSON/PP.pm"} = '#line '.(1+__LINE__).' "'.__FILE__."\"\n".<<'JSON_PP
               |[\xF0][\x90-\xBF][\x80-\xBF][\x80-\xBF]
               |[\xF1-\xF3][\x80-\xBF][\x80-\xBF][\x80-\xBF]
               |[\xF4][\x80-\x8F][\x80-\xBF][\x80-\xBF]
-          )$/x)? $is_valid_utf8 : ''}sub decode_error {my$error=shift;my$no_rep=shift;my$str=defined$text ? substr($text,$at): '';my$mess='';my$type='U*';if (OLD_PERL){my$type=$] < 5.006 ? 'C*' : utf8::is_utf8($str)? 'U*' : 'C*' }for my$c (unpack($type,$str)){$mess .= $c==0x07 ? '\a' : $c==0x09 ? '\t' : $c==0x0a ? '\n' : $c==0x0d ? '\r' : $c==0x0c ? '\f' : $c < 0x20 ? sprintf('\x{%x}',$c): $c==0x5c ? '\\\\' : $c < 0x80 ? chr($c): sprintf('\x{%x}',$c);if (length$mess >= 20){$mess .= '...';last}}unless (length$mess){$mess='(end of string)'}Carp::croak ($no_rep ? "$error" : "$error, at character offset $at (before \"$mess\")")}sub _json_object_hook {my$o=$_[0];my@ks=keys %{$o};if ($cb_sk_object and @ks==1 and exists$cb_sk_object->{$ks[0]}and ref$cb_sk_object->{$ks[0]}){my@val=$cb_sk_object->{$ks[0]}->($o->{$ks[0]});if (@val==1){return$val[0]}}my@val=$cb_object->($o)if ($cb_object);if (@val==0 or @val > 1){return$o}else {return$val[0]}}sub PP_decode_box {{text=>$text,at=>$at,ch=>$ch,len=>$len,depth=>$depth,encoding=>$encoding,is_valid_utf8=>$is_valid_utf8,}}}sub _decode_surrogates {my$uni=0x10000 + (hex($_[0])- 0xD800)* 0x400 + (hex($_[1])- 0xDC00);my$un=pack('U*',$uni);utf8::encode($un);return$un}sub _decode_unicode {my$un=pack('U',hex shift);utf8::encode($un);return$un}BEGIN {unless (defined&utf8::is_utf8){require Encode;*utf8::is_utf8=*Encode::is_utf8}if (!OLD_PERL){*JSON::PP::JSON_PP_encode_ascii=\&_encode_ascii;*JSON::PP::JSON_PP_encode_latin1=\&_encode_latin1;*JSON::PP::JSON_PP_decode_surrogates=\&_decode_surrogates;*JSON::PP::JSON_PP_decode_unicode=\&_decode_unicode;if ($] < 5.008003){package JSON::PP;require subs;subs->import('join');eval q|
+          )$/x)? $is_valid_utf8 : ''}sub decode_error {my$error=shift;my$no_rep=shift;my$str=defined$text ? substr($text,$at): '';my$mess='';my$type='U*';if (OLD_PERL){my$type=$] < 5.006 ? 'C*' : utf8::is_utf8($str)? 'U*' : 'C*' }for my$c (unpack($type,$str)){$mess .= $c==0x07 ? '\a' : $c==0x09 ? '\t' : $c==0x0a ? '\n' : $c==0x0d ? '\r' : $c==0x0c ? '\f' : $c < 0x20 ? sprintf('\x{%x}',$c): $c==0x5c ? '\\\\' : $c < 0x80 ? chr($c): sprintf('\x{%x}',$c);if (length$mess >= 20){$mess .= '...';last}}unless (length$mess){$mess='(end of string)'}Carp::croak ($no_rep ? "$error" : "$error, at character offset $at (before \"$mess\")")}sub _json_object_hook {my$o=$_[0];my@ks=keys %{$o};if ($cb_sk_object and @ks==1 and exists$cb_sk_object->{$ks[0]}and ref$cb_sk_object->{$ks[0]}){my@val=$cb_sk_object->{$ks[0]}->($o->{$ks[0]});if (@val==0){return$o}elsif (@val==1){return$val[0]}else {Carp::croak("filter_json_single_key_object callbacks must not return more than one scalar")}}my@val=$cb_object->($o)if ($cb_object);if (@val==0){return$o}elsif (@val==1){return$val[0]}else {Carp::croak("filter_json_object callbacks must not return more than one scalar")}}sub PP_decode_box {{text=>$text,at=>$at,ch=>$ch,len=>$len,depth=>$depth,encoding=>$encoding,is_valid_utf8=>$is_valid_utf8,}}}sub _decode_surrogates {my$uni=0x10000 + (hex($_[0])- 0xD800)* 0x400 + (hex($_[1])- 0xDC00);my$un=pack('U*',$uni);utf8::encode($un);return$un}sub _decode_unicode {my$un=pack('U',hex shift);utf8::encode($un);return$un}BEGIN {unless (defined&utf8::is_utf8){require Encode;*utf8::is_utf8=*Encode::is_utf8}if (!OLD_PERL){*JSON::PP::JSON_PP_encode_ascii=\&_encode_ascii;*JSON::PP::JSON_PP_encode_latin1=\&_encode_latin1;*JSON::PP::JSON_PP_decode_surrogates=\&_decode_surrogates;*JSON::PP::JSON_PP_decode_unicode=\&_decode_unicode;if ($] < 5.008003){package JSON::PP;require subs;subs->import('join');eval q|
                   sub join {
                       return '' if (@_ < 2);
                       my $j   = shift;
@@ -9059,11 +9172,11 @@ $fatpacked{"JSON/PP.pm"} = '#line '.(1+__LINE__).' "'.__FILE__."\"\n".<<'JSON_PP
               }
               $_[0]->{_incr_parser}->{incr_text};
           }
-      } if ($] >= 5.006)}BEGIN {eval 'require Scalar::Util';unless($@){*JSON::PP::blessed=\&Scalar::Util::blessed;*JSON::PP::reftype=\&Scalar::Util::reftype;*JSON::PP::refaddr=\&Scalar::Util::refaddr}else{eval 'sub UNIVERSAL::a_sub_not_likely_to_be_here { ref($_[0]) }';*JSON::PP::blessed=sub {local($@,$SIG{__DIE__},$SIG{__WARN__});ref($_[0])? eval {$_[0]->a_sub_not_likely_to_be_here}: undef};require B;my%tmap=qw(B::NULL SCALAR B::HV HASH B::AV ARRAY B::CV CODE B::IO IO B::GV GLOB B::REGEXP REGEXP);*JSON::PP::reftype=sub {my$r=shift;return undef unless length(ref($r));my$t=ref(B::svref_2object($r));return exists$tmap{$t}? $tmap{$t}: length(ref($$r))? 'REF' : 'SCALAR'};*JSON::PP::refaddr=sub {return undef unless length(ref($_[0]));my$addr;if(defined(my$pkg=blessed($_[0]))){$addr .= bless $_[0],'Scalar::Util::Fake';bless $_[0],$pkg}else {$addr .= $_[0]}$addr =~ /0x(\w+)/;local $^W;hex($1)}}}$JSON::PP::true=do {bless \(my$dummy=1),"JSON::PP::Boolean"};$JSON::PP::false=do {bless \(my$dummy=0),"JSON::PP::Boolean"};sub is_bool {blessed $_[0]and $_[0]->isa("JSON::PP::Boolean")}sub true {$JSON::PP::true}sub false {$JSON::PP::false}sub null {undef}package JSON::PP::IncrParser;use strict;use constant INCR_M_WS=>0;use constant INCR_M_STR=>1;use constant INCR_M_BS=>2;use constant INCR_M_JSON=>3;use constant INCR_M_C0=>4;use constant INCR_M_C1=>5;$JSON::PP::IncrParser::VERSION='1.01';sub new {my ($class)=@_;bless {incr_nest=>0,incr_text=>undef,incr_pos=>0,incr_mode=>0,},$class}sub incr_parse {my ($self,$coder,$text)=@_;$self->{incr_text}='' unless (defined$self->{incr_text});if (defined$text){if (utf8::is_utf8($text)and!utf8::is_utf8($self->{incr_text})){utf8::upgrade($self->{incr_text});utf8::decode($self->{incr_text})}$self->{incr_text}.= $text}if (defined wantarray){my$max_size=$coder->get_max_size;my$p=$self->{incr_pos};my@ret;{do {unless ($self->{incr_nest}<= 0 and $self->{incr_mode}==INCR_M_JSON){$self->_incr_parse($coder);if ($max_size and $self->{incr_pos}> $max_size){Carp::croak("attempted decode of JSON text of $self->{incr_pos} bytes size, but max_size is set to $max_size")}unless ($self->{incr_nest}<= 0 and $self->{incr_mode}==INCR_M_JSON){if ($self->{incr_mode}==INCR_M_WS and $self->{incr_pos}){$self->{incr_pos}=0;$self->{incr_text}=''}last}}my ($obj,$offset)=$coder->PP_decode_json($self->{incr_text},0x00000001);push@ret,$obj;use bytes;$self->{incr_text}=substr($self->{incr_text},$offset || 0);$self->{incr_pos}=0;$self->{incr_nest}=0;$self->{incr_mode}=0;last unless wantarray}while (wantarray)}if (wantarray){return@ret}else {return$ret[0]? $ret[0]: undef}}}sub _incr_parse {my ($self,$coder)=@_;my$text=$self->{incr_text};my$len=length$text;my$p=$self->{incr_pos};INCR_PARSE: while ($len > $p){my$s=substr($text,$p,1);last INCR_PARSE unless defined$s;my$mode=$self->{incr_mode};if ($mode==INCR_M_WS){while ($len > $p){$s=substr($text,$p,1);last INCR_PARSE unless defined$s;if (ord($s)> 0x20){if ($s eq '#'){$self->{incr_mode}=INCR_M_C0;redo INCR_PARSE}else {$self->{incr_mode}=INCR_M_JSON;redo INCR_PARSE}}$p++}}elsif ($mode==INCR_M_BS){$p++;$self->{incr_mode}=INCR_M_STR;redo INCR_PARSE}elsif ($mode==INCR_M_C0 or $mode==INCR_M_C1){while ($len > $p){$s=substr($text,$p,1);last INCR_PARSE unless defined$s;if ($s eq "\n"){$self->{incr_mode}=$self->{incr_mode}==INCR_M_C0 ? INCR_M_WS : INCR_M_JSON;last}$p++}next}elsif ($mode==INCR_M_STR){while ($len > $p){$s=substr($text,$p,1);last INCR_PARSE unless defined$s;if ($s eq '"'){$p++;$self->{incr_mode}=INCR_M_JSON;last INCR_PARSE unless$self->{incr_nest};redo INCR_PARSE}elsif ($s eq '\\'){$p++;if (!defined substr($text,$p,1)){$self->{incr_mode}=INCR_M_BS;last INCR_PARSE}}$p++}}elsif ($mode==INCR_M_JSON){while ($len > $p){$s=substr($text,$p++,1);if ($s eq "\x00"){$p--;last INCR_PARSE}elsif ($s eq "\x09" or $s eq "\x0a" or $s eq "\x0d" or $s eq "\x20"){if (!$self->{incr_nest}){$p--;last INCR_PARSE}next}elsif ($s eq '"'){$self->{incr_mode}=INCR_M_STR;redo INCR_PARSE}elsif ($s eq '[' or $s eq '{'){if (++$self->{incr_nest}> $coder->get_max_depth){Carp::croak('json text or perl structure exceeds maximum nesting level (max_depth set too low?)')}next}elsif ($s eq ']' or $s eq '}'){if (--$self->{incr_nest}<= 0){last INCR_PARSE}}elsif ($s eq '#'){$self->{incr_mode}=INCR_M_C1;redo INCR_PARSE}}}}$self->{incr_pos}=$p;$self->{incr_parsing}=$p ? 1 : 0}sub incr_text {if ($_[0]->{incr_pos}){Carp::croak("incr_text cannot be called when the incremental parser already started parsing")}$_[0]->{incr_text}}sub incr_skip {my$self=shift;$self->{incr_text}=substr($self->{incr_text},$self->{incr_pos});$self->{incr_pos}=0;$self->{incr_mode}=0;$self->{incr_nest}=0}sub incr_reset {my$self=shift;$self->{incr_text}=undef;$self->{incr_pos}=0;$self->{incr_mode}=0;$self->{incr_nest}=0}1;
+      } if ($] >= 5.006)}BEGIN {eval 'require Scalar::Util';unless($@){*JSON::PP::blessed=\&Scalar::Util::blessed;*JSON::PP::reftype=\&Scalar::Util::reftype;*JSON::PP::refaddr=\&Scalar::Util::refaddr}else{eval 'sub UNIVERSAL::a_sub_not_likely_to_be_here { ref($_[0]) }';*JSON::PP::blessed=sub {local($@,$SIG{__DIE__},$SIG{__WARN__});ref($_[0])? eval {$_[0]->a_sub_not_likely_to_be_here}: undef};require B;my%tmap=qw(B::NULL SCALAR B::HV HASH B::AV ARRAY B::CV CODE B::IO IO B::GV GLOB B::REGEXP REGEXP);*JSON::PP::reftype=sub {my$r=shift;return undef unless length(ref($r));my$t=ref(B::svref_2object($r));return exists$tmap{$t}? $tmap{$t}: length(ref($$r))? 'REF' : 'SCALAR'};*JSON::PP::refaddr=sub {return undef unless length(ref($_[0]));my$addr;if(defined(my$pkg=blessed($_[0]))){$addr .= bless $_[0],'Scalar::Util::Fake';bless $_[0],$pkg}else {$addr .= $_[0]}$addr =~ /0x(\w+)/;local $^W;hex($1)}}}$JSON::PP::true=do {bless \(my$dummy=1),"JSON::PP::Boolean"};$JSON::PP::false=do {bless \(my$dummy=0),"JSON::PP::Boolean"};sub is_bool {blessed $_[0]and ($_[0]->isa("JSON::PP::Boolean")or $_[0]->isa("Types::Serialiser::BooleanBase")or $_[0]->isa("JSON::XS::Boolean"))}sub true {$JSON::PP::true}sub false {$JSON::PP::false}sub null {undef}package JSON::PP::IncrParser;use strict;use constant INCR_M_WS=>0;use constant INCR_M_STR=>1;use constant INCR_M_BS=>2;use constant INCR_M_JSON=>3;use constant INCR_M_C0=>4;use constant INCR_M_C1=>5;use constant INCR_M_TFN=>6;use constant INCR_M_NUM=>7;$JSON::PP::IncrParser::VERSION='1.01';sub new {my ($class)=@_;bless {incr_nest=>0,incr_text=>undef,incr_pos=>0,incr_mode=>0,},$class}sub incr_parse {my ($self,$coder,$text)=@_;$self->{incr_text}='' unless (defined$self->{incr_text});if (defined$text){if (utf8::is_utf8($text)and!utf8::is_utf8($self->{incr_text})){utf8::upgrade($self->{incr_text});utf8::decode($self->{incr_text})}$self->{incr_text}.= $text}if (defined wantarray){my$max_size=$coder->get_max_size;my$p=$self->{incr_pos};my@ret;{do {unless ($self->{incr_nest}<= 0 and $self->{incr_mode}==INCR_M_JSON){$self->_incr_parse($coder);if ($max_size and $self->{incr_pos}> $max_size){Carp::croak("attempted decode of JSON text of $self->{incr_pos} bytes size, but max_size is set to $max_size")}unless ($self->{incr_nest}<= 0 and $self->{incr_mode}==INCR_M_JSON){if ($self->{incr_mode}==INCR_M_WS and $self->{incr_pos}){$self->{incr_pos}=0;$self->{incr_text}=''}last}}my ($obj,$offset)=$coder->PP_decode_json($self->{incr_text},0x00000001);push@ret,$obj;use bytes;$self->{incr_text}=substr($self->{incr_text},$offset || 0);$self->{incr_pos}=0;$self->{incr_nest}=0;$self->{incr_mode}=0;last unless wantarray}while (wantarray)}if (wantarray){return@ret}else {return defined$ret[0]? $ret[0]: undef}}}sub _incr_parse {my ($self,$coder)=@_;my$text=$self->{incr_text};my$len=length$text;my$p=$self->{incr_pos};INCR_PARSE: while ($len > $p){my$s=substr($text,$p,1);last INCR_PARSE unless defined$s;my$mode=$self->{incr_mode};if ($mode==INCR_M_WS){while ($len > $p){$s=substr($text,$p,1);last INCR_PARSE unless defined$s;if (ord($s)> 0x20){if ($s eq '#'){$self->{incr_mode}=INCR_M_C0;redo INCR_PARSE}else {$self->{incr_mode}=INCR_M_JSON;redo INCR_PARSE}}$p++}}elsif ($mode==INCR_M_BS){$p++;$self->{incr_mode}=INCR_M_STR;redo INCR_PARSE}elsif ($mode==INCR_M_C0 or $mode==INCR_M_C1){while ($len > $p){$s=substr($text,$p,1);last INCR_PARSE unless defined$s;if ($s eq "\n"){$self->{incr_mode}=$self->{incr_mode}==INCR_M_C0 ? INCR_M_WS : INCR_M_JSON;last}$p++}next}elsif ($mode==INCR_M_TFN){while ($len > $p){$s=substr($text,$p++,1);next if defined$s and $s =~ /[rueals]/;last}$p--;$self->{incr_mode}=INCR_M_JSON;last INCR_PARSE unless$self->{incr_nest};redo INCR_PARSE}elsif ($mode==INCR_M_NUM){while ($len > $p){$s=substr($text,$p++,1);next if defined$s and $s =~ /[0-9eE.+\-]/;last}$p--;$self->{incr_mode}=INCR_M_JSON;last INCR_PARSE unless$self->{incr_nest};redo INCR_PARSE}elsif ($mode==INCR_M_STR){while ($len > $p){$s=substr($text,$p,1);last INCR_PARSE unless defined$s;if ($s eq '"'){$p++;$self->{incr_mode}=INCR_M_JSON;last INCR_PARSE unless$self->{incr_nest};redo INCR_PARSE}elsif ($s eq '\\'){$p++;if (!defined substr($text,$p,1)){$self->{incr_mode}=INCR_M_BS;last INCR_PARSE}}$p++}}elsif ($mode==INCR_M_JSON){while ($len > $p){$s=substr($text,$p++,1);if ($s eq "\x00"){$p--;last INCR_PARSE}elsif ($s eq "\x09" or $s eq "\x0a" or $s eq "\x0d" or $s eq "\x20"){if (!$self->{incr_nest}){$p--;last INCR_PARSE}next}elsif ($s eq 't' or $s eq 'f' or $s eq 'n'){$self->{incr_mode}=INCR_M_TFN;redo INCR_PARSE}elsif ($s =~ /^[0-9\-]$/){$self->{incr_mode}=INCR_M_NUM;redo INCR_PARSE}elsif ($s eq '"'){$self->{incr_mode}=INCR_M_STR;redo INCR_PARSE}elsif ($s eq '[' or $s eq '{'){if (++$self->{incr_nest}> $coder->get_max_depth){Carp::croak('json text or perl structure exceeds maximum nesting level (max_depth set too low?)')}next}elsif ($s eq ']' or $s eq '}'){if (--$self->{incr_nest}<= 0){last INCR_PARSE}}elsif ($s eq '#'){$self->{incr_mode}=INCR_M_C1;redo INCR_PARSE}}}}$self->{incr_pos}=$p;$self->{incr_parsing}=$p ? 1 : 0}sub incr_text {if ($_[0]->{incr_pos}){Carp::croak("incr_text cannot be called when the incremental parser already started parsing")}$_[0]->{incr_text}}sub incr_skip {my$self=shift;$self->{incr_text}=substr($self->{incr_text},$self->{incr_pos});$self->{incr_pos}=0;$self->{incr_mode}=0;$self->{incr_nest}=0}sub incr_reset {my$self=shift;$self->{incr_text}=undef;$self->{incr_pos}=0;$self->{incr_mode}=0;$self->{incr_nest}=0}1;
 JSON_PP
 
 $fatpacked{"JSON/PP/Boolean.pm"} = '#line '.(1+__LINE__).' "'.__FILE__."\"\n".<<'JSON_PP_BOOLEAN';
-  package JSON::PP::Boolean;use strict;use overload ("0+"=>sub {${$_[0]}},"++"=>sub {$_[0]=${$_[0]}+ 1},"--"=>sub {$_[0]=${$_[0]}- 1},fallback=>1,);$JSON::PP::Boolean::VERSION='2.97001';1;
+  package JSON::PP::Boolean;use strict;require overload;local $^W;overload::import('overload',"0+"=>sub {${$_[0]}},"++"=>sub {$_[0]=${$_[0]}+ 1},"--"=>sub {$_[0]=${$_[0]}- 1},fallback=>1,);$JSON::PP::Boolean::VERSION='4.02';1;
 JSON_PP_BOOLEAN
 
 $fatpacked{"Module/Pluggable.pm"} = '#line '.(1+__LINE__).' "'.__FILE__."\"\n".<<'MODULE_PLUGGABLE';
