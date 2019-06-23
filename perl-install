@@ -18,13 +18,13 @@ if [[ $1 = "--print-version" ]]; then
   PRINT_VERSION=YES
 fi
 
-if [[ `uname -m` != "x86_64" ]]; then
+if [[ $(uname -m) != "x86_64" ]]; then
   die "Only support x86_64"
 fi
 
-if [[ `uname -s` = "Darwin" ]]; then
+if [[ $(uname -s) = "Darwin" ]]; then
   ARCHNAME=darwin-2level
-elif [[ `uname -s` = "Linux" ]]; then
+elif [[ $(uname -s) = "Linux" ]]; then
   ARCHNAME=x86_64-linux
 else
   die "Only support Darwin or Linux"
@@ -32,7 +32,7 @@ fi
 
 if type curl &>/dev/null; then
   HTTP_GET=curl
-  HTTP_GET_OPTION='-sSL'
+  HTTP_GET_OPTION='-fsSL'
 elif type wget &>/dev/null; then
   HTTP_GET=wget
   HTTP_GET_OPTION='-q -O -'
@@ -40,7 +40,7 @@ else
   die 'Cannot find `curl` nor `wget`'
 fi
 
-TAG=`$HTTP_GET $HTTP_GET_OPTION https://raw.githubusercontent.com/skaji/relocatable-perl/master/LATEST`
+TAG=$($HTTP_GET $HTTP_GET_OPTION https://raw.githubusercontent.com/skaji/relocatable-perl/master/LATEST)
 if [[ -z $TAG ]]; then
   die "Failed to determine latest perl version"
 fi
@@ -49,8 +49,12 @@ if [[ $PRINT_VERSION = "YES" ]]; then
   exit
 fi
 
-if ! type tar &>/dev/null; then
-  die 'Cannot find `tar` command'
+TAR_CMD=gtar
+if ! type $TAR_CMD &>/dev/null; then
+  TAR_CMD=tar
+  if ! type $TAR_CMD &>/dev/null; then
+    die 'Cannot find `tar` command'
+  fi
 fi
 
 TAR_OPTION=xzf
@@ -64,14 +68,15 @@ INSTALL_DIR=$1
 if [[ -d $INSTALL_DIR ]]; then
   [[ -w $INSTALL_DIR ]] || die "You don't have write permission to $INSTALL_DIR"
 else
-  mkdir $INSTALL_DIR
+  mkdir -p $INSTALL_DIR
+  [[ -d $INSTALL_DIR ]] || die "Cannot create $INSTALL_DIR"
 fi
 ABS_INSTALL_DIR=$(cd $INSTALL_DIR &>/dev/null; pwd)
 
 URL=https://github.com/skaji/relocatable-perl/releases/download/$TAG/perl-$ARCHNAME.$TAR_SUFFIX
 echo "Installing perl $TAG to $INSTALL_DIR, this may take a while..."
 
-$HTTP_GET $HTTP_GET_OPTION $URL | tar $TAR_OPTION - --strip-components 1 -C $INSTALL_DIR
+$HTTP_GET $HTTP_GET_OPTION $URL | $TAR_CMD $TAR_OPTION - --strip-components 1 -C $INSTALL_DIR
 if [[ ! -f $INSTALL_DIR/bin/perl ]]; then
   die "Failed to install perl"
 fi

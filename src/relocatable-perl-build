@@ -27,14 +27,14 @@ sub run {
 @HTTP::Tinyish::Backends = map "HTTP::Tinyish::$_", qw( Curl Wget HTTPTiny LWP );
 
 my @LINUX_LIBPTH = qw(
-    /usr/local/lib64
-    /usr/local/lib
+    /lib
     /lib/x86_64-linux-gnu
     /lib64
-    /lib
+    /usr/lib
     /usr/lib/x86_64-linux-gnu
     /usr/lib64
-    /usr/lib
+    /usr/local/lib
+    /usr/local/lib64
 );
 
 =head1 NAME

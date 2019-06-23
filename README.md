@@ -11,7 +11,7 @@ then we have self-contained and portable perl.
 
 ### One liner
 
-    curl -sSL https://git.io/perl-install | bash -s ~/perl
+    curl -fsSL https://git.io/perl-install | bash -s ~/perl
 
 This installs the latest relocatable perl to `~/perl`.
 
