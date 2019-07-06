@@ -29,7 +29,7 @@ RUN set -eux; \
   xz   -9 --stdout perl-x86_64-linux.tar > /perl-x86_64-linux.tar.xz; \
   true
 
-FROM alpine
+FROM gcr.io/google_containers/pause
 COPY --from=builder /perl-x86_64-linux.tar.gz /perl-x86_64-linux.tar.gz
 COPY --from=builder /perl-x86_64-linux.tar.xz /perl-x86_64-linux.tar.xz
 # ID=$(docker create skaji/relocatable-perl)

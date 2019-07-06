@@ -1,21 +1,22 @@
-language: objective-c
-before_install: |
-  brew unlink `brew list`; \
-  brew install xz coreutils gnu-tar; \
-  brew link --force xz coreutils gnu-tar; \
-  true; \
-  rvm get stable; \
-  true
-
-script: "./mac.sh --perl_version `cat BUILD_VERSION`"
-
+language: generic
+matrix:
+  include:
+    - os: osx
+      env: _PERL_ARCHNAME=darwin-2level
+    - os: linux
+      env: _PERL_ARCHNAME=x86_64-linux
+      services: docker
+before_install:
+  - bash .travis/before_install_$TRAVIS_OS_NAME.sh
+script:
+  - bash .travis/script_$TRAVIS_OS_NAME.sh
 deploy:
   provider: releases
   api_key:
     secure: LHxcdsW2E+3Dm1FXnIbeKf2yQtEHPP9l4d6j+uK47DmFVDe+u6IpphdiTdrJipiOUrU6eC+lyY3izzh0ej1yklMue99YBbT4KbdtQzHqyeb6KBYs4M/LrB8AU4n8i7O7ZcUCQVtbx5q/be7OtJnwEIJTFSfPnuaJpL3/9mYQ2wU=
   file:
-    - perl-darwin-2level.tar.gz
-    - perl-darwin-2level.tar.xz
+    - perl-$_PERL_ARCHNAME.tar.gz
+    - perl-$_PERL_ARCHNAME.tar.xz
   skip_cleanup: true
   on:
     repo: skaji/relocatable-perl
