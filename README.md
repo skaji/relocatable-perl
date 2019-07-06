@@ -9,6 +9,8 @@ then we have self-contained and portable perl.
 
 ## Install
 
+There are 3 ways:
+
 ### One liner
 
     curl -fsSL https://git.io/perl-install | bash -s ~/perl
@@ -26,25 +28,18 @@ then [plenv-download](https://github.com/skaji/plenv-download) may be useful:
 
 ### Manually
 
-Let's say you use OS X. Then:
+You can download appropriate tarballs from [release pages](https://github.com/skaji/relocatable-perl/releases).
 
-    wget https://github.com/skaji/relocatable-perl/releases/download/5.26.2.0/perl-darwin-2level.tar.gz
-    tar xzf perl-darwin-2level.tar.gz
-    mv perl-darwin-2level ~/my-favorite-name
+For example, if you use x86-64 Linux, then:
 
-That's all. Check out your perl works:
-
-    $ ~/my-favorite-name/bin/perl -v
-    This is perl 5, version 26, subversion 2 (v5.26.2) built for darwin-2level
-
-    # cpanm is already installed. Install your favorite cpan modules.
-    $ ~/my-favorite-name/bin/cpanm LWP::UserAgent
+    curl -fsSL -o perl-x86_64-linux.tar.xz https://github.com/skaji/relocatable-perl/releases/latest/download/perl-x86_64-linux.tar.xz
+    tar xJf perl-x86_64-linux.tar.xz
+    mv perl-x86_64-linux ~/wherever-you-want
+    ~/wherever-you-want/bin/perl --version
 
 ## How to build relocatable perls by yourself
 
-See [mac.sh](https://github.com/skaji/relocatable-perl/blob/master/mac.sh),
-[Dockerfile](https://github.com/skaji/relocatable-perl/blob/master/Dockerfile) and
-[Docker Hub](https://hub.docker.com/r/skaji/relocatable-perl/).
+See [.travis](.travis) directory.
 
 ## License
 
