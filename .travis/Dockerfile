@@ -17,9 +17,11 @@ RUN mkdir -p \
     /usr/local/lib \
     /usr/local/lib64
 RUN curl -fsSL https://git.io/perl-install | bash -s /perl
-COPY relocatable-perl-build BUILD_VERSION /
+RUN curl -fsSL --compressed -o /cpm https://git.io/cpm
+COPY build/relocatable-perl-build build/cpanfile BUILD_VERSION /
+RUN /perl/bin/perl /cpm install -g
 RUN /perl/bin/perl /relocatable-perl-build --perl_version $(cat /BUILD_VERSION) --prefix /opt/perl
-RUN curl -fsSL https://git.io/cpm | /opt/perl/bin/perl - install -g App::cpanminus App::ChangeShebang
+RUN /opt/perl/bin/perl /cpm install -g App::cpanminus App::ChangeShebang
 RUN /opt/perl/bin/change-shebang -f /opt/perl/bin/*
 RUN cp -r /opt/perl /tmp/perl-x86_64-linux
 RUN set -eux; \
@@ -32,7 +34,3 @@ RUN set -eux; \
 FROM gcr.io/google_containers/pause
 COPY --from=builder /perl-x86_64-linux.tar.gz /perl-x86_64-linux.tar.gz
 COPY --from=builder /perl-x86_64-linux.tar.xz /perl-x86_64-linux.tar.xz
-# ID=$(docker create skaji/relocatable-perl)
-# docker cp $ID:/perl-x86_64-linux.tar.gz .
-# docker cp $ID:/perl-x86_64-linux.tar.xz .
-# docker rm $ID
