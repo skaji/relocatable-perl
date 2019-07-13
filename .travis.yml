@@ -2,9 +2,7 @@ language: minimal
 matrix:
   include:
     - os: osx
-      env: _PERL_ARCHNAME=darwin-2level
     - os: linux
-      env: _PERL_ARCHNAME=x86_64-linux
       services: docker
 before_install:
   - bash .travis/before_install_$TRAVIS_OS_NAME.sh
@@ -14,9 +12,8 @@ deploy:
   provider: releases
   api_key:
     secure: LHxcdsW2E+3Dm1FXnIbeKf2yQtEHPP9l4d6j+uK47DmFVDe+u6IpphdiTdrJipiOUrU6eC+lyY3izzh0ej1yklMue99YBbT4KbdtQzHqyeb6KBYs4M/LrB8AU4n8i7O7ZcUCQVtbx5q/be7OtJnwEIJTFSfPnuaJpL3/9mYQ2wU=
-  file:
-    - perl-$_PERL_ARCHNAME.tar.gz
-    - perl-$_PERL_ARCHNAME.tar.xz
+  file_glob: true
+  file: releases/*
   skip_cleanup: true
   on:
     repo: skaji/relocatable-perl

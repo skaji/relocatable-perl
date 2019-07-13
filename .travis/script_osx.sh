@@ -11,9 +11,10 @@ sudo install -m 755 -o $USER -g staff -d /opt/perl
 /opt/perl/bin/perl ~/cpm install -g App::cpanminus App::ChangeShebang
 /opt/perl/bin/change-shebang -f /opt/perl/bin/*
 
+mkdir releases
 NAME=perl-$(/opt/perl/bin/perl -MConfig -e 'print $Config{archname}')
 gcp -r /opt/perl ./$NAME
 gtar cf $NAME.tar $NAME
-gzip -9 --stdout $NAME.tar > $NAME.tar.gz
-xz   -9 --stdout $NAME.tar > $NAME.tar.xz
+gzip -9 --stdout $NAME.tar > releases/$NAME.tar.gz
+xz   -9 --stdout $NAME.tar > releases/$NAME.tar.xz
 rm -rf $NAME $NAME.tar
