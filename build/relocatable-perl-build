@@ -143,6 +143,10 @@ sub perl_build {
         # see https://github.com/agracio/electron-edge-js/issues/16
         push @Configure, "-Ui_xlocale";
         push @Configure, "-Dlibpth=@LINUX_LIBPTH";
+
+        # RHEL8, Fedora28, CentOS8 does not have libnsl.so.1 by default;
+        # remove -lnsl
+        push @Configure, "-Dlibs=-lpthread -ldl -lm -lcrypt -lutil -lc";
     }
     push @Configure, "-des";
 
