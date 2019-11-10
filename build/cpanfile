@@ -1,4 +1,4 @@
 requires 'CPAN::Perl::Releases::MetaCPAN', '0.004';
-requires 'Devel::PatchPerl';
+requires 'Devel::PatchPerl', '== 1.64';
 requires 'HTTP::Tinyish';
 requires 'IPC::Run3';
