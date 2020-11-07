@@ -30,7 +30,3 @@ RUN set -eux; \
   gzip -9 --stdout perl-x86_64-linux.tar > /perl-x86_64-linux.tar.gz; \
   xz   -9 --stdout perl-x86_64-linux.tar > /perl-x86_64-linux.tar.xz; \
   true
-
-FROM gcr.io/google_containers/pause
-COPY --from=builder /perl-x86_64-linux.tar.gz /perl-x86_64-linux.tar.gz
-COPY --from=builder /perl-x86_64-linux.tar.xz /perl-x86_64-linux.tar.xz

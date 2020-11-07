@@ -1,4 +1,4 @@
-# relocatable perl [![Build Status](https://api.travis-ci.org/skaji/relocatable-perl.svg?branch=master)](https://travis-ci.org/skaji/relocatable-perl)
+# relocatable perl [![build](https://github.com/skaji/relocatable-perl/workflows/build/badge.svg)](https://github.com/skaji/relocatable-perl/actions)
 
 Self-contained, portable perl binaries for x86-64 Linux and OS X.
 You can download them from [release page](https://github.com/skaji/relocatable-perl/releases).
