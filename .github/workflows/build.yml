@@ -13,29 +13,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: Docker build
-        run: docker build -t skaji/relocatable-perl -f build/Dockerfile .
+      - run: docker build -t skaji/relocatable-perl -f build/Dockerfile .
+      - run: build/github-actions.sh linux_create_artifacts
+      - uses: actions/upload-artifact@v2
+        with:
+          name: x86_64-linux
+          path: x86_64-linux
   darwin-2level:
     runs-on: macOS-latest
     steps:
       - uses: actions/checkout@v2
-      - name: Show macOS Version
-        run: sw_vers
-      - name: Prepare tools
-        run: |
-          set -euxo pipefail
-          export HOMEBREW_NO_AUTO_UPDATE=1
-          brew unlink $(brew list --formula)
-          brew install xz coreutils gnu-tar
-          brew link --force xz coreutils gnu-tar
-      - name: Build Perl
-        run: |
-          set -euxo pipefail
-          export PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin
-          curl -fsSL https://git.io/perl-install | bash -s ~/perl
-          curl -fsSL --compressed -o ~/cpm https://git.io/cpm
-          ~/perl/bin/perl ~/cpm install -g --cpanfile build/cpanfile
-          sudo install -m 755 -o $USER -g staff -d /opt/perl
-          ~/perl/bin/perl build/relocatable-perl-build --prefix /opt/perl --perl_version $(cat BUILD_VERSION)
-          /opt/perl/bin/perl ~/cpm install -g App::cpanminus App::ChangeShebang
-          /opt/perl/bin/change-shebang -f /opt/perl/bin/*
+      - run: sw_vers
+      - run: bash build/github-actions.sh mac_prepare_tools
+      - run: bash build/github-actions.sh mac_build_perl
+      - run: bash build/github-actions.sh mac_create_artifacts
+      - uses: actions/upload-artifact@v2
+        with:
+          name: darwin-2level
+          path: darwin-2level

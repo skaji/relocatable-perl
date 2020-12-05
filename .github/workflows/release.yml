@@ -10,16 +10,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: Docker build
-        run: docker build -t skaji/relocatable-perl -f build/Dockerfile .
-      - name: Create Artifacts
-        run: |
-          set -euxo pipefail
-          mkdir x86_64-linux
-          ID=$(docker create skaji/relocatable-perl)
-          docker cp $ID:/perl-x86_64-linux.tar.gz x86_64-linux/
-          docker cp $ID:/perl-x86_64-linux.tar.xz x86_64-linux/
-          docker rm $ID
+      - run: docker build -t skaji/relocatable-perl -f build/Dockerfile .
+      - run: build/github-actions.sh linux_create_artifacts
       - uses: actions/upload-artifact@v2
         with:
           name: x86_64-linux
@@ -28,34 +20,10 @@ jobs:
     runs-on: macOS-latest
     steps:
       - uses: actions/checkout@v2
-      - name: Show macOS Version
-        run: sw_vers
-      - name: Prepare tools
-        run: |
-          set -euxo pipefail
-          export HOMEBREW_NO_AUTO_UPDATE=1
-          brew unlink $(brew list --formula)
-          brew install xz coreutils gnu-tar
-          brew link --force xz coreutils gnu-tar
-      - name: Build Perl
-        run: |
-          set -euxo pipefail
-          export PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin
-          curl -fsSL https://git.io/perl-install | bash -s ~/perl
-          curl -fsSL --compressed -o ~/cpm https://git.io/cpm
-          ~/perl/bin/perl ~/cpm install -g --cpanfile build/cpanfile
-          sudo install -m 755 -o $USER -g staff -d /opt/perl
-          ~/perl/bin/perl build/relocatable-perl-build --prefix /opt/perl --perl_version $(cat BUILD_VERSION)
-          /opt/perl/bin/perl ~/cpm install -g App::cpanminus App::ChangeShebang
-          /opt/perl/bin/change-shebang -f /opt/perl/bin/*
-      - name: Create Artifacts
-        run: |
-          set -euxo pipefail
-          mkdir darwin-2level
-          gcp -r /opt/perl ./perl-darwin-2level
-          gtar cf perl-darwin-2level.tar perl-darwin-2level
-          gzip -9 --stdout perl-darwin-2level.tar > darwin-2level/perl-darwin-2level.tar.gz
-          xz   -9 --stdout perl-darwin-2level.tar > darwin-2level/perl-darwin-2level.tar.xz
+      - run: sw_vers
+      - run: bash build/github-actions.sh mac_prepare_tools
+      - run: bash build/github-actions.sh mac_build_perl
+      - run: bash build/github-actions.sh mac_create_artifacts
       - uses: actions/upload-artifact@v2
         with:
           name: darwin-2level
