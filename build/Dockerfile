@@ -1,5 +1,6 @@
 FROM centos:centos6 as builder
 
+RUN sed -i 's/^#baseurl=/baseurl=/g; s/^mirrorlist=/#mirrorlist=/g; s/mirror.centos.org/vault.centos.org/g' /etc/yum.repos.d/CentOS-Base.repo
 RUN yum install -y \
     gcc \
     make \
