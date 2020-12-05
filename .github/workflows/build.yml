@@ -14,7 +14,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - run: docker build -t skaji/relocatable-perl -f build/Dockerfile .
-      - run: build/github-actions.sh linux_create_artifacts
+      - run: bash build/github-actions.sh linux_create_artifacts
       - uses: actions/upload-artifact@v2
         with:
           name: x86_64-linux
