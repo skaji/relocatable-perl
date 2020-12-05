@@ -20,7 +20,7 @@ jobs:
           name: x86_64-linux
           path: x86_64-linux
   darwin-2level:
-    runs-on: macOS-latest
+    runs-on: macOS-11.0
     steps:
       - uses: actions/checkout@v2
       - run: sw_vers
