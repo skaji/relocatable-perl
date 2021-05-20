@@ -1,0 +1,7 @@
+prereqs:
+  runtime:
+    requires:
+      CPAN::Perl::Releases::MetaCPAN:
+      Devel::PatchPerl:
+      HTTP::Tinyish:
+      IPC::Run3:

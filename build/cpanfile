@@ -1,4 +1,0 @@
-requires 'CPAN::Perl::Releases::MetaCPAN';
-requires 'Devel::PatchPerl';
-requires 'HTTP::Tinyish';
-requires 'IPC::Run3';

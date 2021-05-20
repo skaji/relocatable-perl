@@ -19,7 +19,7 @@ RUN mkdir -p \
     /usr/local/lib64
 RUN curl -fsSL https://git.io/perl-install | bash -s /perl
 RUN curl -fsSL --compressed -o /cpm https://git.io/cpm
-COPY build/relocatable-perl-build build/cpanfile BUILD_VERSION /
+COPY build/relocatable-perl-build build/cpm.yml BUILD_VERSION /
 RUN /perl/bin/perl /cpm install -g
 RUN /perl/bin/perl /relocatable-perl-build --perl_version $(cat /BUILD_VERSION) --prefix /opt/perl
 RUN /opt/perl/bin/perl /cpm install -g App::cpanminus App::ChangeShebang

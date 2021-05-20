@@ -13,7 +13,7 @@ mac_build_perl() {
   export PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin
   curl -fsSL https://git.io/perl-install | bash -s ~/perl
   curl -fsSL --compressed -o ~/cpm https://git.io/cpm
-  ~/perl/bin/perl ~/cpm install -g --cpanfile build/cpanfile
+  ~/perl/bin/perl ~/cpm install -g --cpmfile build/cpm.yml
   sudo install -m 755 -o $USER -g staff -d /opt/perl
   ~/perl/bin/perl build/relocatable-perl-build --prefix /opt/perl --perl_version $(cat BUILD_VERSION)
   /opt/perl/bin/perl ~/cpm install -g App::cpanminus App::ChangeShebang
