@@ -1,6 +1,7 @@
 #!/usr/bin/env perl
 use 5.34.0;
 use warnings;
+use experimental 'signatures';
 
 use HTTP::Tiny;
 use JSON::XS ();
@@ -67,8 +68,7 @@ for my $release ($body->{data}{repository}{releases}{edges}->@*) {
     }
 }
 
-my $sort_by = sub {
-    my ($a, $b) = @_;
+my $sort_by = sub ($a, $b) {
     my %os = (linux => 1, darwin => 0);
     my %compress = (xz => 1, gz => 0);
     $b->{version} cmp $a->{version}
