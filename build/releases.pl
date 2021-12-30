@@ -55,11 +55,10 @@ my @release;
 for my $release ($body->{data}{repository}{releases}{edges}->@*) {
     for my $asset ($release->{node}{releaseAssets}{edges}->@*) {
         my $url = $asset->{node}{downloadUrl};
-        if ($url =~ m{/(?<version>\d+\.\d+\.\d+)\.(?<build_version>\d+)/perl-(?:(?<arch>x86_64|arm64)-)?(?<os>linux|darwin).*\.(?<compress>gz|xz)$}) {
+        if ($url =~ m{/(?<version>\d+\.\d+\.\d+\.\d+)/perl-(?:(?<arch>x86_64|arm64)-)?(?<os>linux|darwin).*\.(?<compress>gz|xz)$}) {
             push @release, {
                 url => $url,
                 version => $+{version},
-                build_version => $+{build_version},
                 arch => ($+{arch} || "x86_64"),
                 os => $+{os},
                 compress => $+{compress},
@@ -73,14 +72,12 @@ my $sort_by = sub ($a, $b) {
     my %compress = (xz => 1, gz => 0);
     $b->{version} cmp $a->{version}
     ||
-    $b->{build_version} <=> $a->{build_version}
-    ||
     $os{$b->{os}} <=> $os{$a->{os}}
     ||
     $compress{$b->{compress}} <=> $compress{$a->{compress}};
 };
 
-my @name = qw(version build_version os arch compress url padding);
+my @name = qw(version os arch compress url padding);
 say join ",", @name;
 for my $release (sort { $sort_by->($a, $b) } @release) {
     say join ",", map { $release->{$_} // "" } @name;
