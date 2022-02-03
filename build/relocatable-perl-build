@@ -12,9 +12,11 @@ use File::Path 'rmtree';
 use File::Basename 'dirname';
 use Pod::Usage 'pod2usage';
 use Devel::PatchPerl;
+use Devel::PatchPerl::Plugin::FixCompoundTokenSplitByMacro;
 use CPAN::Perl::Releases::MetaCPAN 'perl_tarballs';
 use HTTP::Tinyish;
 use IPC::Run3 'run3';
+use version;
 
 sub run {
     my ($cmd, $log) = @_;
@@ -154,6 +156,10 @@ sub perl_build {
     my $devel = "Devel::PatchPerl";
     say "---> patching by $devel " . $devel->VERSION;
     $devel->patch_source($perl_version, ".");
+    if ($^O eq "darwin" and version->parse($perl_version) <= v5.34.0) {
+        say "---> patching by Devel::PatchPerl::Plugin::FixCompoundTokenSplitByMacro";
+        Devel::PatchPerl::Plugin::FixCompoundTokenSplitByMacro->patchperl(version => $perl_version);
+    }
     say "---> building perl $perl_version, see $log for progress";
     run \@Configure, $log;
     my @option = $jobs ? ("--jobs=$jobs") : ();
