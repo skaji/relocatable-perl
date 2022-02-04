@@ -33,7 +33,7 @@ my $token = $ENV{GITHUB_TOKEN} or die "Need GITHUB_TOKEN\n";
 my $content = $JSON->encode({ query => $query });
 my $url = "https://api.github.com/graphql";
 
-my $res = $HTTP->post("https://api.github.com/graphql", {
+my $res = $HTTP->post($url, {
     headers => {
         "content-type" => "application/json",
         "content-length" => (length $content),
@@ -52,18 +52,16 @@ if ($body->{errors}) {
 }
 
 my @release;
-for my $release ($body->{data}{repository}{releases}{edges}->@*) {
-    for my $asset ($release->{node}{releaseAssets}{edges}->@*) {
-        my $url = $asset->{node}{downloadUrl};
-        if ($url =~ m{/(?<version>\d+\.\d+\.\d+\.\d+)/perl-(?:(?<arch>x86_64|arm64)-)?(?<os>linux|darwin).*\.(?<compress>gz|xz)$}) {
-            push @release, {
-                url => $url,
-                version => $+{version},
-                arch => ($+{arch} || "x86_64"),
-                os => $+{os},
-                compress => $+{compress},
-            };
-        }
+for my $asset (map { $_->{node}{releaseAssets}{edges}->@* } $body->{data}{repository}{releases}{edges}->@*) {
+    my $url = $asset->{node}{downloadUrl};
+    if ($url =~ m{/(?<version>\d+\.\d+\.\d+\.\d+)/perl-(?:(?<arch>x86_64|arm64)-)?(?<os>linux|darwin).*\.(?<compress>gz|xz)$}) {
+        push @release, {
+            url => $url,
+            version => $+{version},
+            arch => ($+{arch} || "x86_64"),
+            os => $+{os},
+            compress => $+{compress},
+        };
     }
 }
 
