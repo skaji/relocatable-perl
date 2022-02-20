@@ -25,20 +25,6 @@ sub run {
     $? == 0 or die "failed @$cmd";
 }
 
-# XXX old mac os X was shipped with openssl 0.9.8 :/
-@HTTP::Tinyish::Backends = map "HTTP::Tinyish::$_", qw( Curl Wget HTTPTiny LWP );
-
-my @LINUX_LIBPTH = qw(
-    /lib
-    /lib/x86_64-linux-gnu
-    /lib64
-    /usr/lib
-    /usr/lib/x86_64-linux-gnu
-    /usr/lib64
-    /usr/local/lib
-    /usr/local/lib64
-);
-
 =head1 NAME
 
 relocatable-perl-build - building perl with relocatable settings
@@ -138,27 +124,41 @@ sub perl_build {
         "-Dman1dir=none",
         "-Dman3dir=none",
         "-DDEBUGGING=-g",
+        "-des",
     );
-    if ($Config{archname} =~ /linux/i) {
+    if ($^O eq "linux") {
         # ubuntu 18.04 does not have xlocale.h
         # we can safely remove xlocale.h because locale.h reads it
         # see https://github.com/agracio/electron-edge-js/issues/16
         push @Configure, "-Ui_xlocale";
-        push @Configure, "-Dlibpth=@LINUX_LIBPTH";
 
         # RHEL8, Fedora28, CentOS8 does not have libnsl.so.1 by default;
         # remove -lnsl
         push @Configure, "-Dlibs=-lpthread -ldl -lm -lcrypt -lutil -lc";
+
+        my @libpth = qw(
+            /lib
+            /lib/x86_64-linux-gnu
+            /lib64
+            /usr/lib
+            /usr/lib/x86_64-linux-gnu
+            /usr/lib64
+            /usr/local/lib
+            /usr/local/lib64
+        );
+        push @Configure, "-Dlibpth=@libpth";
     }
-    push @Configure, "-des";
 
     chdir "$tempdir/perl-$perl_version" or die;
     my $devel = "Devel::PatchPerl";
     say "---> patching by $devel " . $devel->VERSION;
     $devel->patch_source($perl_version, ".");
-    if ($^O eq "darwin" and version->parse($perl_version) <= v5.34.0) {
-        say "---> patching by Devel::PatchPerl::Plugin::FixCompoundTokenSplitByMacro";
-        Devel::PatchPerl::Plugin::FixCompoundTokenSplitByMacro->patchperl(version => $perl_version);
+    if ($^O eq "darwin") {
+        if (version->parse($perl_version) <= v5.34.0) {
+            my $klass = "Devel::PatchPerl::Plugin::FixCompoundTokenSplitByMacro";
+            say "---> patching by $klass";
+            $klass->patchperl(version => $perl_version);
+        }
     }
     say "---> building perl $perl_version, see $log for progress";
     run \@Configure, $log;
