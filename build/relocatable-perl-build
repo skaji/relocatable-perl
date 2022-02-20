@@ -154,6 +154,21 @@ sub perl_build {
     say "---> patching by $devel " . $devel->VERSION;
     $devel->patch_source($perl_version, ".");
     if ($^O eq "darwin") {
+        {
+            say "---> patching, do not add macosx_version_min";
+            my $file = "hints/darwin.sh";
+            open my $in, "<", $file or die;
+            open my $out, ">", "$file.tmp" or die;
+            while (my $line = <$in>) {
+                print {$out} $line;
+                if ($line =~ m{^ \s* add_macosx_version_min \s* \( }x) {
+                    print {$out} "  return\n";
+                }
+            }
+            close $in;
+            close $out;
+            rename "$file.tmp", $file or die;
+        }
         if (version->parse($perl_version) <= v5.34.0) {
             my $klass = "Devel::PatchPerl::Plugin::FixCompoundTokenSplitByMacro";
             say "---> patching by $klass";
