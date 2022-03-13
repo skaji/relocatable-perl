@@ -169,7 +169,7 @@ sub perl_build {
             close $out;
             rename "$file.tmp", $file or die;
         }
-        if (version->parse($perl_version) <= v5.34.0) {
+        if (version->parse($perl_version) <= v5.34.1) {
             my $klass = "Devel::PatchPerl::Plugin::FixCompoundTokenSplitByMacro";
             say "---> patching by $klass";
             $klass->patchperl(version => $perl_version);
