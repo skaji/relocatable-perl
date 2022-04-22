@@ -17,6 +17,7 @@ use CPAN::Perl::Releases::MetaCPAN 'perl_tarballs';
 use HTTP::Tinyish;
 use IPC::Run3 'run3';
 use version;
+use POSIX 'uname';
 
 sub run {
     my ($cmd, $log) = @_;
@@ -136,15 +137,16 @@ sub perl_build {
         # remove -lnsl
         push @Configure, "-Dlibs=-lpthread -ldl -lm -lcrypt -lutil -lc";
 
-        my @libpth = qw(
-            /lib
-            /lib/x86_64-linux-gnu
-            /lib64
-            /usr/lib
-            /usr/lib/x86_64-linux-gnu
-            /usr/lib64
-            /usr/local/lib
-            /usr/local/lib64
+        my $arch = (uname)[4];
+        my @libpth = (
+            "/lib",
+            "/lib/$arch-linux-gnu",
+            "/lib64",
+            "/usr/lib",
+            "/usr/lib/$arch-linux-gnu",
+            "/usr/lib64",
+            "/usr/local/lib",
+            "/usr/local/lib64",
         );
         push @Configure, "-Dlibpth=@libpth";
     }
