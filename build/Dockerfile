@@ -20,7 +20,7 @@ RUN mkdir -p \
     /usr/local/lib \
     /usr/local/lib64
 RUN mkdir /perl
-RUN curl -fsSL https://github.com/skaji/relocatable-perl/releases/download/5.34.1.0/perl-$(uname -m)-linux.tar.xz | tar xJf - --strip-components 1 -C /perl
+RUN curl -fsSL https://github.com/skaji/relocatable-perl/releases/download/5.34.1.1/perl-$(uname -m)-linux.tar.xz | tar xJf - --strip-components 1 -C /perl
 RUN curl -fsSL --compressed -o /cpm https://git.io/cpm
 COPY build/relocatable-perl-build build/cpm.yml BUILD_VERSION /
 RUN /perl/bin/perl /cpm install -g

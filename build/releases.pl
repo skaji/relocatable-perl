@@ -54,7 +54,7 @@ if ($body->{errors}) {
 my @release;
 for my $asset (map { $_->{node}{releaseAssets}{edges}->@* } $body->{data}{repository}{releases}{edges}->@*) {
     my $url = $asset->{node}{downloadUrl};
-    if ($url =~ m{/(?<version>\d+\.\d+\.\d+\.\d+)/perl-(?:(?<arch>x86_64|arm64)-)?(?<os>linux|darwin).*\.(?<compress>gz|xz)$}) {
+    if ($url =~ m{/(?<version>\d+\.\d+\.\d+\.\d+)/perl-(?:(?<arch>x86_64|arm64|aarch64)-)?(?<os>linux|darwin).*\.(?<compress>gz|xz)$}) {
         push @release, {
             url => $url,
             version => $+{version},

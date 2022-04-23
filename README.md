@@ -1,6 +1,6 @@
 # relocatable perl [![build](https://github.com/skaji/relocatable-perl/workflows/build/badge.svg)](https://github.com/skaji/relocatable-perl/actions)
 
-Self-contained, portable perl binaries for x86-64 Linux and macOS.
+Self-contained, portable perl binaries for Linux and macOS.
 You can download them from [release page](https://github.com/skaji/relocatable-perl/releases).
 
 Since version 5.10, perl can be built with [relocatable INC](https://metacpan.org/pod/release/XSAWYERX/perl-5.26.0/pod/perl5100delta.pod#Relocatable-installations).
@@ -30,7 +30,7 @@ then [plenv-download](https://github.com/skaji/plenv-download) may be useful:
 
 You can download appropriate tarballs from [release pages](https://github.com/skaji/relocatable-perl/releases).
 
-For example, if you use x86-64 Linux, then:
+For example, if you use x86_64 Linux, then:
 
     curl -fsSL -o perl-x86_64-linux.tar.xz https://github.com/skaji/relocatable-perl/releases/latest/download/perl-x86_64-linux.tar.xz
     tar xJf perl-x86_64-linux.tar.xz

@@ -18,16 +18,16 @@ if [[ $1 = "--print-version" ]]; then
   PRINT_VERSION=YES
 fi
 
-if [[ $(uname -m) != "x86_64" ]]; then
-  die "Only support x86_64"
-fi
+UNAME_SM=$(uname -sm)
 
-if [[ $(uname -s) = "Darwin" ]]; then
+if [[ $UNAME_SM = "Darwin x86_64" ]]; then
   ARCHNAME=darwin-2level
-elif [[ $(uname -s) = "Linux" ]]; then
+elif [[ $UNAME_SM = "Linux x86_64" ]]; then
   ARCHNAME=x86_64-linux
+elif [[ $UNAME_SM = "Linux aarch64" ]]; then
+  ARCHNAME=aarch64-linux
 else
-  die "Only support Darwin or Linux"
+  die "Unsupported environment $UNAME_SM"
 fi
 
 if type curl &>/dev/null; then
