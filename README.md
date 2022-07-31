@@ -13,7 +13,7 @@ There are 3 ways:
 
 ### One liner
 
-    curl -fsSL https://git.io/perl-install | bash -s ~/perl
+    curl -fsSL https://raw.githubusercontent.com/skaji/relocatable-perl/main/perl-install | bash -s ~/perl
 
 This installs the latest relocatable perl to `~/perl`.
 
