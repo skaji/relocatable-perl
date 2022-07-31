@@ -22,7 +22,7 @@ This installs the latest relocatable perl to `~/perl`.
 If you use [plenv](https://github.com/tokuhirom/plenv),
 then [plenv-download](https://github.com/skaji/plenv-download) may be useful:
 
-    git clone https://github.com/skaji/plenv-download ~/.plenv/plugins/plenv-download
+    git clone https://github.com/skaji/plenv-download $(plenv root)/plugins/plenv-download
     # download the latest relocatable perl
     plenv download latest
 
@@ -30,11 +30,11 @@ then [plenv-download](https://github.com/skaji/plenv-download) may be useful:
 
 You can download appropriate tarballs from [release pages](https://github.com/skaji/relocatable-perl/releases).
 
-For example, if you use x86_64 Linux, then:
+For example, if you use linux amd64, then:
 
-    curl -fsSL -o perl-x86_64-linux.tar.xz https://github.com/skaji/relocatable-perl/releases/latest/download/perl-x86_64-linux.tar.xz
-    tar xJf perl-x86_64-linux.tar.xz
-    mv perl-x86_64-linux ~/wherever-you-want
+    curl -fsSL -o perl-linux-amd64.tar.xz https://github.com/skaji/relocatable-perl/releases/latest/download/perl-linux-amd64.tar.xz
+    tar xJf perl-linux-amd64.tar.xz
+    mv perl-linux-amd64 ~/wherever-you-want
     ~/wherever-you-want/bin/perl --version
 
 ## How to build relocatable perls by yourself

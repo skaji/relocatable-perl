@@ -37,7 +37,7 @@ else
   die 'Cannot find `curl` nor `wget`'
 fi
 
-LATEST_LINE=$($HTTP_GET $HTTP_GET_OPTION https://raw.githubusercontent.com/skaji/relocatable-perl/master/releases.csv | \grep ,$_OS,$_ARCH, | \head -1)
+LATEST_LINE=$($HTTP_GET $HTTP_GET_OPTION https://raw.githubusercontent.com/skaji/relocatable-perl/main/releases.csv | \grep ,$_OS,$_ARCH, | \head -1)
 if [[ -z $LATEST_LINE ]]; then
   die "Failed to determine latest perl version"
 fi
@@ -81,7 +81,7 @@ if [[ ! -f $INSTALL_DIR/bin/perl ]]; then
 fi
 
 cat <<EOF
-Successfully installed perl $TAG.
+Successfully installed perl $LATEST_VERSION.
 To use this perl, add the following line to ~/.bash_profile or ~/.zshrc:
 
   export PATH=$ABS_INSTALL_DIR/bin:\$PATH
