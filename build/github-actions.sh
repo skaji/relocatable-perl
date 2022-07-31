@@ -11,9 +11,12 @@ mac_prepare_tools() {
 
 mac_build_perl() {
   export PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin
-  curl -fsSL https://git.io/perl-install | bash -s ~/perl
-  curl -fsSL --compressed -o ~/cpm https://git.io/cpm
+  rm -rf ~/perl ~/cpm
+  mkdir ~/perl
+  curl -fsSL https://github.com/skaji/relocatable-perl/releases/download/5.36.0.0/perl-darwin-2level.tar.xz | gtar xJf - --strip-components 1 -C ~/perl
+  curl -fsSL --compressed -o ~/cpm https://raw.githubusercontent.com/skaji/cpm/main/cpm
   ~/perl/bin/perl ~/cpm install -g --cpmfile build/cpm.yml
+  sudo rm -rf /opt/perl
   sudo install -m 755 -o $USER -g staff -d /opt/perl
   ~/perl/bin/perl build/relocatable-perl-build --prefix /opt/perl --perl_version $(cat BUILD_VERSION)
   /opt/perl/bin/perl ~/cpm install -g App::cpanminus App::ChangeShebang
@@ -21,26 +24,28 @@ mac_build_perl() {
 }
 
 mac_create_artifacts() {
-  mkdir darwin-2level
-  gcp -r /opt/perl ./perl-darwin-2level
-  gtar cf perl-darwin-2level.tar perl-darwin-2level
-  gzip -9 --stdout perl-darwin-2level.tar > darwin-2level/perl-darwin-2level.tar.gz
-  xz   -9 --stdout perl-darwin-2level.tar > darwin-2level/perl-darwin-2level.tar.xz
+  local archname=$(if [[ $(uname -m) = x86_64 ]]; then echo amd64; else echo arm64; fi)
+  rm -rf darwin-$archname perl-darwin-$archname*
+  gcp -r /opt/perl perl-darwin-$archname
+  gtar cf perl-darwin-$archname.tar perl-darwin-$archname
+  mkdir darwin-$archname
+  gzip -9 --stdout perl-darwin-$archname.tar > darwin-$archname/perl-darwin-$archname.tar.gz
+  xz   -9 --stdout perl-darwin-$archname.tar > darwin-$archname/perl-darwin-$archname.tar.xz
 }
 
-x86_64_linux_create_artifacts() {
-  mkdir x86_64-linux
+linux_amd64_create_artifacts() {
+  mkdir linux-amd64
   ID=$(docker create skaji/relocatable-perl)
-  docker cp $ID:/perl-x86_64-linux.tar.gz x86_64-linux/
-  docker cp $ID:/perl-x86_64-linux.tar.xz x86_64-linux/
+  docker cp $ID:/perl-linux-amd64.tar.gz linux-amd64/
+  docker cp $ID:/perl-linux-amd64.tar.xz linux-amd64/
   docker rm $ID
 }
 
-aarch64_linux_create_artifacts() {
-  mkdir aarch64-linux
+linux_arm64_create_artifacts() {
+  mkdir linux-arm64
   ID=$(docker create --platform linux/arm64 skaji/relocatable-perl)
-  docker cp $ID:/perl-aarch64-linux.tar.gz aarch64-linux/
-  docker cp $ID:/perl-aarch64-linux.tar.xz aarch64-linux/
+  docker cp $ID:/perl-linux-arm64.tar.gz linux-arm64/
+  docker cp $ID:/perl-linux-arm64.tar.xz linux-arm64/
   docker rm $ID
 }
 
@@ -54,11 +59,11 @@ mac_build_perl)
 mac_create_artifacts)
   mac_create_artifacts
   ;;
-x86_64_linux_create_artifacts)
-  x86_64_linux_create_artifacts
+linux_amd64_create_artifacts)
+  linux_amd64_create_artifacts
   ;;
-aarch64_linux_create_artifacts)
-  aarch64_linux_create_artifacts
+linux_arm64_create_artifacts)
+  linux_arm64_create_artifacts
   ;;
 *)
   echo "unknown command: $1" >&2
