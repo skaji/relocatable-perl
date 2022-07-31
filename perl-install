@@ -18,16 +18,13 @@ if [[ $1 = "--print-version" ]]; then
   PRINT_VERSION=YES
 fi
 
-UNAME_SM=$(uname -sm)
-
-if [[ $UNAME_SM = "Darwin x86_64" ]]; then
-  ARCHNAME=darwin-2level
-elif [[ $UNAME_SM = "Linux x86_64" ]]; then
-  ARCHNAME=x86_64-linux
-elif [[ $UNAME_SM = "Linux aarch64" ]]; then
-  ARCHNAME=aarch64-linux
-else
-  die "Unsupported environment $UNAME_SM"
+_OS=$(uname -s | tr '[:upper:]' '[:lower:]')
+_ARCH=$(uname -m)
+if [[ $_ARCH = x86_64 ]]; then
+  _ARCH=amd64
+fi
+if [[ $_ARCH = aarch64 ]]; then
+  _ARCH=arm64
 fi
 
 if type curl &>/dev/null; then
@@ -40,12 +37,15 @@ else
   die 'Cannot find `curl` nor `wget`'
 fi
 
-TAG=$($HTTP_GET $HTTP_GET_OPTION https://raw.githubusercontent.com/skaji/relocatable-perl/master/LATEST)
-if [[ -z $TAG ]]; then
+LATEST_LINE=$($HTTP_GET $HTTP_GET_OPTION https://raw.githubusercontent.com/skaji/relocatable-perl/master/releases.csv | \grep ,$_OS,$_ARCH, | \head -1)
+if [[ -z $LATEST_LINE ]]; then
   die "Failed to determine latest perl version"
 fi
+
+LATEST_VERSION=$(echo $LATEST_LINE | \cut -d, -f1)
+LATEST_URL=$(echo $LATEST_LINE | \cut -d, -f5)
 if [[ $PRINT_VERSION = "YES" ]]; then
-  echo $TAG
+  echo $LATEST_VERSION
   exit
 fi
 
@@ -73,10 +73,9 @@ else
 fi
 ABS_INSTALL_DIR=$(cd $INSTALL_DIR &>/dev/null; pwd)
 
-URL=https://github.com/skaji/relocatable-perl/releases/download/$TAG/perl-$ARCHNAME.$TAR_SUFFIX
-echo "Installing perl $TAG to $INSTALL_DIR, this may take a while..."
+echo "Installing perl $LATEST_VERSION to $INSTALL_DIR, this may take a while..."
 
-$HTTP_GET $HTTP_GET_OPTION $URL | $TAR_CMD $TAR_OPTION - --strip-components 1 -C $INSTALL_DIR
+$HTTP_GET $HTTP_GET_OPTION $LATEST_URL | $TAR_CMD $TAR_OPTION - --strip-components 1 -C $INSTALL_DIR
 if [[ ! -f $INSTALL_DIR/bin/perl ]]; then
   die "Failed to install perl"
 fi
