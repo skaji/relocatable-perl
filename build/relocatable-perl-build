@@ -12,7 +12,6 @@ use File::Path 'rmtree';
 use File::Basename 'dirname';
 use Pod::Usage 'pod2usage';
 use Devel::PatchPerl;
-use Devel::PatchPerl::Plugin::FixCompoundTokenSplitByMacro;
 use CPAN::Perl::Releases::MetaCPAN 'perl_tarballs';
 use HTTP::Tinyish;
 use IPC::Run3 'run3';
@@ -170,11 +169,6 @@ sub perl_build {
             close $in;
             close $out;
             rename "$file.tmp", $file or die;
-        }
-        if (version->parse($perl_version) <= v5.34.1) {
-            my $klass = "Devel::PatchPerl::Plugin::FixCompoundTokenSplitByMacro";
-            say "---> patching by $klass";
-            $klass->patchperl(version => $perl_version);
         }
     }
     say "---> building perl $perl_version, see $log for progress";

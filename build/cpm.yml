@@ -3,7 +3,6 @@ prereqs:
     requires:
       CPAN::Perl::Releases::MetaCPAN:
       Devel::PatchPerl:
-      Devel::PatchPerl::Plugin::FixCompoundTokenSplitByMacro: { url: "https://github.com/skaji/Devel-PatchPerl-Plugin-FixCompoundTokenSplitByMacro/archive/main.tar.gz" }
       HTTP::Tinyish:
       IPC::Run3:
       version:
