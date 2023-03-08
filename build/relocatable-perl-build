@@ -39,6 +39,7 @@ relocatable-perl-build - building perl with relocatable settings
     --perl_version   install perl version
     --tarball        use local tar.gz
     --jobs           parallel build, default: 1
+    --linktype       linkt type ("dynamic" vs "static" perl executable), default: dynamic
     --help, -h       show this help message
 
     Examples:
@@ -57,6 +58,7 @@ GetOptions
     "perl_version=s" => \(my $perl_version),
     "tarball=s"      => \(my $tarball),
     "jobs=i"         => \(my $jobs),
+    "linktype=s"     => \(my $linktype = "dynamic"),
     "help|h"         => sub { pod2usage(0) },
 or pod2usage(1);
 
@@ -72,7 +74,7 @@ if (!-d $prefix) {
     die "don't have write permission to $prefix\n";
 }
 
-perl_build($prefix, $perl_version, $tarball);
+perl_build($prefix, $perl_version, $tarball, $linktype);
 force_symlink($prefix, $perl_version);
 
 my $config_heavy = `$prefix/bin/perldoc -lm Config_heavy.pl`;
@@ -91,7 +93,7 @@ system "$prefix/bin/perl -V";
 exit;
 
 sub perl_build {
-    my ($prefix, $perl_version, $tarball) = @_;
+    my ($prefix, $perl_version, $tarball, $linktype) = @_;
 
     my $current_dir = getcwd;
 
@@ -126,6 +128,10 @@ sub perl_build {
         "-DDEBUGGING=-g",
         "-des",
     );
+    if ($linktype eq "static") {
+        push @Configure, "-Uusedl";
+        push @Configure, "-Dldflags=-static";
+    }
     if ($^O eq "linux") {
         # ubuntu 18.04 does not have xlocale.h
         # we can safely remove xlocale.h because locale.h reads it

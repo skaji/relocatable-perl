@@ -1,15 +1,24 @@
 ARG IMAGE
 FROM $IMAGE
 ARG IMAGE
+ARG LINKTYPE=dynamic
 
 RUN if [[ $IMAGE = centos:centos6 ]]; then sed -i 's/^#baseurl=/baseurl=/g; s/^mirrorlist=/#mirrorlist=/g; s/http:\/\/mirror.centos.org/https:\/\/vault.centos.org/g' /etc/yum.repos.d/CentOS-Base.repo; fi
-RUN yum install -y \
+RUN if [[ $IMAGE != alpine* ]]; then yum install -y \
     gcc \
     make \
     tar \
     curl \
     patch \
-    xz
+    xz; \
+    fi
+RUN if [[ $IMAGE == alpine* ]]; then apk add --no-cache \
+    build-base \
+    libc6-compat \
+    perl \
+    curl \
+    xz; \
+    fi
 RUN mkdir -p \
     /lib \
     /lib/$(uname -m)-linux-gnu \
@@ -23,8 +32,8 @@ RUN mkdir /perl
 RUN curl -fsSL https://github.com/skaji/relocatable-perl/releases/download/5.36.0.0/perl-$(uname -m)-linux.tar.xz | tar xJf - --strip-components 1 -C /perl
 RUN curl -fsSL --compressed -o /cpm https://raw.githubusercontent.com/skaji/cpm/main/cpm
 COPY build/relocatable-perl-build build/cpm.yml BUILD_VERSION /
-RUN /perl/bin/perl /cpm install -g
-RUN /perl/bin/perl /relocatable-perl-build --perl_version $(cat /BUILD_VERSION) --prefix /opt/perl
+RUN perl /cpm install -g
+RUN perl /relocatable-perl-build --perl_version $(cat /BUILD_VERSION) --prefix /opt/perl "--linktype=${LINKTYPE}"
 RUN /opt/perl/bin/perl /cpm install -g App::cpanminus App::ChangeShebang
 RUN /opt/perl/bin/change-shebang -f /opt/perl/bin/*
 RUN set -eux; \
