@@ -1,4 +1,4 @@
-# relocatable perl [![build](https://github.com/skaji/relocatable-perl/workflows/build/badge.svg)](https://github.com/skaji/relocatable-perl/actions)
+# relocatable perl [![build](https://github.com/skaji/relocatable-perl/workflows/build/badge.svg)](https://github.com/skaji/relocatable-perl/actions) [![Build Status](https://app.bitrise.io/app/ee64bd72-9bc8-4faa-9da5-65d2de4eee0f/status.svg?token=ehqx3S7rVWDjQQlx0B9A_w)](https://app.bitrise.io/app/ee64bd72-9bc8-4faa-9da5-65d2de4eee0f)
 
 Self-contained, portable perl binaries for Linux and macOS.
 You can download them from [release page](https://github.com/skaji/relocatable-perl/releases).

@@ -5,18 +5,18 @@ project_type: other
 workflows:
   primary:
     steps:
-    - activate-ssh-key@4:
+    - activate-ssh-key:
         run_if: '{{getenv "SSH_RSA_PRIVATE_KEY" | ne ""}}'
-    - git-clone@6: {}
-    - script@1:
+    - git-clone: {}
+    - script:
         inputs:
           - content: |-
               #!/bin/bash
-              exec bash build/run.sh
-    - deploy-to-bitrise-io@2:
+              exec bash build/bitrise.sh
+    - deploy-to-bitrise-io:
         inputs:
           - deploy_path: darwin-arm64
 meta:
   bitrise.io:
     stack: osx-xcode-13.4.x
-    machine_type_id: g2-m1.8core
+    machine_type_id: g2-m1.4core
