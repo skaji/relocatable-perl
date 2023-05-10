@@ -37,7 +37,7 @@ else
   die 'Cannot find `curl` nor `wget`'
 fi
 
-LATEST_LINE=$($HTTP_GET $HTTP_GET_OPTION https://raw.githubusercontent.com/skaji/relocatable-perl/main/releases.csv | \grep -m 1 ,$_OS,$_ARCH,)
+LATEST_LINE=$($HTTP_GET $HTTP_GET_OPTION https://raw.githubusercontent.com/skaji/relocatable-perl/main/releases.csv | \tail -n +1 | \grep -m 1 ,$_OS,$_ARCH,)
 if [[ -z $LATEST_LINE ]]; then
   die "Failed to determine latest perl version"
 fi
