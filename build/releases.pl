@@ -1,12 +1,10 @@
 #!/usr/bin/env perl
-use 5.34.0;
-use warnings;
-use experimental 'signatures';
+use v5.38;
 
 use HTTP::Tiny;
 use JSON::XS ();
 
-my $HTTP = HTTP::Tiny->new;
+my $HTTP = HTTP::Tiny->new(verify_SSL => 1);
 my $JSON = JSON::XS->new->utf8->pretty->canonical;
 
 my $query = <<'EOF';
