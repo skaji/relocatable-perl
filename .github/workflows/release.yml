@@ -59,58 +59,7 @@ jobs:
         with:
           name: darwin-amd64
           path: darwin-amd64
-      - uses: actions/create-release@v1
-        id: create_release
+      - name: create release and upload release assets
+        run: gh release create ${{ github.ref }} linux-*/*.gz linux-*/*.xz darwin-*/*.gz darwin-*/*.xz
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref }}
-          release_name: ${{ github.ref }}
-      - uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: linux-amd64/perl-linux-amd64.tar.gz
-          asset_name: perl-linux-amd64.tar.gz
-          asset_content_type: application/gzip
-      - uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: linux-amd64/perl-linux-amd64.tar.xz
-          asset_name: perl-linux-amd64.tar.xz
-          asset_content_type: application/x-xz
-      - uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: linux-arm64/perl-linux-arm64.tar.gz
-          asset_name: perl-linux-arm64.tar.gz
-          asset_content_type: application/gzip
-      - uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: linux-arm64/perl-linux-arm64.tar.xz
-          asset_name: perl-linux-arm64.tar.xz
-          asset_content_type: application/x-xz
-      - uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: darwin-amd64/perl-darwin-amd64.tar.gz
-          asset_name: perl-darwin-amd64.tar.gz
-          asset_content_type: application/gzip
-      - uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: darwin-amd64/perl-darwin-amd64.tar.xz
-          asset_name: perl-darwin-amd64.tar.xz
-          asset_content_type: application/x-xz
