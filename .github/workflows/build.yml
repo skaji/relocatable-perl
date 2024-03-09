@@ -35,7 +35,7 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
-      - run: sw_vers
+      - run: uname -a && sw_vers
       - run: bash build/github-actions.sh mac_prepare_tools
       - run: bash build/github-actions.sh mac_build_perl
       - run: bash build/github-actions.sh mac_create_artifacts
@@ -47,7 +47,7 @@ jobs:
     runs-on: macos-14
     steps:
       - uses: actions/checkout@v4
-      - run: sw_vers
+      - run: uname -a && sw_vers
       - run: bash build/github-actions.sh mac_prepare_tools
       - run: bash build/github-actions.sh mac_build_perl
       - run: bash build/github-actions.sh mac_create_artifacts
