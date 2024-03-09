@@ -14,8 +14,7 @@ mac_prepare_tools() {
 mac_build_perl() {
   export PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin
   rm -rf ~/perl ~/cpm
-  mkdir ~/perl
-  curl -fsSL https://github.com/skaji/relocatable-perl/releases/download/5.36.0.0/perl-darwin-2level.tar.xz | gtar xJf - --strip-components 1 -C ~/perl
+  curl -fsSL https://raw.githubusercontent.com/skaji/relocatable-perl/main/perl-install | bash -s ~/perl
   curl -fsSL --compressed -o ~/cpm https://raw.githubusercontent.com/skaji/cpm/main/cpm
   ~/perl/bin/perl ~/cpm install -g --cpmfile build/cpm.yml
   sudo rm -rf /opt/perl
