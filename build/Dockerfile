@@ -1,5 +1,8 @@
 FROM centos:centos7
 
+# see https://gist.github.com/skaji/76203327b517cb44da88a4301de118d3
+RUN sed -i 's/override_install_langs=en_US.UTF-8/override_install_langs=en_US.utf8/' /etc/yum.conf
+
 RUN yum install -y \
     gcc \
     make \
