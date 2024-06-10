@@ -83,6 +83,6 @@ jobs:
           name: darwin-arm64
           path: darwin-arm64
       - name: create release and upload release assets
-        run: gh release create ${{ github.ref }} linux-*/*.gz linux-*/*.xz darwin-*/*.gz darwin-*/*.xz
+        run: gh release create --repo ${{ github.repository }} ${{ github.ref }} linux-*/*.gz linux-*/*.xz darwin-*/*.gz darwin-*/*.xz
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
