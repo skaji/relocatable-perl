@@ -6,6 +6,7 @@ mac_prepare_tools() {
   export HOMEBREW_NO_AUTO_UPDATE=1
   export HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK=1
   export HOMEBREW_NO_INSTALL_CLEANUP=1
+  unset GITHUB_ACTIONS
   brew unlink $(brew list --formula)
   brew install xz coreutils gnu-tar
   brew link --force xz coreutils gnu-tar
