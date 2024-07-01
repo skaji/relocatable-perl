@@ -11,8 +11,6 @@ install_from_cpan() {
   INSTALL_DIR=$1
   PERL_VER=$2
   VERSION=${PERL_VER%.*}
-  $HTTP_GET=$3
-  $HTTP_GET_OPTION=$4
 
   $HTTP_GET $HTTP_GET_OPTION https://www.cpan.org/src/5.0/perl-${VERSION}.tar.gz -o perl.tar.gz \
     && tar -xzf perl.tar.gz \
@@ -79,7 +77,7 @@ fi
 ABS_INSTALL_DIR=$(cd $INSTALL_DIR &>/dev/null; pwd)
 
 if [[ $BUILD_FROM_CPAN = 1 ]]; then
-  install_from_cpan $INSTALL_DIR $LATEST_VERSION $HTTP_GET $HTTP_GET_OPTION
+  install_from_cpan $INSTALL_DIR $LATEST_VERSION
 
 else
   LATEST_URL=$(echo $LATEST_LINE | \cut -d, -f5)
