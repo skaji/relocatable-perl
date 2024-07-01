@@ -51,6 +51,14 @@ linux_arm64_create_artifacts() {
   docker rm $ID
 }
 
+linux_ppc64le_create_artifacts() {
+  mkdir linux-ppc64le
+  ID=$(docker create --platform linux/ppc64le skaji/relocatable-perl)
+  docker cp $ID:/perl-linux-ppc64le.tar.gz linux-ppc64le/
+  docker cp $ID:/perl-linux-ppc64le.tar.xz linux-ppc64le/
+  docker rm $ID
+}
+
 case "$1" in
 mac_prepare_tools)
   mac_prepare_tools
@@ -66,6 +74,9 @@ linux_amd64_create_artifacts)
   ;;
 linux_arm64_create_artifacts)
   linux_arm64_create_artifacts
+  ;;
+linux_ppc64le_create_artifacts)
+  linux_ppc64le_create_artifacts
   ;;
 *)
   echo "unknown command: $1" >&2

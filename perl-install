@@ -1,10 +1,25 @@
 #!/bin/bash
 
-set -eu
+set -exu
 
 die() {
   echo "$1" >&2
   exit 1
+}
+
+install_from_cpan() {
+  INSTALL_DIR=$1
+  PERL_VER=$2
+  VERSION=${PERL_VER%.*}
+
+  $HTTP_GET $HTTP_GET_OPTION https://www.cpan.org/src/5.0/perl-${VERSION}.tar.gz -o perl.tar.gz \
+    && tar -xzf perl.tar.gz \
+    && cd perl-${VERSION} \
+    && ./Configure -des -Dprefix=$INSTALL_DIR \
+    && make \
+    && make install \
+    && rm -rf /perl.tar.gz perl-${VERSION}
+
 }
 
 if [[ $# -ne 1 ]] || [[ $1 = "-h" ]] || [[ $1 = "--help" ]]; then
@@ -38,31 +53,19 @@ else
 fi
 
 LATEST_LINE=$($HTTP_GET $HTTP_GET_OPTION https://raw.githubusercontent.com/skaji/relocatable-perl/main/releases.csv | (\grep -m 1 ,$_OS,$_ARCH,; cat >/dev/null))
+
+BUILD_FROM_CPAN=0
 if [[ -z $LATEST_LINE ]]; then
-  die "Failed to determine latest perl version"
-fi
-
-LATEST_VERSION=$(echo $LATEST_LINE | \cut -d, -f1)
-LATEST_URL=$(echo $LATEST_LINE | \cut -d, -f5)
-if [[ $PRINT_VERSION = "YES" ]]; then
-  echo $LATEST_VERSION
-  exit
-fi
-
-TAR_CMD=gtar
-if ! type $TAR_CMD &>/dev/null; then
-  TAR_CMD=tar
-  if ! type $TAR_CMD &>/dev/null; then
-    die 'Cannot find `tar` command'
+  if [[ $_ARCH = ppc64le || $_ARCH = s390x ]]; then
+     LATEST_LINE=$($HTTP_GET $HTTP_GET_OPTION https://raw.githubusercontent.com/skaji/relocatable-perl/main/releases.csv | (\grep -m 1 ,$_OS,amd64,; cat >/dev/null))
+     BUILD_FROM_CPAN=1
+  fi
+  if [[ -z $LATEST_LINE ]]; then
+    die "Failed to determine latest perl version"
   fi
 fi
 
-TAR_OPTION=xzf
-TAR_SUFFIX=tar.gz
-if type xz &>/dev/null; then
-  TAR_OPTION=xJf
-  TAR_SUFFIX=tar.xz
-fi
+LATEST_VERSION=$(echo $LATEST_LINE | \cut -d, -f1)
 
 INSTALL_DIR=$1
 if [[ -d $INSTALL_DIR ]]; then
@@ -73,9 +76,37 @@ else
 fi
 ABS_INSTALL_DIR=$(cd $INSTALL_DIR &>/dev/null; pwd)
 
-echo "Installing perl $LATEST_VERSION to $INSTALL_DIR, this may take a while..."
+if [[ $BUILD_FROM_CPAN = 1 ]]; then
+  install_from_cpan $INSTALL_DIR $LATEST_VERSION
 
-$HTTP_GET $HTTP_GET_OPTION $LATEST_URL | $TAR_CMD $TAR_OPTION - --strip-components 1 -C $INSTALL_DIR
+else
+  LATEST_URL=$(echo $LATEST_LINE | \cut -d, -f5)
+  if [[ $PRINT_VERSION = "YES" ]]; then
+    echo $LATEST_VERSION
+    exit
+  fi
+
+  TAR_CMD=gtar
+  if ! type $TAR_CMD &>/dev/null; then
+    TAR_CMD=tar
+    if ! type $TAR_CMD &>/dev/null; then
+      die 'Cannot find `tar` command'
+    fi
+  fi
+
+  TAR_OPTION=xzf
+  TAR_SUFFIX=tar.gz
+  if type xz &>/dev/null; then
+    TAR_OPTION=xJf
+    TAR_SUFFIX=tar.xz
+  fi
+
+  echo "Installing perl $LATEST_VERSION to $INSTALL_DIR, this may take a while..."
+
+  $HTTP_GET $HTTP_GET_OPTION $LATEST_URL | $TAR_CMD $TAR_OPTION - --strip-components 1 -C $INSTALL_DIR
+
+fi
+
 if [[ ! -f $INSTALL_DIR/bin/perl ]]; then
   die "Failed to install perl"
 fi
