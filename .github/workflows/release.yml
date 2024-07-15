@@ -40,6 +40,18 @@ jobs:
         with:
           name: linux-ppc64le
           path: linux-ppc64le
+  linux-s390x:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+      - run: docker buildx build --platform linux/s390x -t skaji/relocatable-perl -f build/Dockerfile .
+      - run: bash build/github-actions.sh linux_s390x_create_artifacts
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-s390x
+          path: linux-s390x
   darwin-amd64:
     runs-on: macos-13
     steps:
@@ -76,6 +88,7 @@ jobs:
       - linux-amd64
       - linux-arm64
       - linux-ppc64le
+      - linux-s390x
       - darwin-amd64
       - darwin-arm64
     steps:
@@ -91,6 +104,10 @@ jobs:
         with:
           name: linux-ppc64le
           path: linux-ppc64le
+      - uses: actions/download-artifact@v4
+        with:
+            name: linux-s390x
+            path: linux-s390x
       - uses: actions/download-artifact@v4
         with:
           name: darwin-amd64
