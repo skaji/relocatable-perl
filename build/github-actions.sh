@@ -59,6 +59,14 @@ linux_ppc64le_create_artifacts() {
   docker rm $ID
 }
 
+linux_s390x_create_artifacts() {
+  mkdir linux-s390x
+  ID=$(docker create --platform linux/s390x skaji/relocatable-perl)
+  docker cp $ID:/perl-linux-s390x.tar.gz linux-s390x/
+  docker cp $ID:/perl-linux-s390x.tar.xz linux-s390x/
+  docker rm $ID
+}
+
 case "$1" in
 mac_prepare_tools)
   mac_prepare_tools
@@ -77,6 +85,9 @@ linux_arm64_create_artifacts)
   ;;
 linux_ppc64le_create_artifacts)
   linux_ppc64le_create_artifacts
+  ;;
+linux_s390x_create_artifacts)
+  linux_s390x_create_artifacts
   ;;
 *)
   echo "unknown command: $1" >&2
