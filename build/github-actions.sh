@@ -35,22 +35,6 @@ mac_create_artifacts() {
   xz   -9 --stdout perl-darwin-$archname.tar > darwin-$archname/perl-darwin-$archname.tar.xz
 }
 
-linux_amd64_create_artifacts() {
-  mkdir linux-amd64
-  ID=$(docker create skaji/relocatable-perl)
-  docker cp $ID:/perl-linux-amd64.tar.gz linux-amd64/
-  docker cp $ID:/perl-linux-amd64.tar.xz linux-amd64/
-  docker rm $ID
-}
-
-linux_arm64_create_artifacts() {
-  mkdir linux-arm64
-  ID=$(docker create --platform linux/arm64 skaji/relocatable-perl)
-  docker cp $ID:/perl-linux-arm64.tar.gz linux-arm64/
-  docker cp $ID:/perl-linux-arm64.tar.xz linux-arm64/
-  docker rm $ID
-}
-
 case "$1" in
 mac_prepare_tools)
   mac_prepare_tools
@@ -60,12 +44,6 @@ mac_build_perl)
   ;;
 mac_create_artifacts)
   mac_create_artifacts
-  ;;
-linux_amd64_create_artifacts)
-  linux_amd64_create_artifacts
-  ;;
-linux_arm64_create_artifacts)
-  linux_arm64_create_artifacts
   ;;
 *)
   echo "unknown command: $1" >&2
