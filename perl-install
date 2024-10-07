@@ -27,28 +27,6 @@ if [[ $_ARCH = aarch64 ]]; then
   _ARCH=arm64
 fi
 
-if type curl &>/dev/null; then
-  HTTP_GET=curl
-  HTTP_GET_OPTION='-fsSL'
-elif type wget &>/dev/null; then
-  HTTP_GET=wget
-  HTTP_GET_OPTION='-q -O -'
-else
-  die 'Cannot find `curl` nor `wget`'
-fi
-
-LATEST_LINE=$($HTTP_GET $HTTP_GET_OPTION https://raw.githubusercontent.com/skaji/relocatable-perl/main/releases.csv | (\grep -m 1 ,$_OS,$_ARCH,; cat >/dev/null))
-if [[ -z $LATEST_LINE ]]; then
-  die "Failed to determine latest perl version"
-fi
-
-LATEST_VERSION=$(echo $LATEST_LINE | \cut -d, -f1)
-LATEST_URL=$(echo $LATEST_LINE | \cut -d, -f5)
-if [[ $PRINT_VERSION = "YES" ]]; then
-  echo $LATEST_VERSION
-  exit
-fi
-
 TAR_CMD=gtar
 if ! type $TAR_CMD &>/dev/null; then
   TAR_CMD=tar
@@ -59,9 +37,33 @@ fi
 
 TAR_OPTION=xzf
 TAR_SUFFIX=tar.gz
+COMPRESS_TYPE=gz
 if type xz &>/dev/null; then
   TAR_OPTION=xJf
   TAR_SUFFIX=tar.xz
+  COMPRESS_TYPE=xz
+fi
+
+if type curl &>/dev/null; then
+  HTTP_GET=curl
+  HTTP_GET_OPTION='-fsSL'
+elif type wget &>/dev/null; then
+  HTTP_GET=wget
+  HTTP_GET_OPTION='-q -O -'
+else
+  die 'Cannot find `curl` nor `wget`'
+fi
+
+LATEST_LINE=$($HTTP_GET $HTTP_GET_OPTION https://raw.githubusercontent.com/skaji/relocatable-perl/main/releases.csv | (\grep -m 1 ,$_OS,$_ARCH,$COMPRESS_TYPE; cat >/dev/null))
+if [[ -z $LATEST_LINE ]]; then
+  die "Failed to determine latest perl version"
+fi
+
+LATEST_VERSION=$(echo $LATEST_LINE | \cut -d, -f1)
+LATEST_URL=$(echo $LATEST_LINE | \cut -d, -f5)
+if [[ $PRINT_VERSION = "YES" ]]; then
+  echo $LATEST_VERSION
+  exit
 fi
 
 INSTALL_DIR=$1
