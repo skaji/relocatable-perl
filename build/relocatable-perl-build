@@ -175,9 +175,6 @@ sub perl_build {
         }
     }
     say "---> building perl $perl_version, see $log for progress";
-    if ($^O eq "linux") {
-        system "rm -f /usr/lib64/libcrypt.so /usr/lib64/libcrypt.so.1"; # XXX
-    }
     run \@Configure, $log;
     my @option = $jobs ? ("--jobs=$jobs") : ();
     run ["make", @option, "install"], $log;

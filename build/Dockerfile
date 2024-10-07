@@ -27,7 +27,7 @@ RUN yum install -y \
     gcc \
     make \
     tar \
-    curl \
+    wget \
     patch \
     xz
 RUN mkdir -p \
@@ -39,11 +39,11 @@ RUN mkdir -p \
     /usr/lib64 \
     /usr/local/lib \
     /usr/local/lib64
-RUN curl -fsSL https://raw.githubusercontent.com/skaji/relocatable-perl/main/perl-install | bash -s /perl
-RUN curl -fsSL --compressed -o /cpm https://raw.githubusercontent.com/skaji/cpm/main/cpm
+RUN wget -q -O - https://raw.githubusercontent.com/skaji/relocatable-perl/main/perl-install | bash -s /perl
+RUN wget -q -O /cpm https://raw.githubusercontent.com/skaji/cpm/main/cpm
 RUN --mount=type=bind,target=src /perl/bin/perl /cpm install -g --cpmfile src/build/cpm.yml
 
-# RUN rm -f /usr/lib64/libcrypt.so /usr/lib64/libcrypt.so.1
+RUN rm -f /usr/lib64/libcrypt.so /usr/lib64/libcrypt.so.1
 COPY --from=static-libcrypt /libcrypt.a /usr/lib64/libcrypt.a
 RUN --mount=type=bind,target=src /perl/bin/perl src/build/relocatable-perl-build --perl_version $(cat src/BUILD_VERSION) --prefix /opt/perl
 RUN cd /usr/lib64; \
