@@ -132,9 +132,12 @@ sub perl_build {
         # see https://github.com/agracio/electron-edge-js/issues/16
         push @Configure, "-Ui_xlocale";
 
-        # RHEL8, Fedora28, CentOS8 does not have libnsl.so.1 by default;
-        # remove -lnsl
+        # RHEL8, Fedora28, CentOS8 does not have libnsl.so.1 by default; remove -lnsl
         push @Configure, "-Dlibs=-lpthread -ldl -lm -lcrypt -lutil -lc";
+
+        # RHEL9 removes libcrypt.so.1 by default; so we will link libcrypt.a statically
+        # manually define d_crypt here
+        push @Configure, "-Dd_crypt";
 
         my $arch = (uname)[4];
         my @libpth = (
@@ -172,6 +175,9 @@ sub perl_build {
         }
     }
     say "---> building perl $perl_version, see $log for progress";
+    if ($^O eq "linux") {
+        system "rm -f /usr/lib64/libcrypt.so /usr/lib64/libcrypt.so.1"; # XXX
+    }
     run \@Configure, $log;
     my @option = $jobs ? ("--jobs=$jobs") : ();
     run ["make", @option, "install"], $log;

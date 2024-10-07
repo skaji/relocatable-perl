@@ -59,3 +59,6 @@ Copyright 2010- Tatsuhiko Miyagawa, licensed under the same terms as Perl.
 
 * [App::ChangeShebang](https://github.com/skaji/change-shebang)
 Copyright Shoichi Kaji, licensed under the same terms as Perl.
+
+* [libcrypt.a](https://sourceware.org/glibc/)
+Copyright (C) 1991-2015 Free Software Foundation, Inc. GNU Lesser General Public License version 2.1 or later.
