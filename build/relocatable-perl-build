@@ -22,7 +22,14 @@ sub run {
     my ($cmd, $log) = @_;
     warn "---> @$cmd\n";
     run3 $cmd, undef, $log, $log, { append_stdout => 1 };
-    $? == 0 or die "failed @$cmd";
+    if ($? != 0) {
+        open my $fh, "<", $log or die;
+        while (<$fh>) {
+            print;
+        }
+        die;
+    }
+    return 1;
 }
 
 =head1 NAME
@@ -138,6 +145,9 @@ sub perl_build {
         # RHEL9 removes libcrypt.so.1 by default; so we will link libcrypt.a statically
         # manually define d_crypt here
         push @Configure, "-Dd_crypt";
+
+        # math.h in debian does not define _LIB_VERSION
+        push @Configure, "-Ud_libm_lib_version";
 
         my $arch = (uname)[4];
         my @libpth = (
