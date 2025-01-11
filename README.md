@@ -2,6 +2,7 @@
 
 Self-contained, portable perl binaries for Linux and macOS.
 You can download them from [release page](https://github.com/skaji/relocatable-perl/releases).
+See also [SUPPORT.md](SUPPORT.md).
 
 Since version 5.10, perl can be built with [relocatable INC](https://metacpan.org/pod/release/XSAWYERX/perl-5.26.0/pod/perl5100delta.pod#Relocatable-installations).
 If we build perl with `-Duserelocatableinc` and apply some patches to it,
