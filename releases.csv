@@ -1,4 +1,12 @@
 version,os,arch,compress,url,padding
+5.40.0.2,linux,amd64,xz,https://github.com/skaji/relocatable-perl/releases/download/5.40.0.2/perl-linux-amd64.tar.xz,
+5.40.0.2,linux,amd64,gz,https://github.com/skaji/relocatable-perl/releases/download/5.40.0.2/perl-linux-amd64.tar.gz,
+5.40.0.2,linux,arm64,xz,https://github.com/skaji/relocatable-perl/releases/download/5.40.0.2/perl-linux-arm64.tar.xz,
+5.40.0.2,linux,arm64,gz,https://github.com/skaji/relocatable-perl/releases/download/5.40.0.2/perl-linux-arm64.tar.gz,
+5.40.0.2,darwin,amd64,xz,https://github.com/skaji/relocatable-perl/releases/download/5.40.0.2/perl-darwin-amd64.tar.xz,
+5.40.0.2,darwin,amd64,gz,https://github.com/skaji/relocatable-perl/releases/download/5.40.0.2/perl-darwin-amd64.tar.gz,
+5.40.0.2,darwin,arm64,xz,https://github.com/skaji/relocatable-perl/releases/download/5.40.0.2/perl-darwin-arm64.tar.xz,
+5.40.0.2,darwin,arm64,gz,https://github.com/skaji/relocatable-perl/releases/download/5.40.0.2/perl-darwin-arm64.tar.gz,
 5.40.0.1,linux,amd64,xz,https://github.com/skaji/relocatable-perl/releases/download/5.40.0.1/perl-linux-amd64.tar.xz,
 5.40.0.1,linux,amd64,gz,https://github.com/skaji/relocatable-perl/releases/download/5.40.0.1/perl-linux-amd64.tar.gz,
 5.40.0.1,linux,arm64,xz,https://github.com/skaji/relocatable-perl/releases/download/5.40.0.1/perl-linux-arm64.tar.xz,
