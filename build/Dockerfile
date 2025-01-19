@@ -1,9 +1,9 @@
 FROM ubuntu:18.04 AS static-libcrypt
 
-RUN set -eux; \
+RUN --mount=type=bind,target=/src set -eux; \
   export DEBIAN_FRONTEND=noninteractive; \
-  apt-get update; \
-  apt-get install -y \
+  /src/build/quiet.sh apt-get update; \
+  /src/build/quiet.sh apt-get install -y \
     ca-certificates \
     curl \
     gcc \
@@ -18,23 +18,23 @@ RUN set -eux; \
 
 ARG LIBXCRYPT_VERSION=4.4.36
 
-RUN set -eux; \
+RUN --mount=type=bind,target=/src set -eux; \
   cd /tmp; \
   curl -fsSL -o libxcrypt-${LIBXCRYPT_VERSION}.tar.xz https://github.com/besser82/libxcrypt/releases/download/v${LIBXCRYPT_VERSION}/libxcrypt-${LIBXCRYPT_VERSION}.tar.xz; \
   tar xf libxcrypt-${LIBXCRYPT_VERSION}.tar.xz; \
   cd libxcrypt-${LIBXCRYPT_VERSION}; \
-  ./configure --with-pic --disable-shared; \
-  make; \
+  /src/build/quiet.sh ./configure --with-pic --disable-shared; \
+  /src/build/quiet.sh make; \
   mv .libs/libcrypt.a /; \
   :
 
 # XXX We use ubuntu:18.04 because its gcc is configured with --enable-default-pie
 FROM ubuntu:18.04 AS builder
 
-RUN set -eux; \
+RUN --mount=type=bind,target=/src set -eux; \
   export DEBIAN_FRONTEND=noninteractive; \
-  apt-get update; \
-  apt-get install -y --no-install-recommends \
+  /src/build/quiet.sh apt-get update; \
+  /src/build/quiet.sh apt-get install -y --no-install-recommends \
     ca-certificates \
     gcc \
     libc6-dev \
@@ -56,13 +56,13 @@ RUN mkdir -p \
     ;
 RUN wget -q -O - https://raw.githubusercontent.com/skaji/relocatable-perl/main/perl-install | bash -s /perl
 RUN wget -q -O /cpm https://raw.githubusercontent.com/skaji/cpm/main/cpm
-RUN --mount=type=bind,target=src /perl/bin/perl /cpm install -g --cpmfile src/build/cpm.yml
+RUN --mount=type=bind,target=/src /perl/bin/perl /cpm install -g --cpmfile /src/build/cpm.yml
 
 RUN rm -f /usr/lib/$(uname -m)-linux-gnu/libcrypt.so
 COPY --from=static-libcrypt /libcrypt.a  /tmp/libcrypt.a
 RUN cp -f /tmp/libcrypt.a /usr/lib/$(uname -m)-linux-gnu/libcrypt.a
 
-RUN --mount=type=bind,target=src /perl/bin/perl src/build/relocatable-perl-build --perl_version $(cat src/BUILD_VERSION) --prefix /opt/perl
+RUN --mount=type=bind,target=/src /perl/bin/perl /src/build/relocatable-perl-build --perl_version $(cat /src/BUILD_VERSION) --prefix /opt/perl
 
 RUN ln -sf /lib/$(uname -m)-linux-gnu/libcrypt.so.1 /usr/lib/$(uname -m)-linux-gnu/libcrypt.so
 
