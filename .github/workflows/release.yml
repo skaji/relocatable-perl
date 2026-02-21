@@ -9,25 +9,25 @@ jobs:
   linux-amd64:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - run: docker build -o linux-amd64 -f build/Dockerfile .
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: linux-amd64
           path: linux-amd64
   linux-arm64:
     runs-on: ubuntu-24.04-arm
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - run: docker build -o linux-arm64 -f build/Dockerfile .
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: linux-arm64
           path: linux-arm64
   darwin-amd64:
-    runs-on: macos-13
+    runs-on: macos-15-intel
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - run: |
           uname -a
           sw_vers
@@ -35,14 +35,14 @@ jobs:
       - run: bash build/github-actions.sh mac_prepare_tools
       - run: bash build/github-actions.sh mac_build_perl
       - run: bash build/github-actions.sh mac_create_artifacts
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: darwin-amd64
           path: darwin-amd64
   darwin-arm64:
-    runs-on: macos-14
+    runs-on: macos-15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - run: |
           uname -a
           sw_vers
@@ -50,7 +50,7 @@ jobs:
       - run: bash build/github-actions.sh mac_prepare_tools
       - run: bash build/github-actions.sh mac_build_perl
       - run: bash build/github-actions.sh mac_create_artifacts
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: darwin-arm64
           path: darwin-arm64
@@ -62,19 +62,19 @@ jobs:
       - darwin-amd64
       - darwin-arm64
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v7
         with:
           name: linux-amd64
           path: linux-amd64
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v7
         with:
           name: linux-arm64
           path: linux-arm64
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v7
         with:
           name: darwin-amd64
           path: darwin-amd64
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v7
         with:
           name: darwin-arm64
           path: darwin-arm64

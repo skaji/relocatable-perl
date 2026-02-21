@@ -16,7 +16,7 @@ RUN --mount=type=bind,target=/src set -eux; \
     xz-utils \
     ;
 
-ARG LIBXCRYPT_VERSION=4.4.38
+ARG LIBXCRYPT_VERSION=4.5.2
 
 RUN --mount=type=bind,target=/src set -eux; \
   cd /tmp; \
@@ -60,7 +60,7 @@ RUN wget -q -O /cpm https://raw.githubusercontent.com/skaji/cpm/main/cpm
 RUN --mount=type=bind,target=/src /perl/bin/perl /cpm install -g --cpmfile /src/build/cpm.yml
 
 RUN rm -f /usr/lib/$(uname -m)-linux-gnu/libcrypt.so
-COPY --from=static-libcrypt /libcrypt.a  /tmp/libcrypt.a
+COPY --from=static-libcrypt /libcrypt.a /tmp/libcrypt.a
 RUN cp -f /tmp/libcrypt.a /usr/lib/$(uname -m)-linux-gnu/libcrypt.a
 
 RUN --mount=type=bind,target=/src /perl/bin/perl /src/build/relocatable-perl-build --perl_version $(cat /src/BUILD_VERSION) --prefix /opt/perl

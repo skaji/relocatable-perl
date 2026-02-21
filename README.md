@@ -49,7 +49,7 @@ Copyright (C) Shoichi Kaji.
 This is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
 
 Please note that the artifacts in the release page contains
-Perl5, App::cpanminus and App::ChangeShebang.
+Perl5, App::cpanminus, App::ChangeShebang and libxcrypt.
 They have their own copyright and license.
 
 * [Perl5](https://www.perl.org/)
