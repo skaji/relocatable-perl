@@ -3,9 +3,9 @@
 The binaries in release pages will work on the following platforms:
 
 * perl-darwin-amd64.tar.{xz,gz}
-  * amd64 macOS 13+
+  * amd64 macOS 15+
 * perl-darwin-arm64.tar.{xz,gz}
-  * arm64 macOS 14+
+  * arm64 macOS 15+
 * perl-linux-amd64.tar.{xz,gz}
   * amd64 Red Hat Enterprise Linux / Rocky Linux / AlmaLinux 8+
   * amd64 AmazonLinux 2, 2023
