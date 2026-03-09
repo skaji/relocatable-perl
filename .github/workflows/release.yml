@@ -62,19 +62,19 @@ jobs:
       - darwin-amd64
       - darwin-arm64
     steps:
-      - uses: actions/download-artifact@v7
+      - uses: actions/download-artifact@v8
         with:
           name: linux-amd64
           path: linux-amd64
-      - uses: actions/download-artifact@v7
+      - uses: actions/download-artifact@v8
         with:
           name: linux-arm64
           path: linux-arm64
-      - uses: actions/download-artifact@v7
+      - uses: actions/download-artifact@v8
         with:
           name: darwin-amd64
           path: darwin-amd64
-      - uses: actions/download-artifact@v7
+      - uses: actions/download-artifact@v8
         with:
           name: darwin-arm64
           path: darwin-arm64
