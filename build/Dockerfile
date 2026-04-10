@@ -1,4 +1,5 @@
-FROM ubuntu:18.04 AS static-libcrypt
+ARG BASE_IMAGE=ubuntu:18.04
+FROM ${BASE_IMAGE} AS static-libcrypt
 
 RUN --mount=type=bind,target=/src set -eux; \
   export DEBIAN_FRONTEND=noninteractive; \
@@ -29,7 +30,7 @@ RUN --mount=type=bind,target=/src set -eux; \
   :
 
 # XXX We use ubuntu:18.04 because its gcc is configured with --enable-default-pie
-FROM ubuntu:18.04 AS builder
+FROM ${BASE_IMAGE} AS builder
 
 RUN --mount=type=bind,target=/src set -eux; \
   export DEBIAN_FRONTEND=noninteractive; \
@@ -55,7 +56,16 @@ RUN mkdir -p \
     /usr/local/lib \
     /usr/local/lib64 \
     ;
-RUN wget -q -O - https://raw.githubusercontent.com/skaji/relocatable-perl/main/perl-install | bash -s /perl
+RUN set -eux; \
+  if wget -q -O /tmp/perl-install https://raw.githubusercontent.com/skaji/relocatable-perl/main/perl-install && bash /tmp/perl-install /perl; then \
+    echo "Bootstrap: using pre-built relocatable-perl"; \
+  else \
+    echo "Bootstrap: no pre-built perl for $(uname -m), using system perl"; \
+    export DEBIAN_FRONTEND=noninteractive; \
+    apt-get update && apt-get install -y --no-install-recommends perl; \
+    mkdir -p /perl/bin; \
+    ln -sf /usr/bin/perl /perl/bin/perl; \
+  fi
 RUN wget -q -O /cpm https://raw.githubusercontent.com/skaji/cpm/main/cpm
 RUN --mount=type=bind,target=/src /perl/bin/perl /cpm install -g --cpmfile /src/build/cpm.yml
 
@@ -71,7 +81,7 @@ RUN /opt/perl/bin/perl /cpm install -g App::cpanminus App::ChangeShebang
 RUN /opt/perl/bin/change-shebang -f /opt/perl/bin/*
 RUN set -eux; \
   cd /tmp; \
-  _ARCHNAME=$(if [ $(uname -m) = x86_64 ]; then echo amd64; else echo arm64; fi); \
+  _ARCHNAME=$(if [ $(uname -m) = x86_64 ]; then echo amd64; elif [ $(uname -m) = riscv64 ]; then echo riscv64; else echo arm64; fi); \
   cp -r /opt/perl perl-linux-$_ARCHNAME; \
   tar cf perl-linux-$_ARCHNAME.tar perl-linux-$_ARCHNAME; \
   gzip -9 --stdout perl-linux-$_ARCHNAME.tar > /perl-linux-$_ARCHNAME.tar.gz; \
