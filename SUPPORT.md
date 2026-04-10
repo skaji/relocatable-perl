@@ -16,6 +16,9 @@ The binaries in release pages will work on the following platforms:
   * arm64 AmazonLinux 2, 2023
   * arm64 Ubuntu 18.04+
   * arm64 Debian 10+
+* perl-linux-riscv64.tar.{xz,gz}
+  * riscv64 Ubuntu 24.04+
+  * riscv64 Debian 13+
 
 # Note
 

@@ -26,6 +26,7 @@ fi
 if [[ $_ARCH = aarch64 ]]; then
   _ARCH=arm64
 fi
+# riscv64 uname -m matches the release name, no mapping needed
 
 TAR_CMD=gtar
 if ! type $TAR_CMD &>/dev/null; then
