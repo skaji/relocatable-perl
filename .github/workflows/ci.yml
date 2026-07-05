@@ -53,6 +53,11 @@ jobs:
     runs-on: ubuntu-latest
     needs:
       - build
+    permissions:
+      id-token: write # actions/attest
+      attestations: write # actions/attest
+      artifact-metadata: write # actions/attest
+      contents: write # gh release
     steps:
       - uses: actions/download-artifact@v8
         with:
@@ -70,7 +75,18 @@ jobs:
         with:
           name: darwin-arm64
           path: darwin-arm64
+      - uses: actions/attest@v4
+        id: attest
+        with:
+          subject-path: |
+            linux-*/*.gz
+            linux-*/*.xz
+            darwin-*/*.gz
+            darwin-*/*.xz
       - name: create release and upload release assets
-        run: gh release create --repo ${{ github.repository }} ${{ github.ref }} linux-*/*.gz linux-*/*.xz darwin-*/*.gz darwin-*/*.xz
+        run: |
+          gh release create --repo ${{ github.repository }} ${{ github.ref }} \
+            --notes "Artifact attestation: ${{ steps.attest.outputs.attestation-url }}" \
+            linux-*/*.gz linux-*/*.xz darwin-*/*.gz darwin-*/*.xz
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
