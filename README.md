@@ -1,4 +1,4 @@
-# relocatable perl [![build](https://github.com/skaji/relocatable-perl/workflows/build/badge.svg)](https://github.com/skaji/relocatable-perl/actions)
+# relocatable perl [![ci](https://github.com/skaji/relocatable-perl/workflows/ci/badge.svg)](https://github.com/skaji/relocatable-perl/actions)
 
 Self-contained, portable perl binaries for Linux and macOS.
 You can download them from [release page](https://github.com/skaji/relocatable-perl/releases).
